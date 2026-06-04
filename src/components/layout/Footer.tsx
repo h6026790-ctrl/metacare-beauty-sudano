@@ -24,8 +24,8 @@ export function Footer() {
         <FooterCol title={t.nav.shop} links={[
           { label: t.nav.categories, to: "/categories" },
           { label: t.nav.brands, to: "/brands" },
+          { label: t.nav.offers, to: "/offers" },
           { label: t.home.newArrivals, to: "/products" },
-          { label: t.home.bestSellers, to: "/products" },
         ]} />
         <FooterCol title={t.footer.help} links={[
           { label: t.nav.account, to: "/account" },

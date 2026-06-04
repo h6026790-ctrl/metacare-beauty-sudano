@@ -12,9 +12,10 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/", key: "home" as const },
+  { to: "/products", key: "shop" as const },
   { to: "/categories", key: "categories" as const },
   { to: "/brands", key: "brands" as const },
-  { to: "/products", key: "shop" as const },
+  { to: "/offers", key: "offers" as const },
 ] as const;
 
 export function Header() {
