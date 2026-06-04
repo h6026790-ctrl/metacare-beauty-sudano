@@ -1,6 +1,28 @@
 export type Lang = "ar" | "en";
 
-export const dict = {
+type DictShape = {
+  brand: { name: string; tagline: string };
+  nav: Record<string, string>;
+  home: Record<string, string>;
+  product: Record<string, string>;
+  cart: Record<string, string>;
+  checkout: Record<string, string>;
+  confirm: Record<string, string>;
+  status: Record<string, string>;
+  account: Record<string, string>;
+  auth: Record<string, string>;
+  search: Record<string, string>;
+  footer: Record<string, string>;
+  common: Record<string, string>;
+  panels: {
+    admin: { title: string; sub: string };
+    staff: { title: string; sub: string };
+    delivery: { title: string; sub: string };
+    previewBadge: string;
+  };
+};
+
+export const dict: Record<Lang, DictShape> = {
   ar: {
     brand: { name: "ميتاكير بيوتي", tagline: "تجربة تسوق فاخرة وبسيطة للجمال" },
     nav: {
@@ -178,6 +200,6 @@ export const dict = {
       previewBadge: "Phase 1 preview",
     },
   },
-} as const;
+};
 
-export type Dict = (typeof dict)["ar"];
+export type Dict = DictShape;
