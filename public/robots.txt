@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Block private surfaces from indexing
+Disallow: /admin
+Disallow: /staff
+Disallow: /delivery
+Disallow: /account
+Disallow: /checkout
+Disallow: /cart
+Disallow: /auth

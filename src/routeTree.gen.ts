@@ -10,8 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StaffRouteImport } from './routes/staff'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ProductsRouteImport } from './routes/products'
+import { Route as OffersRouteImport } from './routes/offers'
 import { Route as DeliveryRouteImport } from './routes/delivery'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CategoriesRouteImport } from './routes/categories'
@@ -31,6 +33,11 @@ const StaffRoute = StaffRouteImport.update({
   path: '/staff',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
@@ -39,6 +46,11 @@ const SearchRoute = SearchRouteImport.update({
 const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
   path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OffersRoute = OffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DeliveryRoute = DeliveryRouteImport.update({
@@ -117,8 +129,10 @@ export interface FileRoutesByFullPath {
   '/categories': typeof CategoriesRoute
   '/checkout': typeof CheckoutRoute
   '/delivery': typeof DeliveryRoute
+  '/offers': typeof OffersRoute
   '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/account/wishlist': typeof AccountWishlistRoute
   '/brands/$id': typeof BrandsIdRoute
@@ -135,8 +149,10 @@ export interface FileRoutesByTo {
   '/categories': typeof CategoriesRoute
   '/checkout': typeof CheckoutRoute
   '/delivery': typeof DeliveryRoute
+  '/offers': typeof OffersRoute
   '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/account/wishlist': typeof AccountWishlistRoute
   '/brands/$id': typeof BrandsIdRoute
@@ -154,8 +170,10 @@ export interface FileRoutesById {
   '/categories': typeof CategoriesRoute
   '/checkout': typeof CheckoutRoute
   '/delivery': typeof DeliveryRoute
+  '/offers': typeof OffersRoute
   '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/account/wishlist': typeof AccountWishlistRoute
   '/brands/$id': typeof BrandsIdRoute
@@ -174,8 +192,10 @@ export interface FileRouteTypes {
     | '/categories'
     | '/checkout'
     | '/delivery'
+    | '/offers'
     | '/products'
     | '/search'
+    | '/sitemap.xml'
     | '/staff'
     | '/account/wishlist'
     | '/brands/$id'
@@ -192,8 +212,10 @@ export interface FileRouteTypes {
     | '/categories'
     | '/checkout'
     | '/delivery'
+    | '/offers'
     | '/products'
     | '/search'
+    | '/sitemap.xml'
     | '/staff'
     | '/account/wishlist'
     | '/brands/$id'
@@ -210,8 +232,10 @@ export interface FileRouteTypes {
     | '/categories'
     | '/checkout'
     | '/delivery'
+    | '/offers'
     | '/products'
     | '/search'
+    | '/sitemap.xml'
     | '/staff'
     | '/account/wishlist'
     | '/brands/$id'
@@ -229,8 +253,10 @@ export interface RootRouteChildren {
   CategoriesRoute: typeof CategoriesRoute
   CheckoutRoute: typeof CheckoutRoute
   DeliveryRoute: typeof DeliveryRoute
+  OffersRoute: typeof OffersRoute
   ProductsRoute: typeof ProductsRouteWithChildren
   SearchRoute: typeof SearchRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StaffRoute: typeof StaffRoute
   OrdersIdRoute: typeof OrdersIdRoute
 }
@@ -242,6 +268,13 @@ declare module '@tanstack/react-router' {
       path: '/staff'
       fullPath: '/staff'
       preLoaderRoute: typeof StaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/search': {
@@ -256,6 +289,13 @@ declare module '@tanstack/react-router' {
       path: '/products'
       fullPath: '/products'
       preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offers': {
+      id: '/offers'
+      path: '/offers'
+      fullPath: '/offers'
+      preLoaderRoute: typeof OffersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/delivery': {
@@ -396,8 +436,10 @@ const rootRouteChildren: RootRouteChildren = {
   CategoriesRoute: CategoriesRoute,
   CheckoutRoute: CheckoutRoute,
   DeliveryRoute: DeliveryRoute,
+  OffersRoute: OffersRoute,
   ProductsRoute: ProductsRouteWithChildren,
   SearchRoute: SearchRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   StaffRoute: StaffRoute,
   OrdersIdRoute: OrdersIdRoute,
 }
