@@ -99,7 +99,7 @@ function ProductDetail() {
             <div className="mt-6 space-y-3">
               <h3 className="font-display text-lg text-foreground">{t.product.specs}</h3>
               <dl className="divide-y divide-border rounded-2xl border border-border bg-card text-sm">
-                {product.specs.map((s, i) => (
+                {product.specs.map((s: typeof product.specs[number], i: number) => (
                   <div key={i} className="grid grid-cols-2 gap-2 px-4 py-3">
                     <dt className="text-muted-foreground">{s.label[lang]}</dt>
                     <dd className="text-foreground">{s.value[lang]}</dd>
