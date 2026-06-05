@@ -14,9 +14,12 @@ async function assertAgent(ctx: any) {
 }
 
 // ---------- STAFF / CS ----------
+const ORDER_STATUSES = ["new","review","paid","shipping","delivered","cancelled","returned"] as const;
+type OrderStatus = typeof ORDER_STATUSES[number];
+
 export const listAllOrders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { status?: string } | undefined) => d ?? {})
+  .inputValidator((d: { status?: OrderStatus } | undefined) => d ?? {})
   .handler(async ({ context, data }) => {
     await assertStaff(context);
     let q = context.supabase
