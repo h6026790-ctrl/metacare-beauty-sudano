@@ -283,6 +283,7 @@ export type Database = {
           completed_at: string | null
           id: string
           order_id: string
+          qr_expires_at: string
           qr_token: string
         }
         Insert: {
@@ -292,6 +293,7 @@ export type Database = {
           completed_at?: string | null
           id?: string
           order_id: string
+          qr_expires_at?: string
           qr_token?: string
         }
         Update: {
@@ -301,6 +303,7 @@ export type Database = {
           completed_at?: string | null
           id?: string
           order_id?: string
+          qr_expires_at?: string
           qr_token?: string
         }
         Relationships: [
@@ -457,6 +460,38 @@ export type Database = {
           },
         ]
       }
+      order_notes: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          id: string
+          order_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          order_id: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_notes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_status_history: {
         Row: {
           actor_id: string | null
@@ -500,6 +535,7 @@ export type Database = {
           address_state: string
           address_street: string
           archived_at: string | null
+          assigned_staff_id: string | null
           contact_name: string
           contact_phone: string
           contact_whatsapp: string
@@ -520,6 +556,7 @@ export type Database = {
           address_state: string
           address_street: string
           archived_at?: string | null
+          assigned_staff_id?: string | null
           contact_name: string
           contact_phone: string
           contact_whatsapp: string
@@ -540,6 +577,7 @@ export type Database = {
           address_state?: string
           address_street?: string
           archived_at?: string | null
+          assigned_staff_id?: string | null
           contact_name?: string
           contact_phone?: string
           contact_whatsapp?: string
@@ -777,6 +815,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      confirm_delivery_by_qr: {
+        Args: { _order_id: string; _token: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
