@@ -1,14 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { useI18n } from "@/i18n/I18nProvider";
-import { useStore, DELIVERY_FEE_SDG } from "@/lib/store";
-import { findProduct } from "@/lib/mock-data";
-import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useCart, useStatesTree, usePlaceOrder, useMyProfile } from "@/lib/api/queries";
+import { useState, useMemo, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatPrice } from "@/lib/format";
-import { Landmark, MapPin } from "lucide-react";
+import { Landmark, MapPin, MessageCircle } from "lucide-react";
+import { toast } from "sonner";
+import { whatsappLink } from "@/lib/format";
+import { METACARE_WHATSAPP, BANK_OF_KHARTOUM } from "@/lib/config";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout — Metacare" }] }),
@@ -17,26 +20,51 @@ export const Route = createFileRoute("/checkout")({
 
 function CheckoutPage() {
   const { t, lang } = useI18n();
-  const cart = useStore((s) => s.cart);
-  const user = useStore((s) => s.user);
-  const placeOrder = useStore((s) => s.placeOrder);
+  const { user } = useAuth();
+  const { data: cart } = useCart();
+  const { data: profile } = useMyProfile();
+  const { data: tree = [] } = useStatesTree();
+  const place = usePlaceOrder();
   const navigate = useNavigate();
+  const items = (cart?.items ?? []) as any[];
 
-  const lines = cart.map((c) => ({ ...c, product: findProduct(c.productId)! })).filter((l) => l.product);
-  const subtotal = lines.reduce((s, l) => s + l.product.price * l.qty, 0);
-  const total = subtotal + (lines.length ? DELIVERY_FEE_SDG : 0);
-
-  const [form, setForm] = useState({
-    name: user?.name ?? "",
-    phone: user?.phone ?? "",
-    whatsapp: user?.whatsapp ?? "",
-    neighborhood: "",
-    street: "",
-    notes: "",
-  });
+  const [stateId, setStateId] = useState("");
+  const [cityId, setCityId] = useState("");
+  const [neighborhoodId, setNeighborhoodId] = useState("");
+  const [form, setForm] = useState({ name: "", phone: "", whatsapp: "", street: "", notes: "" });
   const [submitting, setSubmitting] = useState(false);
 
-  const set = <K extends keyof typeof form>(k: K, v: string) => setForm((p) => ({ ...p, [k]: v }));
+  // Prefill from profile + default address
+  useEffect(() => {
+    if (!profile?.profile) return;
+    setForm((p) => ({
+      ...p,
+      name: p.name || profile.profile?.full_name || "",
+      phone: p.phone || profile.profile?.phone || "",
+      whatsapp: p.whatsapp || profile.profile?.whatsapp || "",
+      street: p.street || profile.defaultAddress?.street || "",
+      notes: p.notes || profile.defaultAddress?.notes || "",
+    }));
+    if (profile.defaultAddress) {
+      setStateId((s) => s || profile.defaultAddress.state_id);
+      setCityId((s) => s || profile.defaultAddress.city_id);
+      setNeighborhoodId((s) => s || (profile.defaultAddress.neighborhood_id ?? ""));
+    } else if (tree[0] && !stateId) {
+      setStateId(tree[0].id);
+    }
+  }, [profile, tree]);
+
+  const stateRow = tree.find((s: any) => s.id === stateId);
+  const cities = stateRow?.cities ?? [];
+  const cityRow = cities.find((c: any) => c.id === cityId);
+  const neighborhoods = cityRow?.neighborhoods ?? [];
+  const neighborhood = neighborhoods.find((n: any) => n.id === neighborhoodId);
+  const deliveryFee = useMemo(
+    () => (neighborhood ? Number(neighborhood.delivery_fee_sdg) : 3000),
+    [neighborhood],
+  );
+  const subtotal = items.reduce((s, l) => s + Number(l.product?.price_sdg ?? 0) * l.qty, 0);
+  const total = subtotal + (items.length ? deliveryFee : 0);
 
   if (!user) {
     return (
@@ -50,7 +78,7 @@ function CheckoutPage() {
     );
   }
 
-  if (lines.length === 0) {
+  if (items.length === 0) {
     return (
       <AppShell>
         <div className="mx-auto max-w-md px-4 py-20 text-center">
@@ -63,14 +91,29 @@ function CheckoutPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!stateRow || !cityRow) { toast.error(lang === "ar" ? "اختاري الولاية والمدينة" : "Pick state & city"); return; }
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 600));
-    const order = placeOrder({
-      name: form.name, phone: form.phone, whatsapp: form.whatsapp,
-      address: { city: "Wad Madani", neighborhood: form.neighborhood, street: form.street, notes: form.notes },
-    });
-    navigate({ to: "/orders/$id", params: { id: order.id }, search: { confirmed: true } });
+    try {
+      const res = await place.mutateAsync({
+        contact_name: form.name,
+        contact_phone: form.phone,
+        contact_whatsapp: form.whatsapp || form.phone,
+        address_state: lang === "ar" ? stateRow.name_ar : stateRow.name_en,
+        address_city: lang === "ar" ? cityRow.name_ar : cityRow.name_en,
+        address_neighborhood: neighborhood ? (lang === "ar" ? neighborhood.name_ar : neighborhood.name_en) : undefined,
+        address_street: form.street,
+        address_notes: form.notes || undefined,
+        delivery_sdg: deliveryFee,
+      });
+      navigate({ to: "/orders/$id", params: { id: res.order.id }, search: { confirmed: true } });
+    } catch (err: any) {
+      toast.error(err.message || "Error");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const set = <K extends keyof typeof form>(k: K, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   return (
     <AppShell>
@@ -82,15 +125,9 @@ function CheckoutPage() {
             <Card>
               <h3 className="mb-4 font-display text-lg text-foreground">{t.checkout.contact}</h3>
               <div className="grid gap-3 md:grid-cols-2">
-                <Field label={t.checkout.fullName}>
-                  <Input required value={form.name} onChange={(e) => set("name", e.target.value)} />
-                </Field>
-                <Field label={t.checkout.phone}>
-                  <Input required type="tel" dir="ltr" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="09xxxxxxxx" />
-                </Field>
-                <Field label={t.checkout.whatsapp} className="md:col-span-2">
-                  <Input required type="tel" dir="ltr" value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} placeholder="09xxxxxxxx" />
-                </Field>
+                <Field label={t.checkout.fullName}><Input required value={form.name} onChange={(e) => set("name", e.target.value)} /></Field>
+                <Field label={t.checkout.phone}><Input required type="tel" dir="ltr" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="09xxxxxxxx" /></Field>
+                <Field label={t.checkout.whatsapp} className="md:col-span-2"><Input required type="tel" dir="ltr" value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} placeholder="09xxxxxxxx" /></Field>
               </div>
             </Card>
 
@@ -98,18 +135,25 @@ function CheckoutPage() {
               <h3 className="mb-1 flex items-center gap-2 font-display text-lg text-foreground"><MapPin className="h-4 w-4 text-primary" />{t.checkout.address}</h3>
               <p className="mb-4 text-xs text-muted-foreground">{t.checkout.wadMadaniOnly}</p>
               <div className="grid gap-3 md:grid-cols-2">
+                <Field label={t.checkout.state}>
+                  <select value={stateId} onChange={(e) => { setStateId(e.target.value); setCityId(""); setNeighborhoodId(""); }} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                    {tree.map((s: any) => <option key={s.id} value={s.id}>{lang === "ar" ? s.name_ar : s.name_en}</option>)}
+                  </select>
+                </Field>
                 <Field label={t.checkout.city}>
-                  <Input disabled value={lang === "ar" ? "ود مدني" : "Wad Madani"} />
+                  <select value={cityId} onChange={(e) => { setCityId(e.target.value); setNeighborhoodId(""); }} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">—</option>
+                    {cities.map((c: any) => <option key={c.id} value={c.id}>{lang === "ar" ? c.name_ar : c.name_en}</option>)}
+                  </select>
                 </Field>
                 <Field label={t.checkout.neighborhood}>
-                  <Input required value={form.neighborhood} onChange={(e) => set("neighborhood", e.target.value)} />
+                  <select value={neighborhoodId} onChange={(e) => setNeighborhoodId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">—</option>
+                    {neighborhoods.map((n: any) => <option key={n.id} value={n.id}>{lang === "ar" ? n.name_ar : n.name_en} ({formatPrice(Number(n.delivery_fee_sdg), lang)})</option>)}
+                  </select>
                 </Field>
-                <Field label={t.checkout.street} className="md:col-span-2">
-                  <Input required value={form.street} onChange={(e) => set("street", e.target.value)} />
-                </Field>
-                <Field label={t.checkout.notes} className="md:col-span-2">
-                  <Textarea rows={3} value={form.notes} onChange={(e) => set("notes", e.target.value)} />
-                </Field>
+                <Field label={t.checkout.street} className="md:col-span-2"><Input required value={form.street} onChange={(e) => set("street", e.target.value)} /></Field>
+                <Field label={t.checkout.notes} className="md:col-span-2"><Textarea rows={3} value={form.notes} onChange={(e) => set("notes", e.target.value)} /></Field>
               </div>
             </Card>
 
@@ -122,28 +166,32 @@ function CheckoutPage() {
                   <p className="text-xs text-muted-foreground">{t.checkout.bankNote}</p>
                 </div>
               </label>
+              <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4">
+                <p className="text-sm font-medium text-foreground">{t.checkout.bankInstructionsTitle}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{t.checkout.bankInstructionsBody}</p>
+                <p className="mt-2 text-xs text-foreground">{t.checkout.bankName}: <strong>{BANK_OF_KHARTOUM.bank}</strong></p>
+                <a href={whatsappLink(METACARE_WHATSAPP, lang === "ar" ? "مرحباً، أرغب في إتمام دفع طلب جديد" : "Hi, I'd like to complete payment for a new order")} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 rounded-full bg-success px-4 py-2 text-xs font-medium text-success-foreground">
+                  <MessageCircle className="h-3.5 w-3.5" />{t.checkout.contactCSForBank}
+                </a>
+              </div>
             </Card>
           </div>
 
           <aside className="h-fit space-y-3 rounded-2xl border border-border bg-card p-5 shadow-glass lg:sticky lg:top-24">
             <h3 className="font-display text-lg text-foreground">{t.cart.title}</h3>
             <ul className="space-y-2 text-sm">
-              {lines.map((l) => (
-                <li key={l.productId} className="flex justify-between gap-3">
-                  <span className="line-clamp-1 text-foreground">{l.product.name[lang]} × {l.qty}</span>
-                  <span className="shrink-0 text-muted-foreground">{formatPrice(l.product.price * l.qty, lang)}</span>
+              {items.map((l) => (
+                <li key={l.product.id} className="flex justify-between gap-3">
+                  <span className="line-clamp-1 text-foreground">{lang === "ar" ? l.product.name_ar : l.product.name_en} × {l.qty}</span>
+                  <span className="shrink-0 text-muted-foreground">{formatPrice(Number(l.product.price_sdg) * l.qty, lang)}</span>
                 </li>
               ))}
             </ul>
             <div className="my-2 h-px bg-border" />
             <Row label={t.cart.subtotal} value={formatPrice(subtotal, lang)} />
-            <Row label={t.cart.delivery} value={formatPrice(DELIVERY_FEE_SDG, lang)} />
+            <Row label={t.cart.delivery} value={formatPrice(deliveryFee, lang)} />
             <Row label={t.cart.total} value={formatPrice(total, lang)} strong />
-            <button
-              type="submit"
-              disabled={submitting}
-              className="mt-3 w-full rounded-full gradient-brand py-3 text-sm font-medium text-primary-foreground shadow-glow transition hover:opacity-95 disabled:opacity-60"
-            >
+            <button type="submit" disabled={submitting} className="mt-3 w-full rounded-full gradient-brand py-3 text-sm font-medium text-primary-foreground shadow-glow transition hover:opacity-95 disabled:opacity-60">
               {submitting ? t.checkout.placing : t.checkout.placeOrder}
             </button>
           </aside>
@@ -153,9 +201,7 @@ function CheckoutPage() {
   );
 }
 
-function Card({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-2xl border border-border bg-card p-5 shadow-glass">{children}</div>;
-}
+function Card({ children }: { children: React.ReactNode }) { return <div className="rounded-2xl border border-border bg-card p-5 shadow-glass">{children}</div>; }
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return <div className={className}><Label className="mb-1.5 block text-xs text-muted-foreground">{label}</Label>{children}</div>;
 }

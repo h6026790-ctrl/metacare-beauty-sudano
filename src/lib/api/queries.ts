@@ -223,7 +223,7 @@ export function usePlaceOrder() {
   const fn = useServerFn(placeOrder);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: Parameters<typeof fn>[0]["data"]) => fn({ data: input } as any),
+    mutationFn: (input: any) => (fn as any)({ data: input }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cart"] });
       qc.invalidateQueries({ queryKey: ["my-orders"] });
@@ -248,7 +248,7 @@ export function useUpsertAddress() {
   const fn = useServerFn(upsertDefaultAddress);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: Parameters<typeof fn>[0]["data"]) => fn({ data: vars } as any),
+    mutationFn: (vars: any) => (fn as any)({ data: vars }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["my-profile"] }),
   });
 }

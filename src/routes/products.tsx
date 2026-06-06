@@ -3,12 +3,11 @@ import { z } from "zod";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProductCard } from "@/components/ProductCard";
 import { useI18n } from "@/i18n/I18nProvider";
-import { brands, categories, products } from "@/lib/mock-data";
-import type { CategoryId } from "@/lib/types";
+import { useProducts, useBrands, useCategories } from "@/lib/api/queries";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({
-  category: z.enum(["skincare", "makeup", "fragrance", "bodycare"]).optional(),
+  category: z.string().optional(),
   brand: z.string().optional(),
 });
 
@@ -22,15 +21,12 @@ function ProductsPage() {
   const { lang, t } = useI18n();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  const { data: brands = [] } = useBrands();
+  const { data: categories = [] } = useCategories();
+  const { data: filtered = [], isLoading } = useProducts({ brand: search.brand, category: search.category });
 
-  const filtered = products.filter((p) => {
-    if (search.category && p.categoryId !== search.category) return false;
-    if (search.brand && p.brandId !== search.brand) return false;
-    return true;
-  });
-
-  const setCategory = (id?: CategoryId) => navigate({ search: { ...search, category: id } });
-  const setBrand = (id?: string) => navigate({ search: { ...search, brand: id } });
+  const setCategory = (slug?: string) => navigate({ search: { ...search, category: slug } });
+  const setBrand = (slug?: string) => navigate({ search: { ...search, brand: slug } });
 
   return (
     <AppShell>
@@ -44,21 +40,23 @@ function ProductsPage() {
           <Chips>
             <Chip active={!search.category} onClick={() => setCategory(undefined)}>{lang === "ar" ? "كل الأقسام" : "All categories"}</Chip>
             {categories.map((c) => (
-              <Chip key={c.id} active={search.category === c.id} onClick={() => setCategory(c.id)}>{c.name[lang]}</Chip>
+              <Chip key={c.id} active={search.category === c.slug} onClick={() => setCategory(c.slug)}>{c.name[lang]}</Chip>
             ))}
           </Chips>
           <Chips>
             <Chip active={!search.brand} onClick={() => setBrand(undefined)}>{lang === "ar" ? "كل العلامات" : "All brands"}</Chip>
             {brands.map((b) => (
-              <Chip key={b.id} active={search.brand === b.id} onClick={() => setBrand(b.id)}>{b.name[lang]}</Chip>
+              <Chip key={b.id} active={search.brand === b.slug} onClick={() => setBrand(b.slug)}>{b.name[lang]}</Chip>
             ))}
           </Chips>
         </div>
 
-        {filtered.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-muted-foreground">
-            {t.search.noResults}
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => <div key={i} className="aspect-square animate-pulse rounded-2xl bg-muted" />)}
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-muted-foreground">{t.search.noResults}</div>
         ) : (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
             {filtered.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
