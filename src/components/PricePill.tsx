@@ -1,13 +1,13 @@
 import { useI18n } from "@/i18n/I18nProvider";
-import { useStore } from "@/lib/store";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
 import { formatPrice } from "@/lib/format";
 
-export function PricePill({ price, compareAt, size = "md" }: { price: number; compareAt?: number; size?: "sm" | "md" | "lg" }) {
+export function PricePill({ price, compareAt, size = "md" }: { price: number; compareAt?: number | null; size?: "sm" | "md" | "lg" }) {
   const { lang, t } = useI18n();
-  const user = useStore((s) => s.user);
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const sz = size === "lg" ? "text-2xl" : size === "sm" ? "text-sm" : "text-lg";

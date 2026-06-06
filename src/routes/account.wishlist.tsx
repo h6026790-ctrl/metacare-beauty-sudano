@@ -1,9 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { useI18n } from "@/i18n/I18nProvider";
-import { useStore } from "@/lib/store";
+import { useWishlist } from "@/lib/api/queries";
 import { ProductCard } from "@/components/ProductCard";
-import { findProduct } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/account/wishlist")({
   head: () => ({ meta: [{ title: "Wishlist — Metacare" }] }),
@@ -12,7 +11,7 @@ export const Route = createFileRoute("/account/wishlist")({
 
 function WishlistPage() {
   const { t, lang } = useI18n();
-  const wishlist = useStore((s) => s.wishlist);
+  const { data: wishlist = [] } = useWishlist();
   return (
     <AppShell>
       <div className="mx-auto max-w-7xl px-4 py-10">
@@ -24,9 +23,19 @@ function WishlistPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
-            {wishlist.map((id, i) => {
-              const p = findProduct(id);
-              return p ? <ProductCard key={id} product={p} index={i} /> : null;
+            {wishlist.map((w: any, i: number) => {
+              const p = w.product; if (!p) return null;
+              const ui: any = {
+                id: p.id, slug: p.slug,
+                name: { ar: p.name_ar, en: p.name_en },
+                price: Number(p.price_sdg),
+                image: p.image_url || "/placeholder.svg",
+                inStock: (Array.isArray(p.inventory) ? p.inventory[0]?.stock : p.inventory?.stock) > 0,
+                isNew: false, isBestSeller: false, isFeatured: false,
+                brandId: null, categoryId: null,
+                description: { ar: "", en: "" }, compareAt: null,
+              };
+              return <ProductCard key={p.id} product={ui} index={i} />;
             })}
           </div>
         )}
