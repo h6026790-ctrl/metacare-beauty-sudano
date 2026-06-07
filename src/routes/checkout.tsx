@@ -105,7 +105,8 @@ function CheckoutPage() {
         address_notes: form.notes || undefined,
         delivery_sdg: deliveryFee,
       });
-      navigate({ to: "/orders/$id", params: { id: res.order.id }, search: { confirmed: true } });
+      const orderId = (res as { order: { id: string } }).order.id;
+      navigate({ to: "/orders/$id", params: { id: orderId }, search: { confirmed: true } });
     } catch (err: any) {
       toast.error(err.message || "Error");
     } finally {
