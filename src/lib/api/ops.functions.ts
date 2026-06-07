@@ -188,6 +188,22 @@ export const listMyDeliveries = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+// Agent confirms delivery by entering / scanning the QR token shown to the
+// customer. The RPC validates ownership, token, and expiry atomically and
+// flips the order to `delivered`.
+export const confirmDeliveryQr = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { orderId: string; token: string }) =>
+    z.object({ orderId: z.string().uuid(), token: z.string().min(8).max(128) }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAgent(context);
+    const { data: res, error } = await context.supabase.rpc("confirm_delivery_by_qr", {
+      _order_id: data.orderId, _token: data.token,
+    });
+    if (error) throw error;
+    return res ?? { ok: true };
+  });
+
 // ---------- ADMIN ----------
 
 export const adminListAllOrders = createServerFn({ method: "GET" })
