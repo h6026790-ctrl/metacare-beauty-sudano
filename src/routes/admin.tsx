@@ -33,6 +33,9 @@ function AdminPanel() {
   const custFn = useServerFn(adminListCustomers);
   const brandsFn = useServerFn(adminListBrands);
   const teamFn = useServerFn(listTeam);
+  const softDelFn = useServerFn(adminSoftDeleteProduct);
+  const restoreFn = useServerFn(adminRestoreProduct);
+  const reportsFn = useServerFn(adminReports);
 
   const orders = useQuery({ queryKey: ["adm-orders"], queryFn: () => ordersFn(), enabled: !!user && isAdmin });
   const products = useQuery({ queryKey: ["adm-products"], queryFn: () => productsFn(), enabled: !!user && isAdmin });
@@ -40,6 +43,7 @@ function AdminPanel() {
   const customers = useQuery({ queryKey: ["adm-cust"], queryFn: () => custFn(), enabled: !!user && isAdmin });
   const brands = useQuery({ queryKey: ["adm-brands"], queryFn: () => brandsFn(), enabled: !!user && isAdmin });
   const team = useQuery({ queryKey: ["adm-team"], queryFn: () => teamFn(), enabled: !!user && isAdmin });
+  const reports = useQuery({ queryKey: ["adm-reports"], queryFn: () => reportsFn(), enabled: !!user && isAdmin });
 
   if (loading) return <AppShell><div className="p-16 text-center">…</div></AppShell>;
   if (!user || !isAdmin) {
