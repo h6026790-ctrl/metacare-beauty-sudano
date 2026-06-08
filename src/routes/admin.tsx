@@ -111,18 +111,38 @@ function AdminPanel() {
             <div className="overflow-hidden rounded-2xl border border-border bg-card">
               <table className="w-full text-start text-sm">
                 <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
-                  <tr><Th>{lang === "ar" ? "المنتج" : "Product"}</Th><Th>{lang === "ar" ? "العلامة" : "Brand"}</Th><Th align="end">{lang === "ar" ? "السعر" : "Price"}</Th><Th align="end">{lang === "ar" ? "المخزون" : "Stock"}</Th><Th align="end">{lang === "ar" ? "إجراء" : "Action"}</Th></tr>
+                  <tr><Th>{lang === "ar" ? "المنتج" : "Product"}</Th><Th>{lang === "ar" ? "العلامة" : "Brand"}</Th><Th align="end">{lang === "ar" ? "السعر" : "Price"}</Th><Th align="end">{lang === "ar" ? "المخزون" : "Stock"}</Th><Th align="end">{lang === "ar" ? "الحالة" : "Status"}</Th><Th align="end">{lang === "ar" ? "إجراء" : "Action"}</Th></tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {productsData.map((p) => {
                     const stock = Array.isArray(p.inventory) ? p.inventory[0]?.stock : p.inventory?.stock;
+                    const toggleArchive = async () => {
+                      try {
+                        if (p.is_active) await softDelFn({ data: { productId: p.id } } as any);
+                        else await restoreFn({ data: { productId: p.id } } as any);
+                        toast.success(p.is_active ? (lang === "ar" ? "تم الأرشفة" : "Archived") : (lang === "ar" ? "تم الاستعادة" : "Restored"));
+                        qc.invalidateQueries({ queryKey: ["adm-products"] });
+                      } catch (e: any) { toast.error(e.message); }
+                    };
                     return (
-                      <tr key={p.id} className="hover:bg-muted/30">
+                      <tr key={p.id} className={`hover:bg-muted/30 ${p.is_active ? "" : "opacity-60"}`}>
                         <Td><div className="flex items-center gap-2.5"><img src={p.image_url || "/placeholder.svg"} alt="" className="h-10 w-10 rounded-xl object-cover" /><span className="line-clamp-1">{lang === "ar" ? p.name_ar : p.name_en}</span></div></Td>
                         <Td>{lang === "ar" ? p.brand?.name_ar : p.brand?.name_en}</Td>
                         <Td align="end">{formatPrice(Number(p.price_sdg), lang)}</Td>
                         <Td align="end"><StockEditor id={p.id} stock={stock ?? 0} onSave={async (n) => { await stockFn({ data: { productId: p.id, stock: n } } as any); toast.success("OK"); qc.invalidateQueries({ queryKey: ["adm-products"] }); }} /></Td>
-                        <Td align="end"><Link to="/products/$id" params={{ id: p.slug }} className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs hover:bg-muted"><Pencil className="h-3 w-3" />{lang === "ar" ? "عرض" : "View"}</Link></Td>
+                        <Td align="end">
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] ${p.is_active ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}>
+                            {p.is_active ? (lang === "ar" ? "نشط" : "Active") : (lang === "ar" ? "مؤرشف" : "Archived")}
+                          </span>
+                        </Td>
+                        <Td align="end">
+                          <div className="inline-flex items-center gap-1.5">
+                            <Link to="/products/$id" params={{ id: p.slug }} className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs hover:bg-muted"><Pencil className="h-3 w-3" />{lang === "ar" ? "عرض" : "View"}</Link>
+                            <button onClick={toggleArchive} className="rounded-full border border-border px-2.5 py-1 text-xs hover:bg-muted">
+                              {p.is_active ? (lang === "ar" ? "أرشفة" : "Archive") : (lang === "ar" ? "استعادة" : "Restore")}
+                            </button>
+                          </div>
+                        </Td>
                       </tr>
                     );
                   })}
