@@ -184,6 +184,42 @@ function AdminPanel() {
             <p className="mt-3 text-xs text-muted-foreground">{lang === "ar" ? "لمنح الأدوار، استخدمي قاعدة البيانات مباشرة في هذه المرحلة." : "Role grants are performed via the database for now."}</p>
           </TabsContent>
 
+          <TabsContent value="reports">
+            {reports.isLoading ? (
+              <p className="p-8 text-center text-sm text-muted-foreground">…</p>
+            ) : reports.data ? (
+              <div className="space-y-5">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <Kpi icon={BarChart3} label={lang === "ar" ? "إيرادات ٣٠ يوم" : "Revenue 30d"} value={formatPrice(reports.data.revenue30d, lang)} />
+                  <Kpi icon={ShoppingBag} label={lang === "ar" ? "طلبات ٣٠ يوم" : "Orders 30d"} value={String(reports.data.orders30d)} />
+                  <Kpi icon={Package} label={lang === "ar" ? "منتجات نشطة" : "Active products"} value={String(reports.data.activeProducts)} />
+                  <Kpi icon={AlertCircle} label={lang === "ar" ? "مؤرشفة" : "Archived"} value={String(reports.data.archivedProducts)} tone="warning" />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-2xl border border-border bg-card p-4">
+                    <h4 className="mb-2 font-display text-sm text-foreground">{lang === "ar" ? "حالات الطلبات" : "Orders by status"}</h4>
+                    <ul className="space-y-1.5 text-xs">
+                      {Object.entries(reports.data.byStatus).map(([s, n]) => (
+                        <li key={s} className="flex justify-between"><span className="text-muted-foreground">{s}</span><span className="font-medium text-foreground">{n as number}</span></li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-card p-4">
+                    <h4 className="mb-2 font-display text-sm text-foreground">{lang === "ar" ? "مخزون منخفض" : "Low stock (≤3)"}</h4>
+                    <ul className="space-y-1.5 text-xs">
+                      {reports.data.lowStock.length === 0 ? <li className="text-muted-foreground">—</li> : reports.data.lowStock.map((r: any) => (
+                        <li key={r.product_id} className="flex justify-between">
+                          <span className="line-clamp-1 text-foreground">{lang === "ar" ? r.product?.name_ar : r.product?.name_en}</span>
+                          <span className={`font-mono ${r.stock === 0 ? "text-destructive" : "text-warning-foreground"}`}>{r.stock}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </TabsContent>
+
           <TabsContent value="audit">
             <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
               {(audits.data ?? []).map((a: any) => (
