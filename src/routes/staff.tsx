@@ -39,10 +39,10 @@ function StaffPanel() {
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<any | null>(null);
 
-  const ordersQ = useQuery({ queryKey: ["staff-orders", q], queryFn: () => listMine({ data: { q: q || undefined } } as any) });
-  const unassQ = useQuery({ queryKey: ["staff-unassigned"], queryFn: () => listUnass() });
-  const teamQ = useQuery({ queryKey: ["staff-team"], queryFn: () => teamFn() });
-  const notesQ = useQuery({ queryKey: ["staff-notes", selected?.id], queryFn: () => listNotes({ data: { orderId: selected.id } } as any), enabled: !!selected?.id });
+  const ordersQ = useQuery({ queryKey: ["staff-orders", q], queryFn: () => listMine({ data: { q: q || undefined } } as any), enabled: !!user && isStaff });
+  const unassQ = useQuery({ queryKey: ["staff-unassigned"], queryFn: () => listUnass(), enabled: !!user && isStaff });
+  const teamQ = useQuery({ queryKey: ["staff-team"], queryFn: () => teamFn(), enabled: !!user && isStaff });
+  const notesQ = useQuery({ queryKey: ["staff-notes", selected?.id], queryFn: () => listNotes({ data: { orderId: selected.id } } as any), enabled: !!user && isStaff && !!selected?.id });
 
   if (loading) return <AppShell><div className="p-16 text-center">…</div></AppShell>;
   if (!user || !isStaff) {
