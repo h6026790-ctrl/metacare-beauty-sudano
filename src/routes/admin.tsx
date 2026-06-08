@@ -82,6 +82,7 @@ function AdminPanel() {
             <Tab value="customers" icon={Users}>{lang === "ar" ? "العملاء" : "Customers"}</Tab>
             <Tab value="catalog" icon={Tags}>{lang === "ar" ? "العلامات" : "Brands"}</Tab>
             <Tab value="team" icon={UserCog}>{lang === "ar" ? "الفريق" : "Team"}</Tab>
+            <Tab value="reports" icon={BarChart3}>{lang === "ar" ? "التقارير" : "Reports"}</Tab>
             <Tab value="audit" icon={LayoutDashboard}>{lang === "ar" ? "السجل" : "Audit"}</Tab>
           </TabsList>
 
