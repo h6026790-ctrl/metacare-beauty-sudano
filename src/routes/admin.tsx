@@ -11,6 +11,7 @@ import {
   adminListAllOrders, adminListProducts, adminAdjustStock,
   adminListAuditLogs, adminListCustomers, adminListBrands, listTeam,
 } from "@/lib/api/ops.functions";
+import { adminSoftDeleteProduct, adminRestoreProduct, adminReports } from "@/lib/api/admin.functions";
 import { formatPrice, formatDate } from "@/lib/format";
 import { LayoutDashboard, Package, Users, Tags, BarChart3, ShoppingBag, UserCog, AlertCircle, Pencil } from "lucide-react";
 import { useState } from "react";
