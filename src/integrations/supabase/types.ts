@@ -732,6 +732,100 @@ export type Database = {
         }
         Relationships: []
       }
+      registration_requests: {
+        Row: {
+          address_city_id: string | null
+          address_neighborhood_id: string | null
+          address_state_id: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          expires_at: string
+          full_name: string
+          id: string
+          notes: string | null
+          otp_code: string
+          phone: string
+          reject_reason: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          request_type: string
+          status: Database["public"]["Enums"]["registration_request_status"]
+          street: string | null
+          user_id: string | null
+          verified_at: string | null
+          whatsapp: string
+        }
+        Insert: {
+          address_city_id?: string | null
+          address_neighborhood_id?: string | null
+          address_state_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          expires_at?: string
+          full_name: string
+          id?: string
+          notes?: string | null
+          otp_code: string
+          phone: string
+          reject_reason?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          request_type?: string
+          status?: Database["public"]["Enums"]["registration_request_status"]
+          street?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+          whatsapp: string
+        }
+        Update: {
+          address_city_id?: string | null
+          address_neighborhood_id?: string | null
+          address_state_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          expires_at?: string
+          full_name?: string
+          id?: string
+          notes?: string | null
+          otp_code?: string
+          phone?: string
+          reject_reason?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          request_type?: string
+          status?: Database["public"]["Enums"]["registration_request_status"]
+          street?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+          whatsapp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_requests_address_city_id_fkey"
+            columns: ["address_city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registration_requests_address_neighborhood_id_fkey"
+            columns: ["address_neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registration_requests_address_state_id_fkey"
+            columns: ["address_state_id"]
+            isOneToOne: false
+            referencedRelation: "states"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       states: {
         Row: {
           id: string
@@ -838,6 +932,12 @@ export type Database = {
         | "delivered"
         | "cancelled"
         | "returned"
+      registration_request_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "verified"
+        | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -974,6 +1074,13 @@ export const Constants = {
         "delivered",
         "cancelled",
         "returned",
+      ],
+      registration_request_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "verified",
+        "expired",
       ],
     },
   },
