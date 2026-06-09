@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatPrice } from "@/lib/format";
-import { Landmark, MapPin, MessageCircle } from "lucide-react";
+import { MapPin, MessageCircle, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { whatsappLink } from "@/lib/format";
-import { METACARE_WHATSAPP, BANK_OF_KHARTOUM } from "@/lib/config";
+import { METACARE_WHATSAPP } from "@/lib/config";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout — Metacare" }] }),
@@ -159,20 +159,19 @@ function CheckoutPage() {
             </Card>
 
             <Card>
-              <h3 className="mb-3 flex items-center gap-2 font-display text-lg text-foreground"><Landmark className="h-4 w-4 text-primary" />{t.checkout.payment}</h3>
-              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-primary/40 bg-primary/5 p-4">
-                <input type="radio" checked readOnly className="h-4 w-4 accent-primary" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">{t.checkout.bankTransfer}</p>
-                  <p className="text-xs text-muted-foreground">{t.checkout.bankNote}</p>
-                </div>
-              </label>
-              <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4">
-                <p className="text-sm font-medium text-foreground">{t.checkout.bankInstructionsTitle}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{t.checkout.bankInstructionsBody}</p>
-                <p className="mt-2 text-xs text-foreground">{t.checkout.bankName}: <strong>{BANK_OF_KHARTOUM.bank}</strong></p>
-                <a href={whatsappLink(METACARE_WHATSAPP, lang === "ar" ? "مرحباً، أرغب في إتمام دفع طلب جديد" : "Hi, I'd like to complete payment for a new order")} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 rounded-full bg-success px-4 py-2 text-xs font-medium text-success-foreground">
-                  <MessageCircle className="h-3.5 w-3.5" />{t.checkout.contactCSForBank}
+              <h3 className="mb-3 flex items-center gap-2 font-display text-lg text-foreground"><ShieldCheck className="h-4 w-4 text-primary" />{t.checkout.payment}</h3>
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+                <p className="text-sm font-medium text-foreground">
+                  {lang === "ar" ? "سيتواصل معكِ فريق خدمة العملاء" : "Customer Service will contact you"}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  {lang === "ar"
+                    ? "بعد تأكيد الطلب، سيتواصل معكِ فريق خدمة العملاء عبر واتساب لترتيب الدفع وتفاصيل التوصيل. لا حاجة لإدخال أي بيانات دفع الآن."
+                    : "After you place this order, our Customer Service team will reach out on WhatsApp to arrange payment and delivery. No payment details are required here."}
+                </p>
+                <a href={whatsappLink(METACARE_WHATSAPP, lang === "ar" ? "مرحباً، لدي طلب جديد وأودّ ترتيب الدفع والتوصيل" : "Hi, I have a new order and would like to arrange payment and delivery")} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 rounded-full bg-success px-4 py-2 text-xs font-medium text-success-foreground">
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  {lang === "ar" ? "تواصلي معنا عبر واتساب" : "Contact us on WhatsApp"}
                 </a>
               </div>
             </Card>

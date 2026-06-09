@@ -13,9 +13,10 @@ import {
 } from "@/lib/api/ops.functions";
 import { adminSoftDeleteProduct, adminRestoreProduct, adminReports } from "@/lib/api/admin.functions";
 import { formatPrice, formatDate } from "@/lib/format";
-import { LayoutDashboard, Package, Users, Tags, BarChart3, ShoppingBag, UserCog, AlertCircle, Pencil } from "lucide-react";
+import { LayoutDashboard, Package, Users, Tags, BarChart3, ShoppingBag, UserCog, AlertCircle, Pencil, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { RegistrationRequestsPanel } from "@/components/RegistrationRequestsPanel";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin Dashboard — Metacare" }] }),
@@ -78,6 +79,7 @@ function AdminPanel() {
         <Tabs defaultValue="orders" className="mt-6 space-y-5">
           <TabsList className="flex flex-wrap gap-1 rounded-2xl bg-card p-1 shadow-glass">
             <Tab value="orders" icon={ShoppingBag}>{lang === "ar" ? "الطلبات" : "Orders"}</Tab>
+            <Tab value="registrations" icon={UserPlus}>{lang === "ar" ? "طلبات التسجيل" : "Registrations"}</Tab>
             <Tab value="products" icon={Package}>{lang === "ar" ? "المنتجات" : "Products"}</Tab>
             <Tab value="customers" icon={Users}>{lang === "ar" ? "العملاء" : "Customers"}</Tab>
             <Tab value="catalog" icon={Tags}>{lang === "ar" ? "العلامات" : "Brands"}</Tab>
@@ -85,6 +87,11 @@ function AdminPanel() {
             <Tab value="reports" icon={BarChart3}>{lang === "ar" ? "التقارير" : "Reports"}</Tab>
             <Tab value="audit" icon={LayoutDashboard}>{lang === "ar" ? "السجل" : "Audit"}</Tab>
           </TabsList>
+
+          <TabsContent value="registrations">
+            <RegistrationRequestsPanel enabled={!!user && isAdmin} />
+          </TabsContent>
+
 
           <TabsContent value="orders">
             <div className="overflow-hidden rounded-2xl border border-border bg-card">
