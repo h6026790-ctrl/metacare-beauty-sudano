@@ -15,8 +15,9 @@ import { formatPrice, whatsappLink } from "@/lib/format";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageCircle, CheckCircle2, Truck, Search, Phone, MapPin, Package } from "lucide-react";
+import { MessageCircle, CheckCircle2, Truck, Search, Phone, MapPin, Package, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { RegistrationRequestsPanel } from "@/components/RegistrationRequestsPanel";
 
 export const Route = createFileRoute("/staff")({
   head: () => ({ meta: [{ title: "Customer Service — Metacare" }] }),
@@ -76,6 +77,14 @@ function StaffPanel() {
           <h1 className="mt-3 font-display text-3xl md:text-4xl">{t.panels.staff.title}</h1>
           <p className="mt-1 text-sm opacity-90">{t.panels.staff.sub}</p>
         </div>
+
+        <section className="mb-6">
+          <h3 className="mb-3 flex items-center gap-2 font-display text-lg text-foreground">
+            <UserPlus className="h-4 w-4 text-primary" />
+            {lang === "ar" ? "طلبات تسجيل الحسابات" : "Registration requests"}
+          </h3>
+          <RegistrationRequestsPanel enabled={!!user && isStaff} />
+        </section>
 
         {unassigned.length > 0 && (
           <section className="mb-6">
