@@ -277,7 +277,7 @@ export type Database = {
       }
       delivery_assignments: {
         Row: {
-          agent_id: string
+          agent_id: string | null
           assigned_at: string
           assigned_by: string | null
           completed_at: string | null
@@ -287,7 +287,7 @@ export type Database = {
           qr_token: string
         }
         Insert: {
-          agent_id: string
+          agent_id?: string | null
           assigned_at?: string
           assigned_by?: string | null
           completed_at?: string | null
@@ -297,7 +297,7 @@ export type Database = {
           qr_token?: string
         }
         Update: {
-          agent_id?: string
+          agent_id?: string | null
           assigned_at?: string
           assigned_by?: string | null
           completed_at?: string | null
@@ -923,7 +923,7 @@ export type Database = {
       is_staff_or_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "staff" | "agent" | "customer"
+      app_role: "admin" | "staff" | "customer"
       order_status:
         | "new"
         | "review"
@@ -1065,7 +1065,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff", "agent", "customer"],
+      app_role: ["admin", "staff", "customer"],
       order_status: [
         "new",
         "review",
