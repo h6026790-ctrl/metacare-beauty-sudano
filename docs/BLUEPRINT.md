@@ -75,7 +75,7 @@ Metacare Beauty is a Sudan-based, Arabic-first e-commerce platform for **medical
 4. **Decide** — See price, read description, add to wishlist or cart.
 5. **Checkout** — Confirm address (Wad Madani neighbourhoods only in v1), receive Bank of Khartoum transfer instructions, get a WhatsApp deep-link to CS.
 6. **Confirm** — CS verifies the bank transfer, moves order to **Paid**.
-7. **Deliver** — Staff assigns a external courier. Customer sees ETA + tracking. Agent arrives; customer shows the QR from their order page; agent scans → **Delivered**.
+7. **Deliver** — Staff coordinates an external courier via WhatsApp and marks the order **Out for Delivery** (this generates a QR token). The courier delivers; the customer opens their order page and scans / enters the QR token → **Delivered**.
 8. **Reorder** — Account page shows order history, repeat-order shortcut, persistent wishlist.
 
 ### Shopping Experience Principles
@@ -139,7 +139,7 @@ Metacare Beauty is a Sudan-based, Arabic-first e-commerce platform for **medical
 ### Admin pages (role: `admin`)
 ```
 /admin                     Overview, Orders, Products, Catalog (brands + categories),
-                           Customers, Team (staff + agents), Content, Reports
+                           Customers, Team (staff + admins), Content, Reports
 ```
 
 ### Customer Service pages (role: `staff`)
@@ -148,7 +148,7 @@ Metacare Beauty is a Sudan-based, Arabic-first e-commerce platform for **medical
                            confirm payment, mark Out for Delivery, internal notes, WhatsApp shortcut
 ```
 
-### Delivery pages (role: `customer` (agents are external))
+### Delivery workflow (no dedicated dashboard — handled inside Staff panel)
 ```
                            call/WhatsApp/map shortcuts, completed-today log
 ```
@@ -192,7 +192,7 @@ All tables live in `public` schema, RLS-enabled, with explicit GRANTs per migrat
 - `order_items` — id, order_id, product_id, **name_snapshot**, qty, price_sdg
 - `order_status_history` — id, order_id, status, actor_id, note, at (append-only)
 - `order_notes` — id, order_id, author_id, body, created_at (staff-only)
-- `delivery_assignments` — id, order_id (unique), agent_id, assigned_by, **qr_token**, **qr_expires_at** (24h default), assigned_at, completed_at
+- `delivery_assignments` — id, order_id (unique), agent_id (nullable, deprecated — couriers are external), assigned_by, **qr_token**, **qr_expires_at** (24h default), assigned_at, completed_at
 - `notifications` — id, profile_id, channel, template, payload, sent_at
 
 **Audit**
@@ -390,20 +390,20 @@ At order time, each line stores `name_snapshot` and `price_sdg`. The order remai
 ### Delivery Assignment
 - After `paid`, staff manually selects an available external courier → inserts a `delivery_assignments` row.
 - This is **never automatic**. The platform deliberately requires a human decision.
-- The assignment generates a `qr_token` (24h expiry) used by the agent to confirm delivery.
+- The assignment generates a `qr_token` (24h expiry) used by the customer to confirm receipt from their order page.
 
 ---
 
 ## 11. Delivery Workflow
 
 ### Delivery Dashboard (the Staff panel)
-- "Today's jobs": all `delivery_assignments` for the signed-in agent that are not yet completed.
+- "Today's jobs": the delivery assignment records the assigned staff created; there is no dedicated agent dashboard.
 - Per order: customer name, phone, WhatsApp, address snapshot, map deep-link, call shortcut.
 - Completed-today log: visible at the bottom for end-of-day reconciliation.
 
 ### Assignment Logic
 - Assignments are created by staff after payment confirmation (see §10).
-- One agent per order (unique `order_id` constraint on `delivery_assignments`).
+- One assignment per order (unique `order_id` constraint on `delivery_assignments`).
 - Reassignment in v1 = staff deletes-and-recreates is not allowed (DELETE is denied); instead, the assignment is updated. Token rotation on reassignment is a Phase 3 enhancement.
 
 ### QR Workflow
@@ -414,7 +414,7 @@ At order time, each line stores `name_snapshot` and `price_sdg`. The order remai
 5. On success: `delivery_assignments.completed_at = now()`, `orders.status = 'delivered'`.
 
 ### Delivery Confirmation
-- The QR scan is the only "delivered" path. There is no manual "mark delivered" button for agents — this prevents fraud and accidental status updates.
+- The QR scan is the only "delivered" path. There is no manual "mark delivered" button — this prevents fraud and accidental status updates.
 - Staff/admin retain the ability to set `delivered` via the operations dashboard for edge cases (e.g. lost QR), and every such override is audited.
 
 ### Return Handling
