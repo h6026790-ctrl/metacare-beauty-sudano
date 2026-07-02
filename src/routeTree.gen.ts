@@ -14,7 +14,6 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as OffersRouteImport } from './routes/offers'
-import { Route as DeliveryRouteImport } from './routes/delivery'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as CartRouteImport } from './routes/cart'
@@ -51,11 +50,6 @@ const ProductsRoute = ProductsRouteImport.update({
 const OffersRoute = OffersRouteImport.update({
   id: '/offers',
   path: '/offers',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DeliveryRoute = DeliveryRouteImport.update({
-  id: '/delivery',
-  path: '/delivery',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -128,7 +122,6 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/categories': typeof CategoriesRoute
   '/checkout': typeof CheckoutRoute
-  '/delivery': typeof DeliveryRoute
   '/offers': typeof OffersRoute
   '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
@@ -148,7 +141,6 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/categories': typeof CategoriesRoute
   '/checkout': typeof CheckoutRoute
-  '/delivery': typeof DeliveryRoute
   '/offers': typeof OffersRoute
   '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
@@ -169,7 +161,6 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/categories': typeof CategoriesRoute
   '/checkout': typeof CheckoutRoute
-  '/delivery': typeof DeliveryRoute
   '/offers': typeof OffersRoute
   '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
@@ -191,7 +182,6 @@ export interface FileRouteTypes {
     | '/cart'
     | '/categories'
     | '/checkout'
-    | '/delivery'
     | '/offers'
     | '/products'
     | '/search'
@@ -211,7 +201,6 @@ export interface FileRouteTypes {
     | '/cart'
     | '/categories'
     | '/checkout'
-    | '/delivery'
     | '/offers'
     | '/products'
     | '/search'
@@ -231,7 +220,6 @@ export interface FileRouteTypes {
     | '/cart'
     | '/categories'
     | '/checkout'
-    | '/delivery'
     | '/offers'
     | '/products'
     | '/search'
@@ -252,7 +240,6 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CategoriesRoute: typeof CategoriesRoute
   CheckoutRoute: typeof CheckoutRoute
-  DeliveryRoute: typeof DeliveryRoute
   OffersRoute: typeof OffersRoute
   ProductsRoute: typeof ProductsRouteWithChildren
   SearchRoute: typeof SearchRoute
@@ -296,13 +283,6 @@ declare module '@tanstack/react-router' {
       path: '/offers'
       fullPath: '/offers'
       preLoaderRoute: typeof OffersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/delivery': {
-      id: '/delivery'
-      path: '/delivery'
-      fullPath: '/delivery'
-      preLoaderRoute: typeof DeliveryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -435,7 +415,6 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CategoriesRoute: CategoriesRoute,
   CheckoutRoute: CheckoutRoute,
-  DeliveryRoute: DeliveryRoute,
   OffersRoute: OffersRoute,
   ProductsRoute: ProductsRouteWithChildren,
   SearchRoute: SearchRoute,
@@ -446,13 +425,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

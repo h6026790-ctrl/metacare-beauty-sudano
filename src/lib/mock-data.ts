@@ -272,18 +272,18 @@ export type SampleOrder = {
   items: { productId: string; qty: number }[];
   total: number; // SDG (subtotal + 3000 delivery)
   placedAt: string; // ISO
-  assignedTo?: { staff?: string; agent?: string };
+  assignedTo?: { staff?: string };
   address: string;
 };
 
 export const sampleOrders: SampleOrder[] = [
   { number: "MC260604-1042", customerId: "c-001", status: "new",       items: [{ productId: "p-001", qty: 1 }, { productId: "p-005", qty: 1 }], total: 90000, placedAt: "2026-06-04T08:42:00Z", assignedTo: { staff: "خدمة 1" }, address: "حي الثورة، شارع الجامعة، بجوار صيدلية النور" },
   { number: "MC260604-2173", customerId: "c-002", status: "review",    items: [{ productId: "p-002", qty: 1 }, { productId: "p-009", qty: 1 }], total: 107000, placedAt: "2026-06-04T07:10:00Z", assignedTo: { staff: "خدمة 1" }, address: "حي الموردة، خلف المستشفى" },
-  { number: "MC260604-3320", customerId: "c-005", status: "paid",      items: [{ productId: "p-013", qty: 1 }], total: 101000, placedAt: "2026-06-04T06:30:00Z", assignedTo: { staff: "خدمة 1", agent: "مندوب 1" }, address: "حي الدبيكر، شارع المدينة" },
-  { number: "MC260603-9981", customerId: "c-003", status: "shipping",  items: [{ productId: "p-004", qty: 1 }, { productId: "p-010", qty: 2 }], total: 176000, placedAt: "2026-06-03T17:05:00Z", assignedTo: { staff: "خدمة 2", agent: "مندوب 1" }, address: "حي السوق، شارع الميدان" },
-  { number: "MC260603-7714", customerId: "c-006", status: "shipping",  items: [{ productId: "p-016", qty: 1 }, { productId: "p-014", qty: 1 }], total: 57000, placedAt: "2026-06-03T15:20:00Z", assignedTo: { staff: "خدمة 2", agent: "مندوب 2" }, address: "حي الزهور، أمام مدرسة الأمل" },
-  { number: "MC260603-5520", customerId: "c-001", status: "delivered", items: [{ productId: "p-003", qty: 1 }, { productId: "p-010", qty: 1 }], total: 45000, placedAt: "2026-06-03T10:00:00Z", assignedTo: { staff: "خدمة 1", agent: "مندوب 2" }, address: "حي الثورة، شارع الجامعة" },
-  { number: "MC260602-4407", customerId: "c-004", status: "delivered", items: [{ productId: "p-001", qty: 1 }], total: 51000, placedAt: "2026-06-02T11:30:00Z", assignedTo: { staff: "خدمة 2", agent: "مندوب 1" }, address: "حي الجديد، شارع الكلية" },
+  { number: "MC260604-3320", customerId: "c-005", status: "paid",      items: [{ productId: "p-013", qty: 1 }], total: 101000, placedAt: "2026-06-04T06:30:00Z", assignedTo: { staff: "خدمة 1" }, address: "حي الدبيكر، شارع المدينة" },
+  { number: "MC260603-9981", customerId: "c-003", status: "shipping",  items: [{ productId: "p-004", qty: 1 }, { productId: "p-010", qty: 2 }], total: 176000, placedAt: "2026-06-03T17:05:00Z", assignedTo: { staff: "خدمة 2" }, address: "حي السوق، شارع الميدان" },
+  { number: "MC260603-7714", customerId: "c-006", status: "shipping",  items: [{ productId: "p-016", qty: 1 }, { productId: "p-014", qty: 1 }], total: 57000, placedAt: "2026-06-03T15:20:00Z", assignedTo: { staff: "خدمة 2" }, address: "حي الزهور، أمام مدرسة الأمل" },
+  { number: "MC260603-5520", customerId: "c-001", status: "delivered", items: [{ productId: "p-003", qty: 1 }, { productId: "p-010", qty: 1 }], total: 45000, placedAt: "2026-06-03T10:00:00Z", assignedTo: { staff: "خدمة 1" }, address: "حي الثورة، شارع الجامعة" },
+  { number: "MC260602-4407", customerId: "c-004", status: "delivered", items: [{ productId: "p-001", qty: 1 }], total: 51000, placedAt: "2026-06-02T11:30:00Z", assignedTo: { staff: "خدمة 2" }, address: "حي الجديد، شارع الكلية" },
   { number: "MC260602-2298", customerId: "c-003", status: "cancelled", items: [{ productId: "p-008", qty: 1 }], total: 178000, placedAt: "2026-06-02T09:00:00Z", assignedTo: { staff: "خدمة 1" }, address: "حي السوق، شارع الميدان" },
 ];
 

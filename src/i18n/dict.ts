@@ -17,7 +17,6 @@ type DictShape = {
   panels: {
     admin: { title: string; sub: string };
     staff: { title: string; sub: string };
-    delivery: { title: string; sub: string };
     previewBadge: string;
   };
 };
@@ -29,7 +28,7 @@ export const dict: Record<Lang, DictShape> = {
       home: "الرئيسية", shop: "تسوقي", categories: "الأقسام", brands: "العلامات",
       offers: "العروض", search: "بحث", account: "حسابي", cart: "السلة",
       wishlist: "المفضلة", login: "تسجيل الدخول", register: "إنشاء حساب", logout: "تسجيل الخروج",
-      admin: "لوحة الإدارة", staff: "خدمة العملاء", delivery: "التوصيل",
+      admin: "لوحة الإدارة", staff: "خدمة العملاء",
     },
     home: {
       heroEyebrow: "ود مدني • السودان",
@@ -113,7 +112,6 @@ export const dict: Record<Lang, DictShape> = {
     panels: {
       admin: { title: "لوحة الإدارة", sub: "إدارة المنتجات، الطلبات، والفريق" },
       staff: { title: "لوحة خدمة العملاء", sub: "إدارة الطلبات المُسندة إليكِ" },
-      delivery: { title: "لوحة المندوب", sub: "توصيلات اليوم" },
       previewBadge: "معاينة المرحلة الأولى",
     },
   },
@@ -123,7 +121,7 @@ export const dict: Record<Lang, DictShape> = {
       home: "Home", shop: "Shop", categories: "Categories", brands: "Brands",
       offers: "Offers", search: "Search", account: "Account", cart: "Cart",
       wishlist: "Wishlist", login: "Sign in", register: "Create account", logout: "Sign out",
-      admin: "Admin", staff: "Customer Service", delivery: "Delivery",
+      admin: "Admin", staff: "Customer Service",
     },
     home: {
       heroEyebrow: "Wad Madani • Sudan",
@@ -206,7 +204,6 @@ export const dict: Record<Lang, DictShape> = {
     panels: {
       admin: { title: "Admin Dashboard", sub: "Manage products, orders, and team" },
       staff: { title: "Customer Service", sub: "Manage your assigned orders" },
-      delivery: { title: "Delivery Console", sub: "Today's deliveries" },
       previewBadge: "Phase 1 preview",
     },
   },

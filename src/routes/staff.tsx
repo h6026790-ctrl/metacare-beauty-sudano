@@ -9,7 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   listStaffOrders, listUnassignedOrders, claimOrder, updateOrderStatus,
-  assignDeliveryAgent, addOrderNote, listOrderNotes, listTeam,
+  markOutForDelivery, addOrderNote, listOrderNotes, listTeam,
 } from "@/lib/api/ops.functions";
 import { formatPrice, whatsappLink } from "@/lib/format";
 import { useState } from "react";
@@ -32,13 +32,14 @@ function StaffPanel() {
   const listUnass = useServerFn(listUnassignedOrders);
   const claim = useServerFn(claimOrder);
   const setStatus = useServerFn(updateOrderStatus);
-  const assign = useServerFn(assignDeliveryAgent);
+  const markOut = useServerFn(markOutForDelivery);
   const addNote = useServerFn(addOrderNote);
   const listNotes = useServerFn(listOrderNotes);
   const teamFn = useServerFn(listTeam);
 
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<any | null>(null);
+  const [courierNote, setCourierNote] = useState("");
 
   const ordersQ = useQuery({ queryKey: ["staff-orders", q], queryFn: () => listMine({ data: { q: q || undefined } } as any), enabled: !!user && isStaff });
   const unassQ = useQuery({ queryKey: ["staff-unassigned"], queryFn: () => listUnass(), enabled: !!user && isStaff });
@@ -52,7 +53,8 @@ function StaffPanel() {
 
   const orders = (ordersQ.data ?? []) as any[];
   const unassigned = (unassQ.data ?? []) as any[];
-  const agents = teamQ.data?.agents ?? [];
+  // teamQ retained for future admin-facing views (currently unused in this panel)
+  void teamQ;
 
   const onStatus = async (status: string, note?: string) => {
     if (!selected) return;
@@ -63,10 +65,14 @@ function StaffPanel() {
     try { await claim({ data: { orderId } } as any); toast.success("Claimed"); qc.invalidateQueries({ queryKey: ["staff-unassigned"] }); qc.invalidateQueries({ queryKey: ["staff-orders"] }); }
     catch (e: any) { toast.error(e.message); }
   };
-  const onAssign = async (agentId: string) => {
+  const onMarkOut = async () => {
     if (!selected) return;
-    try { await assign({ data: { orderId: selected.id, agentId } } as any); toast.success(lang === "ar" ? "تم الإسناد" : "Assigned"); qc.invalidateQueries({ queryKey: ["staff-orders"] }); }
-    catch (e: any) { toast.error(e.message); }
+    try {
+      await markOut({ data: { orderId: selected.id, courierNote: courierNote.trim() || undefined } } as any);
+      toast.success(lang === "ar" ? "تم التسليم للمندوب" : "Marked out for delivery");
+      setCourierNote("");
+      qc.invalidateQueries({ queryKey: ["staff-orders"] });
+    } catch (e: any) { toast.error(e.message); }
   };
 
   return (
@@ -178,11 +184,11 @@ function StaffPanel() {
                 </div>
 
                 <div className="mt-3 rounded-xl border border-border bg-muted/30 p-3">
-                  <p className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Truck className="h-3 w-3" /> {lang === "ar" ? "إسناد مندوب" : "Assign agent"}</p>
-                  <select onChange={(e) => e.target.value && onAssign(e.target.value)} defaultValue="" className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs">
-                    <option value="">{lang === "ar" ? "اختاري مندوباً" : "Select agent"}</option>
-                    {agents.map((a: any) => <option key={a.id} value={a.id}>{a.full_name || a.phone}</option>)}
-                  </select>
+                  <p className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Truck className="h-3 w-3" /> {lang === "ar" ? "التسليم للمندوب (يدوي عبر واتساب)" : "Hand off to courier (manual via WhatsApp)"}</p>
+                  <Input value={courierNote} onChange={(e) => setCourierNote(e.target.value)} placeholder={lang === "ar" ? "اسم المندوب / رقمه (اختياري)" : "Courier name / phone (optional)"} className="h-9 text-xs" />
+                  <button onClick={onMarkOut} className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-full gradient-brand px-3 py-2 text-xs font-medium text-primary-foreground shadow-glow">
+                    <Truck className="h-3.5 w-3.5" />{lang === "ar" ? "تحديد كخارج للتوصيل" : "Mark Out for Delivery"}
+                  </button>
                 </div>
 
                 <NoteBox orderId={selected.id} onSaved={() => qc.invalidateQueries({ queryKey: ["staff-notes", selected.id] })} addNote={addNote} />

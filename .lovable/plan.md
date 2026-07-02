@@ -1,67 +1,67 @@
-# خطة: تقرير هندسي شامل للمشروع (Metacare Beauty Engineering Audit)
+# Remove Delivery Agent Role — Simplification Plan
 
-## الهدف
-إنشاء ملف واحد `docs/ENGINEERING_AUDIT.md` باللغة العربية يحتوي على تحليل دقيق ومفصّل للمشروع كما هو **موجود فعليًا في الكود وقاعدة البيانات**، بدون افتراضات. أي معلومة غير قابلة للتحقق ستُذكر صراحةً كذلك.
+Simplify the system so delivery is a manual Customer Service task. Couriers are no longer system users. Keep the QR confirmation feature (to be redesigned later).
 
-## منهجية الفحص (قبل الكتابة)
-سأقوم بفحص فعلي للمصادر التالية:
+## 1. Database migration (single file)
 
-1. **الكود الأمامي (Frontend)**
-   - كل الملفات في `src/routes/` (14 route file)
-   - `src/components/`, `src/hooks/`, `src/i18n/`, `src/lib/`
-   - `src/router.tsx`, `src/start.ts`, `src/server.ts`, `src/styles.css`
+- Drop RLS policies referencing `'agent'` on `orders`, `delivery_assignments`, `order_items`, `order_status_history`, `user_roles`.
+- Recreate them without agent branches (staff/admin only for ops; customer sees own).
+- Delete any existing `user_roles` rows with `role = 'agent'`.
+- Recreate `app_role` enum without `'agent'`:
+  - Create `app_role_new AS ENUM ('admin','staff','customer')`.
+  - Alter `user_roles.role`, `has_role` param, and default in `handle_new_user` to the new type.
+  - Drop old enum, rename new one to `app_role`.
+- Keep `delivery_assignments` table intact (QR feature preserved) but:
+  - Make `agent_id` nullable (no longer FK-required to a user), or keep FK but allow NULL.
+  - New RLS: only staff/admin can INSERT/UPDATE/SELECT; customers can SELECT for own order (for QR display).
+- Update `is_staff_or_admin` — already only checks staff/admin, no change needed.
 
-2. **الكود الخلفي (Server Functions)**
-   - جميع ملفات `src/lib/api/*.functions.ts` (auth, catalog, commerce, account, ops, admin)
-   - `src/lib/config.server.ts`, `src/integrations/supabase/*`
+## 2. Server functions (`src/lib/api/ops.functions.ts`)
 
-3. **قاعدة البيانات**
-   - جميع الـ migrations في `supabase/migrations/`
-   - استعلام مباشر عبر `psql` للتحقق من: الجداول، الأعمدة، الـ RLS policies، الـ triggers، الـ functions، الـ grants، الـ indexes، الـ foreign keys
-   - `supabase--linter` لكشف مشاكل الأمان والأداء
-   - Storage buckets (لا يوجد حاليًا حسب السياق)
+- Delete: `listMyDeliveries`, `confirmDeliveryQr` remains (customer-facing QR still works via `confirm_delivery_by_qr` DB function — no agent needed).
+- Refactor `assignDeliveryAgent` → `markOutForDelivery(orderId, courierNote?)`: sets order status to `shipping` and optionally stores a free-text courier note in `delivery_assignments` (no `agent_id`).
+- Delete `listAgents` bucketing of agents; keep only staff/admin listing (or remove entirely if unused elsewhere).
+- Update role guards: remove all `.includes("agent")` checks.
 
-4. **التهيئة والبيئة**
-   - `package.json`, `vite.config.ts`, `tsconfig.json`, `supabase/config.toml`, `.env`
-   - قائمة الأسرار (secrets) الموجودة
+## 3. Routes & UI
 
-5. **التوثيق الحالي**
-   - `docs/SCHEMA.md`, `docs/ERD.md`, `docs/ROLES.md`, `docs/RLS.md`, `docs/BLUEPRINT.md`, `docs/UAT.md`, `docs/ARCHITECTURE.md`
+- Delete `src/routes/delivery.tsx`.
+- `src/routes/staff.tsx`: remove agent dropdown/assign UI; replace with a single "Mark Out for Delivery" button + optional courier note field.
+- `src/routes/admin.tsx`: remove Agents column from team panel.
+- `src/hooks/useAuth.ts`: remove `'agent'` from `AppRole`, remove `isAgent`.
+- `src/i18n/dict.ts`: remove agent-only strings (keep generic delivery labels used by staff).
+- Remove Delivery nav item from Header/Footer if present.
 
-6. **فحوصات جودة**
-   - `tsgo` للتحقق من أخطاء TypeScript
-   - `rg` للبحث عن TODO/FIXME/console.log/mock data/dead code
-   - فحص وجود اختبارات (unit/integration/e2e)
+## 4. Types
 
-## هيكل التقرير
+- Regenerate `src/integrations/supabase/types.ts` after migration (automatic).
+- Update `src/lib/types.ts` / `src/lib/store.ts` / `src/lib/mock-data.ts` to drop agent references.
 
-سيحتوي `docs/ENGINEERING_AUDIT.md` على 16 قسمًا كما طلبت بالضبط:
+## 5. QR delivery (preserved)
 
-1. **Executive Summary** — ملخص + نسبة إنجاز محسوبة + الحالة الحالية
-2. **Functional Modules** — جدول لكل وحدة (Auth, Catalog, Cart, Checkout, Orders, Delivery, Admin, CS, Reports) مع Routes/Components/Hooks/Services/Tables/API/الحالة
-3. **Authentication & Authorization** — نظام OTP اليدوي، الأدوار (admin/staff/agent/customer)، has_role، الثغرات
-4. **Database Analysis** — تحليل كامل مبني على استعلام حي: 22 جدول، RLS policies، 10 functions، triggers، grants، indexes
-5. **Backend** — كل server function مع endpoint، validation (zod)، error handling
-6. **Frontend** — تحليل الصفحات، RTL/i18n، الاستجابة، إمكانية الوصول
-7. **Security Audit** — فحص فعلي مع نتائج `supabase--linter`
-8. **Performance Analysis** — bundle، lazy loading، query indexes
-9. **Code Quality** — architecture، naming، dead code، duplication
-10. **Bugs & Issues** — نتائج tsgo + فحص يدوي
-11. **Missing Features** — مقارنة بين BLUEPRINT.md والواقع
-12. **Project Progress** — جدول شامل (feature/status/%/priority/gaps)
-13. **Development Roadmap** — Critical / High / Medium / Low
-14. **Testing** — الحالة الفعلية (لا يوجد إطار اختبارات مثبت)
-15. **Documentation** — جرد الملفات الموجودة في `docs/`
-16. **Final Assessment** — نسبة اكتمال، جاهزية إنتاج، أعلى 20 مشكلة، أعلى 20 تحسين، تقييم /100 لعشرة محاور، وجدول ختامي شامل (تم/ناقص/أخطاء/ملفات للمراجعة/الخطوات التالية بالتسلسل)
+- Customer's order page continues to show the QR (from `delivery_assignments.qr_token`) once staff marks the order Out for Delivery.
+- `confirm_delivery_by_qr` RPC unchanged — customer scans/confirms on their own device to move status → `delivered`. (Redesign later.)
 
-## قواعد الالتزام
-- كل رقم أو حقيقة → مصدرها ملف أو استعلام DB (سيتم ذكر المصدر بجانبها عند الحاجة)
-- أي بند غير قابل للتحقق → يُكتب صراحةً: **«غير قابل للتحقق من الكود»**
-- لا تعديل على أي ملف باستثناء إنشاء `docs/ENGINEERING_AUDIT.md`
-- التقرير بالعربية بالكامل مع مصطلحات تقنية بالإنجليزية عند الضرورة
-- الحجم المتوقع: 1500–2500 سطر markdown
+## 6. Docs updates
 
-## المخرجات
-ملف واحد جديد: `docs/ENGINEERING_AUDIT.md`
+- `docs/ROLES.md` — 3-role matrix (Customer / Staff / Admin).
+- `docs/RLS.md` — remove all agent rows/columns.
+- `docs/ERD.md` — remove `auth_users ||--o{ delivery_assignments : "agent"` edge.
+- `docs/BLUEPRINT.md` — update roles section + delivery workflow narrative.
+- `docs/SCHEMA.md` — note `agent_id` deprecated/nullable.
 
-لن يتم تعديل أي كود أو schema أو بيانات — التقرير للقراءة فقط.
+## 7. Order status flow (unchanged values, clarified ownership)
+
+`new → review → paid → shipping (Out for Delivery) → delivered`. All transitions by Customer Service.
+
+## Deliverables after implementation
+
+1. Updated role matrix (3 roles).
+2. Updated ERD.
+3. Updated RLS summary.
+4. List of removed files/components: `src/routes/delivery.tsx`, `listMyDeliveries`, agent buckets in `listAgents`, agent assignment UI in staff panel, agent column in admin team panel, `isAgent` in `useAuth`, `'agent'` enum value.
+5. Confirmation grep showing no remaining `agent` role references in `src/` or migrations.
+
+## Preserved (not touched)
+
+Customer accounts, admin panel structure, CS panel structure, inventory, orders schema (aside from RLS), auth/OTP flow, UI design, branding.

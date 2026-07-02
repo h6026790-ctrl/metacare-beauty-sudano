@@ -183,10 +183,9 @@ function AdminPanel() {
           </TabsContent>
 
           <TabsContent value="team">
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               <TeamCol title={lang === "ar" ? "مديرون" : "Admins"} members={team.data?.admins ?? []} />
               <TeamCol title={lang === "ar" ? "خدمة العملاء" : "Customer Service"} members={team.data?.staff ?? []} />
-              <TeamCol title={lang === "ar" ? "المندوبون" : "Agents"} members={team.data?.agents ?? []} />
             </div>
             <p className="mt-3 text-xs text-muted-foreground">{lang === "ar" ? "لمنح الأدوار، استخدمي قاعدة البيانات مباشرة في هذه المرحلة." : "Role grants are performed via the database for now."}</p>
           </TabsContent>
