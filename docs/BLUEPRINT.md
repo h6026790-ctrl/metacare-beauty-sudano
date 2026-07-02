@@ -10,7 +10,7 @@
 ## 1. Executive Summary
 
 ### What Metacare Beauty Is
-Metacare Beauty is a Sudan-based, Arabic-first e-commerce platform for **medical-grade and luxury beauty products**. It blends the credibility of a dermatology clinic with the polish of a high-end beauty retailer. The platform is operational software, not a brochure: it ingests orders, routes them through a human customer-service desk, coordinates delivery agents, and tracks every state change through a full audit trail.
+Metacare Beauty is a Sudan-based, Arabic-first e-commerce platform for **medical-grade and luxury beauty products**. It blends the credibility of a dermatology clinic with the polish of a high-end beauty retailer. The platform is operational software, not a brochure: it ingests orders, routes them through a human customer-service desk, coordinates external couriers (not system users), and tracks every state change through a full audit trail.
 
 ### Business Goals
 - Become the trusted destination in Sudan for authentic, medically-credible beauty products.
@@ -29,7 +29,7 @@ Metacare Beauty is a Sudan-based, Arabic-first e-commerce platform for **medical
 
 ### Expansion Strategy
 - Geography is data-driven (`states / cities / neighborhoods` tables with per-neighbourhood delivery fees). Adding Khartoum, Port Sudan, Atbara etc. is a SQL insert, not a code change.
-- Operationally, expansion is gated on: (a) a local delivery agent rotation, (b) a CS staff member assigned to that region, (c) verified delivery fees per neighbourhood.
+- Operationally, expansion is gated on: (a) a local trusted external courier list, (b) a CS staff member assigned to that region, (c) verified delivery fees per neighbourhood.
 
 ---
 
@@ -75,7 +75,7 @@ Metacare Beauty is a Sudan-based, Arabic-first e-commerce platform for **medical
 4. **Decide** — See price, read description, add to wishlist or cart.
 5. **Checkout** — Confirm address (Wad Madani neighbourhoods only in v1), receive Bank of Khartoum transfer instructions, get a WhatsApp deep-link to CS.
 6. **Confirm** — CS verifies the bank transfer, moves order to **Paid**.
-7. **Deliver** — Staff assigns a delivery agent. Customer sees ETA + tracking. Agent arrives; customer shows the QR from their order page; agent scans → **Delivered**.
+7. **Deliver** — Staff assigns a external courier. Customer sees ETA + tracking. Agent arrives; customer shows the QR from their order page; agent scans → **Delivered**.
 8. **Reorder** — Account page shows order history, repeat-order shortcut, persistent wishlist.
 
 ### Shopping Experience Principles
@@ -145,16 +145,15 @@ Metacare Beauty is a Sudan-based, Arabic-first e-commerce platform for **medical
 ### Customer Service pages (role: `staff`)
 ```
 /staff                     Assigned-orders queue, master/detail view,
-                           confirm payment, assign agent, internal notes, WhatsApp shortcut
+                           confirm payment, mark Out for Delivery, internal notes, WhatsApp shortcut
 ```
 
-### Delivery pages (role: `agent`)
+### Delivery pages (role: `customer` (agents are external))
 ```
-/delivery                  Today's jobs, per-order QR scan to confirm delivery,
                            call/WhatsApp/map shortcuts, completed-today log
 ```
 
-Robots/SEO: `/admin`, `/staff`, `/delivery`, `/account`, `/checkout`, `/cart`, `/auth` are disallowed in `public/robots.txt`. Public pages are sitemap-indexed.
+Robots/SEO: `/admin`, `/staff`, the Staff panel, `/account`, `/checkout`, `/cart`, `/auth` are disallowed in `public/robots.txt`. Public pages are sitemap-indexed.
 
 ---
 
@@ -163,7 +162,7 @@ Robots/SEO: `/admin`, `/staff`, `/delivery`, `/account`, `/checkout`, `/cart`, `
 All tables live in `public` schema, RLS-enabled, with explicit GRANTs per migration.
 
 ### Enums
-- `app_role`: `admin | staff | agent | customer`
+- `app_role`: `admin | staff | customer`
 - `order_status`: `new | review | paid | shipping | delivered | cancelled | returned`
 
 ### Tables
@@ -230,7 +229,7 @@ orders 1—n order_items, 1—n order_status_history, 0..1 delivery_assignments,
 - Policies always go through `has_role` / `is_staff_or_admin` to avoid recursion against `user_roles`.
 - Public catalog tables (`brands`, `categories`, `products`, `product_images`, `inventory`, geography) are publicly readable for active rows; admin-only for writes.
 - Customer-owned tables (`carts`, `cart_items`, `wishlists`, `addresses`, `profiles`) gate by `auth.uid()`.
-- Orders are visible to: the owning customer, admins (all), staff (only when `assigned_staff_id = auth.uid()`), assigned delivery agents.
+- Orders are visible to: the owning customer, admins (all), staff (only when `assigned_staff_id = auth.uid()`), assigned external couriers (not system users).
 - `audit_logs`, `order_notes` are staff/admin readable; writes are trigger-driven or staff-authored.
 
 ### Audit Architecture
@@ -261,7 +260,7 @@ Roles live in `public.user_roles`; one user may hold multiple. Default role on s
 | Move order new → review → paid → shipping | — | — | ✓ (assigned) | ✓ |
 | Confirm payment (→ paid) — triggers stock decrement | — | — | ✓ | ✓ |
 | Cancel / refund order | — | — | ✓ | ✓ |
-| Manually assign delivery agent | — | — | ✓ | ✓ |
+| Manually assign external courier | — | — | ✓ | ✓ |
 | Mark delivered via QR scan | — | ✓ (own) | ✓ | ✓ |
 | Read audit logs | — | — | ✓ | ✓ |
 | Manage products / brands / categories | — | — | — | ✓ |
@@ -389,7 +388,7 @@ At order time, each line stores `name_snapshot` and `price_sdg`. The order remai
 - The business WhatsApp number is in `src/lib/config.ts` (`METACARE_WHATSAPP`) — placeholder until the operator provides the real number.
 
 ### Delivery Assignment
-- After `paid`, staff manually selects an available delivery agent → inserts a `delivery_assignments` row.
+- After `paid`, staff manually selects an available external courier → inserts a `delivery_assignments` row.
 - This is **never automatic**. The platform deliberately requires a human decision.
 - The assignment generates a `qr_token` (24h expiry) used by the agent to confirm delivery.
 
@@ -397,7 +396,7 @@ At order time, each line stores `name_snapshot` and `price_sdg`. The order remai
 
 ## 11. Delivery Workflow
 
-### Delivery Dashboard (`/delivery`)
+### Delivery Dashboard (the Staff panel)
 - "Today's jobs": all `delivery_assignments` for the signed-in agent that are not yet completed.
 - Per order: customer name, phone, WhatsApp, address snapshot, map deep-link, call shortcut.
 - Completed-today log: visible at the bottom for end-of-day reconciliation.
@@ -409,7 +408,7 @@ At order time, each line stores `name_snapshot` and `price_sdg`. The order remai
 
 ### QR Workflow
 1. Customer opens their order page → it shows a QR encoding `{order_id, qr_token}`.
-2. Agent arrives, opens `/delivery`, taps the order, scans the customer's QR.
+2. Agent arrives, opens the Staff panel, taps the order, scans the customer's QR.
 3. Frontend calls `confirmDeliveryQr({orderId, token})` server function → `confirm_delivery_by_qr` RPC.
 4. RPC validates: order exists, customer is the order owner, token matches, not already completed, not expired (24h).
 5. On success: `delivery_assignments.completed_at = now()`, `orders.status = 'delivered'`.
@@ -472,7 +471,7 @@ At order time, each line stores `name_snapshot` and `price_sdg`. The order remai
 
 ### Future Reports (Phase 3+)
 - Per-staff productivity (orders processed, average time-to-paid, average time-to-delivered)
-- Per-agent delivery performance (completed/day, average time-to-deliver, return rate)
+- Per-order delivery throughput
 - Per-product velocity & stock-out frequency
 - Per-neighbourhood demand heatmap
 - Cohort retention (repeat-order rate by signup month)
@@ -480,7 +479,7 @@ At order time, each line stores `name_snapshot` and `price_sdg`. The order remai
 
 ### Operational KPIs
 - Time-to-confirm-payment (CS SLA)
-- Time-to-deliver (agent SLA, per neighbourhood)
+- Time-to-deliver (per neighbourhood)
 - Order cancellation rate (and reason taxonomy — Phase 3)
 - Stock-out rate per SKU
 - Customer-service contact rate per order (signal for UX friction)
@@ -497,7 +496,7 @@ At order time, each line stores `name_snapshot` and `price_sdg`. The order remai
 - **Checkout:** Address selection (Wad Madani neighbourhoods), Bank of Khartoum instructions, WhatsApp handoff.
 - **Order lifecycle:** Full status machine + triggers (status history, inventory decrement on paid, restore rules).
 - **Audit logs:** Triggers + explicit server-function writes for role changes.
-- **Staff dashboard:** Assigned-orders queue, payment confirmation, internal notes, agent assignment.
+- **Staff dashboard:** Assigned-orders queue, payment confirmation, internal notes, Out-for-Delivery handoff.
 - **Delivery dashboard:** Today's jobs, QR confirmation via `confirm_delivery_by_qr` RPC.
 - **Admin dashboard:** Orders, products (incl. soft-delete / restore), inventory adjustment, role management, brand/category management, audit log viewer, 30-day reports.
 - **Security:** RLS on all tables, security-definer role helpers, append-only audit, server-side role gates.
@@ -515,7 +514,7 @@ At order time, each line stores `name_snapshot` and `price_sdg`. The order remai
 - Twilio OTP credentials & SMS template approval.
 - WhatsApp Business Cloud API onboarding (Phase 4).
 - Product photography refresh (replace prototype imagery).
-- Reassignment / token-rotation flow for delivery agents.
+- Reassignment / token-rotation flow for external couriers (not system users).
 - Daily cutoff job (06:00) and 3-day terminal-state auto-archive job.
 - Customer return-request UI (currently WhatsApp only).
 - Notifications fan-out (`notifications` table is staged but no sender wired).
@@ -527,7 +526,7 @@ At order time, each line stores `name_snapshot` and `price_sdg`. The order remai
 ### Remaining Work Before Launch
 1. Operator inputs: Twilio creds, WhatsApp business number, Bank of Khartoum account details, first admin phone number.
 2. Grant the first admin role via SQL.
-3. End-to-end smoke test: signup → browse → checkout → CS verifies payment → assigns agent → agent QR-confirms → delivered.
+3. End-to-end smoke test: signup → browse → checkout → CS verifies payment → marks Out for Delivery → customer QR-confirms receipt → delivered.
 4. Replace placeholder product photography with operator-provided assets.
 5. Final pass on Arabic copy with the operator's preferred tone.
 6. Production publish and DNS / custom domain setup.
@@ -536,9 +535,9 @@ At order time, each line stores `name_snapshot` and `price_sdg`. The order remai
 - Per-staff queue distribution (round-robin or load-aware) instead of admin-only assignment.
 - Daily 06:00 reset job + 3-day terminal-state auto-archive.
 - Configurable daily cutoff (admin setting).
-- Reassignment workflow for delivery agents with QR token rotation.
+- Reassignment workflow for external couriers (not system users) with QR token rotation.
 - Customer self-service: address book, cancel-while-new, return request.
-- Full reports suite (per-staff, per-agent, per-product, per-neighbourhood).
+- Full reports suite (per-staff, per-product, per-neighbourhood).
 - Inventory low-stock alerts → admin notification channel.
 - Image storage in Supabase Storage with on-the-fly resizing.
 
@@ -554,8 +553,8 @@ At order time, each line stores `name_snapshot` and `price_sdg`. The order remai
 - **Data-first rollout:** add state → cities → neighbourhoods rows with verified delivery fees. No code change required.
 - **Operational gates per new region:**
   1. At least one CS staff member assigned to that region's orders.
-  2. A delivery agent rotation seeded in `user_roles`.
-  3. A cutoff and delivery-window agreed with local agents.
+  2. A trusted external courier list seeded in `user_roles`.
+  3. A cutoff and delivery-window agreed with local couriers.
 - **Pricing & taxes:** in v1 a single SDG price applies nationally. Regional pricing requires a new `regional_prices` table — defer until justified by data.
 - **Logistics partners:** when in-house delivery doesn't scale to a region, add a `delivery_provider` enum on `delivery_assignments` and integrate a third-party (e.g. courier API). The lifecycle and QR confirmation remain unchanged.
 - **Multi-warehouse:** future `warehouses` + `inventory_by_warehouse` model; current `inventory` becomes a sum/view. Triggered when a second physical stocking location opens.

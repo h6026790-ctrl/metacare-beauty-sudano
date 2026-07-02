@@ -5,7 +5,7 @@ Explicit GRANTs are issued in each migration (no reliance on default privileges)
 
 ## Enums
 
-- `app_role` — `admin | staff | agent | customer`
+- `app_role` — `admin | staff | customer` (delivery agents are external and not system users)
 - `order_status` — `new | review | paid | shipping | delivered | cancelled | returned`
 
 ## Geography (multi-state ready)
@@ -44,7 +44,7 @@ Explicit GRANTs are issued in each migration (no reliance on default privileges)
 | `orders` | id, **number** (auto `MCyymmdd-####`), profile_id, status, subtotal_sdg, delivery_sdg, total_sdg, contact_*, address_* snapshot, cutoff_bucket, placed_at, archived_at | |
 | `order_items` | id, order_id, product_id, **name_snapshot**, qty, price_sdg | Prices snapshotted at order time |
 | `order_status_history` | id, order_id, status, actor_id, note, at | Auto-written on every status change |
-| `delivery_assignments` | id, order_id (unique), agent_id, **qr_token** (auto), assigned_at, assigned_by, completed_at | **Created manually by staff — never automatic** |
+| `delivery_assignments` | id, order_id (unique), agent_id (nullable, deprecated — no FK), **qr_token** (auto), assigned_at, assigned_by, completed_at | **Created manually by staff via `markOutForDelivery` — never automatic. Couriers are external, not system users.** |
 | `notifications` | id, profile_id, channel, template, payload, sent_at | Staged for Phase 4 |
 
 ## Audit
