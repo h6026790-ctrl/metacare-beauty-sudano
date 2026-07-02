@@ -1,19 +1,18 @@
 # Metacare Beauty — Row Level Security Summary
 
 All policies use `public.has_role()` / `public.is_staff_or_admin()`
-(SECURITY DEFINER) to keep checks non-recursive.
+(SECURITY DEFINER) to keep checks non-recursive. The `agent` role has been
+removed from `app_role` — only `admin`, `staff`, and `customer` exist.
 
 ## Public catalog & geography
 
 `states · cities · neighborhoods · brands · categories · products · product_images · inventory`
 
-| Action | Anon | Customer | Staff | Agent | Admin |
-|---|---|---|---|---|---|
-| SELECT (active rows) | ✓ | ✓ | ✓ | ✓ | ✓ |
-| SELECT inactive | — | — | products only | — | ✓ |
-| INSERT / UPDATE / DELETE | — | — | — | — | ✓ |
-
-> Anon can browse the catalog, but `price_sdg` is hidden in the UI behind the login prompt (`<PricePill />`). RLS allows reading the price column — the gating is intentionally a UX rule so SEO/snippet bots still see structured product data.
+| Action | Anon | Customer | Staff | Admin |
+|---|---|---|---|---|
+| SELECT (active rows) | ✓ | ✓ | ✓ | ✓ |
+| SELECT inactive | — | — | products only | ✓ |
+| INSERT / UPDATE / DELETE | — | — | — | ✓ |
 
 ## Identity
 
@@ -33,29 +32,33 @@ All policies use `public.has_role()` / `public.is_staff_or_admin()`
 
 ## Orders
 
-| Action | Customer | Staff | Agent (assigned) | Admin |
-|---|---|---|---|---|
-| SELECT own | ✓ | — | — | ✓ |
-| SELECT any | — | ✓ | own assignments only | ✓ |
-| INSERT (`profile_id = auth.uid()`) | ✓ | — | — | ✓ |
-| UPDATE status | — | ✓ | own assignments only | ✓ |
+| Action | Customer | Staff | Admin |
+|---|---|---|---|
+| SELECT own | ✓ | — | ✓ |
+| SELECT any | — | ✓ (assigned) | ✓ |
+| INSERT (`profile_id = auth.uid()`) | ✓ | — | ✓ |
+| UPDATE status | — | ✓ (assigned) | ✓ |
 
 `order_items` and `order_status_history` inherit visibility from their parent
-order (customer / staff / assigned agent / admin).
+order (customer / staff / admin).
 
 ## Delivery assignments
 
-| Action | Customer | Staff | Agent | Admin |
-|---|---|---|---|---|
-| SELECT | own order | ✓ | own | ✓ |
-| INSERT | — | ✓ | — | ✓ |
-| UPDATE (mark completed) | — | ✓ | own | ✓ |
+| Action | Customer | Staff | Admin |
+|---|---|---|---|
+| SELECT | own order (for QR) | ✓ | ✓ |
+| INSERT | — | ✓ | ✓ |
+| UPDATE (mark completed via QR RPC) | own order (via `confirm_delivery_by_qr`) | ✓ | ✓ |
+
+`delivery_assignments.agent_id` is nullable and no longer FK-linked to a user;
+staff create these rows manually to generate the QR token. Couriers are
+external and never referenced by user id.
 
 ## Audit logs
 
-| Action | Customer | Staff | Agent | Admin |
-|---|---|---|---|---|
-| SELECT | — | ✓ | — | ✓ |
+| Action | Customer | Staff | Admin |
+|---|---|---|---|
+| SELECT | — | ✓ | ✓ |
 | INSERT | — written by triggers only (service_role) — |
 
 ## Notifications
@@ -66,7 +69,8 @@ order (customer / staff / assigned agent / admin).
 
 ## Hardening checklist applied
 
-- Trigger functions revoked from `PUBLIC`, `anon`, `authenticated` — only triggers (running as table owner) can call them.
+- No policy references the `agent` role or `agent_id = auth.uid()`.
+- Trigger functions revoked from `PUBLIC`, `anon`, `authenticated`.
 - `has_role` / `is_staff_or_admin` revoked from `anon`, granted to `authenticated`.
 - All `SECURITY DEFINER` functions pinned to `SET search_path = public`.
 - No policy references the same table it protects (recursion-safe).
