@@ -14,11 +14,6 @@ async function assertStaff(ctx: any) {
   if (!r.includes("admin") && !r.includes("staff")) throw new Error("Forbidden");
   return r;
 }
-async function assertAgent(ctx: any) {
-  const r = await getRoles(ctx);
-  if (!r.includes("agent") && !r.includes("admin")) throw new Error("Forbidden");
-  return r;
-}
 async function assertAdmin(ctx: any) {
   const r = await getRoles(ctx);
   if (!r.includes("admin")) throw new Error("Forbidden");
@@ -123,10 +118,17 @@ export const listOrderNotes = createServerFn({ method: "GET" })
     return rows ?? [];
   });
 
-export const assignDeliveryAgent = createServerFn({ method: "POST" })
+// Customer Service marks an order as Out for Delivery. Couriers are arranged
+// manually via WhatsApp — they are NOT system users. A delivery_assignments
+// row is still created so the customer's order page can show the QR token
+// they scan when the courier hands over the package.
+export const markOutForDelivery = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { orderId: string; agentId: string }) =>
-    z.object({ orderId: z.string().uuid(), agentId: z.string().uuid() }).parse(d))
+  .inputValidator((d: { orderId: string; courierNote?: string }) =>
+    z.object({
+      orderId: z.string().uuid(),
+      courierNote: z.string().max(500).optional(),
+    }).parse(d))
   .handler(async ({ context, data }) => {
     await assertStaff(context);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -134,14 +136,20 @@ export const assignDeliveryAgent = createServerFn({ method: "POST" })
       .from("delivery_assignments").select("id").eq("order_id", data.orderId).maybeSingle();
     if (existing) {
       await context.supabase.from("delivery_assignments").update({
-        agent_id: data.agentId, assigned_by: context.userId,
+        assigned_by: context.userId,
         assigned_at: new Date().toISOString(),
         qr_expires_at: expiresAt, completed_at: null,
       }).eq("id", existing.id);
     } else {
       await context.supabase.from("delivery_assignments").insert({
-        order_id: data.orderId, agent_id: data.agentId,
+        order_id: data.orderId,
         assigned_by: context.userId, qr_expires_at: expiresAt,
+      });
+    }
+    if (data.courierNote) {
+      await context.supabase.from("order_notes").insert({
+        order_id: data.orderId, author_id: context.userId,
+        body: `Courier: ${data.courierNote}`,
       });
     }
     // Move order into shipping if currently paid
@@ -150,58 +158,27 @@ export const assignDeliveryAgent = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// Reads staff/agent directory (admin + staff can use)
+// Staff/admin directory (delivery agents no longer exist)
 export const listTeam = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertStaff(context);
     const { data: rolesRows } = await context.supabase
       .from("user_roles").select("user_id, role")
-      .in("role", ["staff","agent","admin"]);
+      .in("role", ["staff","admin"]);
     const ids = Array.from(new Set((rolesRows ?? []).map((r: any) => r.user_id)));
-    if (ids.length === 0) return { staff: [], agents: [], admins: [] };
+    if (ids.length === 0) return { staff: [], admins: [] };
     const { data: profiles } = await context.supabase
       .from("profiles").select("id, full_name, phone, whatsapp").in("id", ids);
     const byId = new Map((profiles ?? []).map((p: any) => [p.id, p]));
-    const buckets = { staff: [] as any[], agents: [] as any[], admins: [] as any[] };
+    const buckets = { staff: [] as any[], admins: [] as any[] };
     for (const r of rolesRows ?? []) {
       const p = byId.get(r.user_id);
       if (!p) continue;
       if (r.role === "staff") buckets.staff.push(p);
-      else if (r.role === "agent") buckets.agents.push(p);
       else if (r.role === "admin") buckets.admins.push(p);
     }
     return buckets;
-  });
-
-// ---------- DELIVERY AGENT ----------
-
-export const listMyDeliveries = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAgent(context);
-    const { data } = await context.supabase
-      .from("delivery_assignments")
-      .select("*, order:orders(*, order_items(*))")
-      .eq("agent_id", context.userId)
-      .order("assigned_at", { ascending: false });
-    return data ?? [];
-  });
-
-// Agent confirms delivery by entering / scanning the QR token shown to the
-// customer. The RPC validates ownership, token, and expiry atomically and
-// flips the order to `delivered`.
-export const confirmDeliveryQr = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: { orderId: string; token: string }) =>
-    z.object({ orderId: z.string().uuid(), token: z.string().min(8).max(128) }).parse(d))
-  .handler(async ({ context, data }) => {
-    await assertAgent(context);
-    const { data: res, error } = await context.supabase.rpc("confirm_delivery_by_qr", {
-      _order_id: data.orderId, _token: data.token,
-    });
-    if (error) throw error;
-    return res ?? { ok: true };
   });
 
 // ---------- ADMIN ----------
@@ -286,7 +263,7 @@ export const adminSetUserRole = createServerFn({ method: "POST" })
   .inputValidator((d: { userId: string; role: string; grant: boolean }) =>
     z.object({
       userId: z.string().uuid(),
-      role: z.enum(["admin","staff","agent","customer"]),
+      role: z.enum(["admin","staff","customer"]),
       grant: z.boolean(),
     }).parse(d))
   .handler(async ({ context, data }) => {
