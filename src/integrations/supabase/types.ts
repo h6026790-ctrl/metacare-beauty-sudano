@@ -745,6 +745,7 @@ export type Database = {
           id: string
           notes: string | null
           otp_code: string
+          password_hash: string | null
           phone: string
           reject_reason: string | null
           rejected_at: string | null
@@ -768,6 +769,7 @@ export type Database = {
           id?: string
           notes?: string | null
           otp_code: string
+          password_hash?: string | null
           phone: string
           reject_reason?: string | null
           rejected_at?: string | null
@@ -791,6 +793,7 @@ export type Database = {
           id?: string
           notes?: string | null
           otp_code?: string
+          password_hash?: string | null
           phone?: string
           reject_reason?: string | null
           rejected_at?: string | null

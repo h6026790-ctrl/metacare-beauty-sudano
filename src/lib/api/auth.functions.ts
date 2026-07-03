@@ -1,11 +1,21 @@
-// Manual OTP registration / sign-in workflow.
-// No SMS / Twilio. CS staff reads the OTP from the dashboard and sends it
-// to the customer over WhatsApp. The customer enters it on the site, which
-// activates the account and returns a one-time email/password the client
-// uses to obtain a Supabase session.
+// Manual OTP workflow — used ONLY for first-time account activation and
+// for password resets. Normal login is phone + password directly against
+// Supabase Auth (no OTP).
+//
+// Flow summary:
+//   • Registration: customer submits full info + password → request stored
+//     (password_hash only). CS approves → OTP shown → customer verifies +
+//     re-enters password → auth user created with that password.
+//   • Password reset: customer submits phone + new password → request
+//     stored (request_type='reset', password_hash only, must match an
+//     existing user). CS approves → OTP shown → customer verifies +
+//     re-enters password → auth user password updated.
+//   • Login: phone + password only, handled client-side via
+//     supabase.auth.signInWithPassword using the synthetic phone email.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { scryptSync, randomBytes, timingSafeEqual } from "node:crypto";
 
 // ---------- helpers ----------
 function normalizePhone(input: string): string {
@@ -16,34 +26,41 @@ function normalizePhone(input: string): string {
   if (p.startsWith("249")) return "+" + p;
   return "+249" + p;
 }
-function phoneToEmail(phone: string) {
+export function phoneToEmail(phone: string) {
   // synthetic, never delivered to a real inbox
   return `${phone.replace(/[^0-9]/g, "")}@phone.metacare.local`;
 }
 function rand6() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
-function randPassword() {
-  return (
-    "Mc-" +
-    Math.random().toString(36).slice(2, 10) +
-    Math.random().toString(36).slice(2, 10).toUpperCase() +
-    "!" +
-    Math.floor(Math.random() * 1000)
-  );
+function hashPassword(pw: string): string {
+  const salt = randomBytes(16);
+  const hash = scryptSync(pw, salt, 64);
+  return `scrypt$${salt.toString("hex")}$${hash.toString("hex")}`;
+}
+function verifyPassword(pw: string, stored: string | null | undefined): boolean {
+  if (!stored) return false;
+  const [alg, saltHex, hashHex] = stored.split("$");
+  if (alg !== "scrypt" || !saltHex || !hashHex) return false;
+  try {
+    const salt = Buffer.from(saltHex, "hex");
+    const expected = Buffer.from(hashHex, "hex");
+    const actual = scryptSync(pw, salt, expected.length);
+    return actual.length === expected.length && timingSafeEqual(actual, expected);
+  } catch { return false; }
 }
 
-// ---------- 1) PUBLIC: submit registration / sign-in request ----------
+// ---------- 1) PUBLIC: submit registration ----------
 const submitSchema = z.object({
   full_name: z.string().trim().min(2).max(120),
   phone: z.string().trim().min(6).max(30),
   whatsapp: z.string().trim().min(6).max(30),
+  password: z.string().min(8).max(128),
   street: z.string().trim().max(500).optional().nullable(),
   notes: z.string().trim().max(500).optional().nullable(),
   state_id: z.string().uuid().optional().nullable(),
   city_id: z.string().uuid().optional().nullable(),
   neighborhood_id: z.string().uuid().optional().nullable(),
-  request_type: z.enum(["register", "login"]).default("register"),
 });
 
 export const submitRegistrationRequest = createServerFn({ method: "POST" })
@@ -52,13 +69,25 @@ export const submitRegistrationRequest = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const phone = normalizePhone(data.phone);
     const whatsapp = normalizePhone(data.whatsapp || data.phone);
+
+    // Refuse if a verified auth user already exists for this phone.
+    const email = phoneToEmail(phone);
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+    const existing = list?.users?.find((u: any) => u.email === email);
+    if (existing) {
+      throw new Error(
+        "يوجد حساب مسجل بهذا الرقم. استخدمي تسجيل الدخول أو استعادة كلمة المرور. / An account already exists for this phone. Please sign in or use password reset.",
+      );
+    }
+
     const otp = rand6();
 
-    // Expire any earlier pending requests for the same phone.
+    // Expire any earlier pending register requests for the same phone.
     await supabaseAdmin
       .from("registration_requests")
       .update({ status: "expired" })
       .eq("phone", phone)
+      .eq("request_type", "register")
       .in("status", ["pending", "approved"]);
 
     const { data: row, error } = await supabaseAdmin
@@ -73,8 +102,9 @@ export const submitRegistrationRequest = createServerFn({ method: "POST" })
         address_city_id: data.city_id ?? null,
         address_neighborhood_id: data.neighborhood_id ?? null,
         otp_code: otp,
+        password_hash: hashPassword(data.password),
         status: "pending",
-        request_type: data.request_type,
+        request_type: "register",
       })
       .select("id, phone")
       .single();
@@ -82,10 +112,60 @@ export const submitRegistrationRequest = createServerFn({ method: "POST" })
     return { requestId: row.id, phone: row.phone };
   });
 
-// ---------- 2) PUBLIC: verify OTP & obtain credentials ----------
+// ---------- 2) PUBLIC: submit password-reset request ----------
+const resetSchema = z.object({
+  phone: z.string().trim().min(6).max(30),
+  password: z.string().min(8).max(128),
+});
+
+export const submitPasswordResetRequest = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => resetSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const phone = normalizePhone(data.phone);
+    const email = phoneToEmail(phone);
+
+    // Must reference an existing user.
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+    const existing = list?.users?.find((u: any) => u.email === email);
+    if (!existing) {
+      throw new Error(
+        "لا يوجد حساب بهذا الرقم. / No account exists for this phone number.",
+      );
+    }
+
+    // Expire any earlier pending reset requests for the same phone.
+    await supabaseAdmin
+      .from("registration_requests")
+      .update({ status: "expired" })
+      .eq("phone", phone)
+      .eq("request_type", "reset")
+      .in("status", ["pending", "approved"]);
+
+    const otp = rand6();
+    const { data: row, error } = await supabaseAdmin
+      .from("registration_requests")
+      .insert({
+        full_name: (existing.user_metadata as any)?.full_name || "—",
+        phone,
+        whatsapp: (existing.user_metadata as any)?.whatsapp || phone,
+        otp_code: otp,
+        password_hash: hashPassword(data.password),
+        status: "pending",
+        request_type: "reset",
+      })
+      .select("id, phone")
+      .single();
+    if (error) throw error;
+    return { requestId: row.id, phone: row.phone };
+  });
+
+// ---------- 3) PUBLIC: verify OTP (register or reset) ----------
 const verifySchema = z.object({
   phone: z.string().trim().min(6).max(30),
   otp: z.string().trim().regex(/^\d{6}$/),
+  password: z.string().min(8).max(128),
+  request_type: z.enum(["register", "reset"]).default("register"),
 });
 
 export const verifyRegistrationOtp = createServerFn({ method: "POST" })
@@ -98,6 +178,7 @@ export const verifyRegistrationOtp = createServerFn({ method: "POST" })
       .from("registration_requests")
       .select("*")
       .eq("phone", phone)
+      .eq("request_type", data.request_type)
       .in("status", ["pending", "approved"])
       .order("created_at", { ascending: false })
       .limit(1)
@@ -112,41 +193,38 @@ export const verifyRegistrationOtp = createServerFn({ method: "POST" })
       throw new Error("بانتظار موافقة خدمة العملاء / Awaiting Customer Service approval");
     }
     if (req.otp_code !== data.otp) throw new Error("رمز غير صحيح / Invalid code");
+    if (!verifyPassword(data.password, req.password_hash)) {
+      throw new Error("كلمة المرور لا تطابق التي أدخلتِها في الطلب / Password does not match the one submitted with the request");
+    }
 
-    // Find or create the auth user keyed by synthetic email.
     const email = phoneToEmail(phone);
-    const password = randPassword();
-
-    let userId: string | null = null;
-    // Try to find by listing users filtered by email (admin endpoint).
     const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
     const existing = list?.users?.find((u: any) => u.email === email);
 
-    if (existing) {
-      userId = existing.id;
-      const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(existing.id, {
-        password,
-        email_confirm: true,
-        user_metadata: {
-          ...(existing.user_metadata ?? {}),
-          full_name: req.full_name,
-          phone,
-          whatsapp: req.whatsapp,
-        },
-      });
-      if (updErr) throw updErr;
-    } else {
+    let userId: string | null = null;
+    if (data.request_type === "register") {
+      if (existing) {
+        // Safety: shouldn't happen because submit blocks it, but keep account intact.
+        throw new Error("يوجد حساب بهذا الرقم مسبقاً / Account already exists");
+      }
       const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
         email,
-        password,
+        password: data.password,
         email_confirm: true,
         user_metadata: { full_name: req.full_name, phone, whatsapp: req.whatsapp },
       });
       if (createErr) throw createErr;
       userId = created.user!.id;
+    } else {
+      if (!existing) throw new Error("لا يوجد حساب / No account");
+      userId = existing.id;
+      const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(existing.id, {
+        password: data.password,
+        email_confirm: true,
+      });
+      if (updErr) throw updErr;
     }
 
-    // Make sure profile is up to date (handle_new_user trigger covers insert).
     await supabaseAdmin
       .from("profiles")
       .upsert(
@@ -154,16 +232,20 @@ export const verifyRegistrationOtp = createServerFn({ method: "POST" })
         { onConflict: "id" },
       );
 
-    // Mark request verified
     await supabaseAdmin
       .from("registration_requests")
-      .update({ status: "verified", verified_at: new Date().toISOString(), user_id: userId })
+      .update({
+        status: "verified",
+        verified_at: new Date().toISOString(),
+        user_id: userId,
+        password_hash: null, // clear stored hash after use
+      })
       .eq("id", req.id);
 
-    return { email, password };
+    return { email };
   });
 
-// ---------- 3) STAFF/ADMIN: list requests ----------
+// ---------- 4) STAFF/ADMIN: list requests ----------
 async function assertStaff(ctx: any) {
   const { data } = await ctx.supabase.from("user_roles").select("role").eq("user_id", ctx.userId);
   const roles = (data ?? []).map((r: any) => r.role);
@@ -191,7 +273,7 @@ export const listRegistrationRequests = createServerFn({ method: "GET" })
     return rows ?? [];
   });
 
-// ---------- 4) STAFF/ADMIN: approve / reject ----------
+// ---------- 5) STAFF/ADMIN: approve / reject ----------
 export const approveRegistrationRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ requestId: z.string().uuid() }).parse(d))
@@ -227,7 +309,7 @@ export const rejectRegistrationRequest = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// ---------- 5) STAFF/ADMIN: regenerate OTP (in case the original was leaked) ----------
+// ---------- 6) STAFF/ADMIN: regenerate OTP ----------
 export const regenerateRegistrationOtp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ requestId: z.string().uuid() }).parse(d))
