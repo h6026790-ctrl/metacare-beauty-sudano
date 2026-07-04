@@ -47,6 +47,7 @@ async function destinationForCurrentUser(): Promise<"/admin" | "/staff" | "/acco
   if (roles.includes("admin")) return "/admin";
   if (roles.includes("staff")) return "/staff";
   return "/account";
+}
 
 type Mode = "login" | "register" | "forgot";
 
