@@ -82,7 +82,7 @@ function AuthPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password: form.password });
       if (error) throw error;
       toast.success(lang === "ar" ? "أهلاً بكِ" : "Welcome");
-      navigate({ to: "/account" });
+      navigate({ to: await destinationForCurrentUser() });
     } catch (err: any) {
       toast.error(
         lang === "ar"
