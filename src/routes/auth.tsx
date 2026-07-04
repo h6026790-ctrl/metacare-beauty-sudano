@@ -156,7 +156,7 @@ function AuthPage() {
           ? (lang === "ar" ? "تم تفعيل حسابكِ" : "Account activated")
           : (lang === "ar" ? "تم تحديث كلمة المرور" : "Password updated"),
       );
-      navigate({ to: "/account" });
+      navigate({ to: await destinationForCurrentUser() });
     } catch (err: any) {
       toast.error(err.message || (lang === "ar" ? "تعذّر التحقق" : "Verification failed"));
     } finally {
