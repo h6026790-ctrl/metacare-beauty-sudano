@@ -36,6 +36,18 @@ function phoneToEmail(phone: string) {
   return `${phone.replace(/[^0-9]/g, "")}@phone.metacare.local`;
 }
 
+async function destinationForCurrentUser(): Promise<"/admin" | "/staff" | "/account"> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return "/account";
+  const { data: roleRows } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+  const roles = (roleRows ?? []).map((r) => r.role as string);
+  if (roles.includes("admin")) return "/admin";
+  if (roles.includes("staff")) return "/staff";
+  return "/account";
+
 type Mode = "login" | "register" | "forgot";
 
 function AuthPage() {
