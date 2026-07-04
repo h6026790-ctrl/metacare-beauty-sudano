@@ -36,6 +36,19 @@ function phoneToEmail(phone: string) {
   return `${phone.replace(/[^0-9]/g, "")}@phone.metacare.local`;
 }
 
+async function destinationForCurrentUser(): Promise<"/admin" | "/staff" | "/account"> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return "/account";
+  const { data: roleRows } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id);
+  const roles = (roleRows ?? []).map((r) => r.role as string);
+  if (roles.includes("admin")) return "/admin";
+  if (roles.includes("staff")) return "/staff";
+  return "/account";
+}
+
 type Mode = "login" | "register" | "forgot";
 
 function AuthPage() {
@@ -82,7 +95,7 @@ function AuthPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password: form.password });
       if (error) throw error;
       toast.success(lang === "ar" ? "أهلاً بكِ" : "Welcome");
-      navigate({ to: "/account" });
+      navigate({ to: await destinationForCurrentUser() });
     } catch (err: any) {
       toast.error(
         lang === "ar"
@@ -156,7 +169,7 @@ function AuthPage() {
           ? (lang === "ar" ? "تم تفعيل حسابكِ" : "Account activated")
           : (lang === "ar" ? "تم تحديث كلمة المرور" : "Password updated"),
       );
-      navigate({ to: "/account" });
+      navigate({ to: await destinationForCurrentUser() });
     } catch (err: any) {
       toast.error(err.message || (lang === "ar" ? "تعذّر التحقق" : "Verification failed"));
     } finally {
