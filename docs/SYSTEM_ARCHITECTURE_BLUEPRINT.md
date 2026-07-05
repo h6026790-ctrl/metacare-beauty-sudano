@@ -117,24 +117,25 @@ Each user type has its own **interface**, its own **navigation**, its own **voca
 
 **Definition.** A user with the `admin` role. Admin is a superset of staff — an admin can do everything Customer Service can do, plus company management.
 
-**Purpose.** Supervise the entire company. The Administrator interface is the **company operating system**.
+**Purpose.** Supervise, configure, and monitor the entire company. The Administrator interface is the **Company's Operating System**.
 
 **The Administrator interface is organized into operational centers**, not into a flat list of CRUD screens. Each operational center corresponds to a real business function.
 
 **Operational centers under the Administrator interface:**
 
-1. **Overview** — company-wide KPIs (revenue, orders, customers, low stock).
-2. **Orders** — full order history and lifecycle oversight.
-3. **Inventory** — stock levels, low-stock alerts, manual adjustments.
-4. **Catalog** — products, brands, categories (create, edit, archive/restore; products are soft-deleted, never destroyed).
-5. **Customers** — customer directory and registration requests.
-6. **Team** — Customer Service and Administrator accounts, role grants.
-7. **Reports** — sales, operational, and audit reporting.
-8. **System** — company information, delivery zones, and platform settings.
+1. **Activity** — the real-time operational timeline of the company. Aggregates important events from every operational area, including new orders, order status changes, registration requests, registration approvals, password reset requests, inventory reservations, inventory adjustments, low stock alerts, warehouse transfers, product updates, product archives, role changes, user activations, user deactivations, system warnings, and backup completions. This is the company's operational pulse.
+2. **Overview** — company-wide KPIs (revenue, orders, customers, low stock).
+3. **Orders** — full order history and lifecycle oversight.
+4. **Inventory** — stock levels, low-stock alerts, manual adjustments, and reservation tracking. Architected to support future expansion to multiple warehouses, warehouse creation and management, warehouse transfers, warehouse-level inventory, reservation tracking, inventory audit history, and stock movement history without architectural redesign.
+5. **Catalog** — products, brands, categories (create, edit, archive/restore; products are soft-deleted, never destroyed).
+6. **Customers** — customer directory and registration requests.
+7. **Team** — Customer Service and Administrator accounts, role grants.
+8. **Reports** — sales, operational, and audit reporting. Evolving into a Business Intelligence Center with future capabilities for executive dashboards, KPI monitoring, sales analytics, customer analytics, inventory analytics, operational performance, trend analysis, export center, scheduled reports, and business insights.
+9. **System** — the operational configuration center of the company. Includes company information, business identity, phone numbers, WhatsApp numbers, address, business hours, delivery areas, system settings, operational settings, maintenance mode, backup and restore, system health, system diagnostics, notifications configuration, audit configuration, and future integrations.
 
-**The Administrator supervises rather than performs.** The Administrator does not personally process orders in the normal course of business — that is Customer Service's role. The Administrator's interface is optimized for **visibility, control, and configuration**.
+**Customer Service is responsible for daily operational processing.** Administrators have full operational permissions and can perform every operational task when necessary. However, their primary responsibility is supervising, configuring, and monitoring the company. The Administrator's interface is optimized for **visibility, control, and configuration**.
 
-**Primary question the interface answers:** *"What is happening across the company today?"*
+**Primary question the interface answers:** *"What is happening across the company today?*"
 
 ---
 
