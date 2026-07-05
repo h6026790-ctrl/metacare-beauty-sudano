@@ -213,6 +213,7 @@ Operational areas (each belongs to specific interfaces):
 | Registration approvals |       |          |        ✓         |       ✓       |
 | Team & roles         |         |          |                  |       ✓       |
 | Reports              |         |          |                  |       ✓       |
+| Activity timeline    |         |          |                  |       ✓       |
 | System configuration |         |          |                  |       ✓       |
 
 Operational rules preserved from existing implementation (unchanged by this blueprint):
