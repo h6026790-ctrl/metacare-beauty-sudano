@@ -117,22 +117,23 @@ Each user type has its own **interface**, its own **navigation**, its own **voca
 
 **Definition.** A user with the `admin` role. Admin is a superset of staff — an admin can do everything Customer Service can do, plus company management.
 
-**Purpose.** Supervise the entire company. The Administrator interface is the **company operating system**.
+**Purpose.** Supervise, configure, and monitor the entire company. The Administrator interface is the **Company's Operating System**.
 
 **The Administrator interface is organized into operational centers**, not into a flat list of CRUD screens. Each operational center corresponds to a real business function.
 
 **Operational centers under the Administrator interface:**
 
-1. **Overview** — company-wide KPIs (revenue, orders, customers, low stock).
-2. **Orders** — full order history and lifecycle oversight.
-3. **Inventory** — stock levels, low-stock alerts, manual adjustments.
-4. **Catalog** — products, brands, categories (create, edit, archive/restore; products are soft-deleted, never destroyed).
-5. **Customers** — customer directory and registration requests.
-6. **Team** — Customer Service and Administrator accounts, role grants.
-7. **Reports** — sales, operational, and audit reporting.
-8. **System** — company information, delivery zones, and platform settings.
+1. **Activity** — the real-time operational timeline of the company. Aggregates important events from every operational area, including new orders, order status changes, registration requests, registration approvals, password reset requests, inventory reservations, inventory adjustments, low stock alerts, warehouse transfers, product updates, product archives, role changes, user activations, user deactivations, system warnings, and backup completions. This is the company's operational pulse.
+2. **Overview** — company-wide KPIs (revenue, orders, customers, low stock).
+3. **Orders** — full order history and lifecycle oversight.
+4. **Inventory** — stock levels, low-stock alerts, manual adjustments, and reservation tracking. Architected to support future expansion to multiple warehouses, warehouse creation and management, warehouse transfers, warehouse-level inventory, reservation tracking, inventory audit history, and stock movement history without architectural redesign.
+5. **Catalog** — products, brands, categories (create, edit, archive/restore; products are soft-deleted, never destroyed).
+6. **Customers** — customer directory and registration requests.
+7. **Team** — Customer Service and Administrator accounts, role grants.
+8. **Reports** — sales, operational, and audit reporting. Evolving into a Business Intelligence Center with future capabilities for executive dashboards, KPI monitoring, sales analytics, customer analytics, inventory analytics, operational performance, trend analysis, export center, scheduled reports, and business insights.
+9. **System** — the operational configuration center of the company. Includes company information, business identity, phone numbers, WhatsApp numbers, address, business hours, delivery areas, system settings, operational settings, maintenance mode, backup and restore, system health, system diagnostics, notifications configuration, audit configuration, and future integrations.
 
-**The Administrator supervises rather than performs.** The Administrator does not personally process orders in the normal course of business — that is Customer Service's role. The Administrator's interface is optimized for **visibility, control, and configuration**.
+**Customer Service is responsible for daily operational processing.** Administrators have full operational permissions and can perform every operational task when necessary. However, their primary responsibility is supervising, configuring, and monitoring the company. The Administrator's interface is optimized for **visibility, control, and configuration**.
 
 **Primary question the interface answers:** *"What is happening across the company today?"*
 
@@ -149,7 +150,7 @@ Rules governing the relationship:
 - **Strict feature separation.** No interface exposes controls that belong to another interface. The Customer never sees "assign to staff". Customer Service never sees "grant admin role". The Administrator never sees "add to my cart".
 - **Role-based routing.** After sign-in, the user is routed to their home interface based on role — Administrator → `/admin`, Customer Service → `/staff`, Customer → `/account`. Visitors have no post-sign-in home.
 - **Shared identity.** All four interfaces authenticate against the same identity store (`auth.users` + `user_roles`). A single person can hold multiple roles; role precedence for routing is `admin > staff > customer`.
-- **Shared business rules.** Order lifecycle, inventory decrement on `paid`, QR delivery confirmation, soft-delete of products, and audit logging are enforced at the database layer and behave identically no matter which interface triggers them.
+- **Shared business rules.** Order lifecycle, inventory reservation converted to sale on `paid`, QR delivery confirmation, soft-delete of products, and audit logging are enforced at the database layer and behave identically no matter which interface triggers them.
 
 ---
 
@@ -186,7 +187,7 @@ Navigation is **minimal, predictable, and role-appropriate**.
 
 - **Visitor & Customer** — a single top header with the primary catalog nav (Home, Shop, Categories, Brands, Offers), a search field, and account/cart/wishlist icons. Mobile uses a slide-in sheet.
 - **Customer Service** — a task-centric layout: a queue on one side, a detail pane on the other. Global chrome is kept out of the way. Navigation between operational views is flat, not deep.
-- **Administrator** — a **persistent left sidebar** listing operational centers (Overview, Orders, Inventory, Catalog, Customers, Team, Reports, System). The sidebar is the map of the business. Each center is one click away; no more than one level of sub-navigation inside a center.
+- **Administrator** — a **persistent left sidebar** listing operational centers of the Company's Operating System (Activity, Overview, Orders, Inventory, Catalog, Customers, Team, Reports, System). The sidebar is the map of the business. Each center is one click away; no more than one level of sub-navigation inside a center.
 - **No hidden features.** Every capability a user is allowed to use is reachable from that user's primary navigation. No feature lives only behind a URL.
 - **No cross-role navigation.** The Customer interface never links to `/admin`. The Administrator interface never links to `/account` as a customer surface.
 - **URL hierarchy mirrors interfaces.** `/` and `/products/*` etc. for public + customer; `/account/*` for customer-only; `/staff/*` for Customer Service; `/admin/*` for Administrator.
@@ -212,12 +213,18 @@ Operational areas (each belongs to specific interfaces):
 | Registration approvals |       |          |        ✓         |       ✓       |
 | Team & roles         |         |          |                  |       ✓       |
 | Reports              |         |          |                  |       ✓       |
+| Activity timeline    |         |          |                  |       ✓       |
 | System configuration |         |          |                  |       ✓       |
 
 Operational rules preserved from existing implementation (unchanged by this blueprint):
 
 - Order lifecycle: `new → review → paid → shipping → delivered`, terminal `cancelled` / `returned`.
-- Inventory decrements **only** when an order moves to `paid`.
+- Inventory reservation workflow:
+  - When an order is created, inventory is **reserved**.
+  - While the order is under review, the reservation is **maintained**.
+  - When the order reaches `paid`, the reservation is **converted into a sale** and inventory is **decremented**.
+  - Cancelled and archived orders **release** their reservations.
+  - Returned orders **restore** inventory.
 - Delivery assignments are created **only** when staff marks an order Out for Delivery; couriers are external.
 - Delivery is confirmed by the customer scanning the QR on their own order page.
 - Products are **soft-deleted** (`is_active = false`), never physically removed.
@@ -250,22 +257,23 @@ Operational rules preserved from existing implementation (unchanged by this blue
 
 1. Signs in with phone + password → routed to `/staff`.
 2. Sees the day's queue of orders needing action, plus pending registration requests.
-3. Opens an order, contacts the customer via WhatsApp, confirms payment (inventory decrements automatically), then marks Out for Delivery (QR is minted).
+3. Opens an order, contacts the customer via WhatsApp, confirms payment (reservation converts to sale and inventory decrements), then marks Out for Delivery (QR is minted).
 4. Reviews and approves/rejects new customer registration requests.
 5. Ends the day with an empty or triaged queue.
 
 ### 8.4 Administrator journey
 
 1. Signs in with phone + password → routed to `/admin`.
-2. Lands on **Overview** — sees today's KPIs (revenue, orders, customers, low stock).
+2. Lands on **Overview** — the dashboard of the Company's Operating System — sees today's KPIs (revenue, orders, customers, low stock).
 3. Navigates via the sidebar into any operational center as needed:
+   - Monitors the real-time operational timeline in **Activity**.
    - Reviews order flow in **Orders**.
-   - Restocks in **Inventory**.
+   - Restocks and tracks reservations in **Inventory**.
    - Publishes or archives products in **Catalog**.
    - Grants a staff role in **Team**.
    - Pulls a monthly report in **Reports**.
    - Updates delivery zones or company information in **System**.
-4. Uses the platform to **supervise**, not to perform Customer Service work.
+4. Uses the Company's Operating System to **supervise, configure, and monitor** the company. Can perform any operational task when necessary, but primarily focuses on oversight.
 
 ---
 
@@ -303,7 +311,7 @@ Every future phase and every future change MUST comply with the following princi
 17. **Preserve RLS.** No change is allowed to bypass Row Level Security.
 18. **Preserve permissions.** The permission matrix in `docs/ROLES.md` is the source of truth.
 19. **Preserve audit logging.** Every mutating admin/staff action must remain auditable.
-20. **Preserve business rules.** Inventory decrement on `paid`, QR-only delivery confirmation, soft-delete of products, manual courier coordination — all remain as specified.
+20. **Preserve business rules.** Inventory reservation converted to sale and decremented on `paid`, QR-only delivery confirmation, soft-delete of products, manual courier coordination — all remain as specified.
 
 ### 9.5 Change-management principle
 
@@ -318,7 +326,7 @@ This blueprint is the input to four subsequent phases. Each phase implements exa
 - **Phase 1 — Visitor Experience.** Public catalog, brand story, trust surface, registration entry point.
 - **Phase 2 — Customer Workspace.** Cart, checkout, order tracking, personal account management.
 - **Phase 3 — Customer Service Workspace.** Task queue, order operations, registration approvals, WhatsApp coordination.
-- **Phase 4 — Administrator Workspace.** Operational centers (Overview, Orders, Inventory, Catalog, Customers, Team, Reports, System) organized under a persistent sidebar.
+- **Phase 4 — Administrator Workspace.** Operational centers of the Company's Operating System (Activity, Overview, Orders, Inventory, Catalog, Customers, Team, Reports, System) organized under a persistent sidebar.
 
 Each phase is a UI/UX and navigation phase. Backend logic, database schema, RLS, permissions, and business rules are already implemented and must be preserved.
 
