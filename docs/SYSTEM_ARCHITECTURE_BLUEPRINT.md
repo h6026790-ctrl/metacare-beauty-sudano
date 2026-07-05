@@ -150,7 +150,7 @@ Rules governing the relationship:
 - **Strict feature separation.** No interface exposes controls that belong to another interface. The Customer never sees "assign to staff". Customer Service never sees "grant admin role". The Administrator never sees "add to my cart".
 - **Role-based routing.** After sign-in, the user is routed to their home interface based on role — Administrator → `/admin`, Customer Service → `/staff`, Customer → `/account`. Visitors have no post-sign-in home.
 - **Shared identity.** All four interfaces authenticate against the same identity store (`auth.users` + `user_roles`). A single person can hold multiple roles; role precedence for routing is `admin > staff > customer`.
-- **Shared business rules.** Order lifecycle, inventory decrement on `paid`, QR delivery confirmation, soft-delete of products, and audit logging are enforced at the database layer and behave identically no matter which interface triggers them.
+- **Shared business rules.** Order lifecycle, inventory reservation converted to sale on `paid`, QR delivery confirmation, soft-delete of products, and audit logging are enforced at the database layer and behave identically no matter which interface triggers them.
 
 ---
 
@@ -311,7 +311,7 @@ Every future phase and every future change MUST comply with the following princi
 17. **Preserve RLS.** No change is allowed to bypass Row Level Security.
 18. **Preserve permissions.** The permission matrix in `docs/ROLES.md` is the source of truth.
 19. **Preserve audit logging.** Every mutating admin/staff action must remain auditable.
-20. **Preserve business rules.** Inventory decrement on `paid`, QR-only delivery confirmation, soft-delete of products, manual courier coordination — all remain as specified.
+20. **Preserve business rules.** Inventory reservation converted to sale and decremented on `paid`, QR-only delivery confirmation, soft-delete of products, manual courier coordination — all remain as specified.
 
 ### 9.5 Change-management principle
 
@@ -326,7 +326,7 @@ This blueprint is the input to four subsequent phases. Each phase implements exa
 - **Phase 1 — Visitor Experience.** Public catalog, brand story, trust surface, registration entry point.
 - **Phase 2 — Customer Workspace.** Cart, checkout, order tracking, personal account management.
 - **Phase 3 — Customer Service Workspace.** Task queue, order operations, registration approvals, WhatsApp coordination.
-- **Phase 4 — Administrator Workspace.** Operational centers (Overview, Orders, Inventory, Catalog, Customers, Team, Reports, System) organized under a persistent sidebar.
+- **Phase 4 — Administrator Workspace.** Operational centers of the Company's Operating System (Activity, Overview, Orders, Inventory, Catalog, Customers, Team, Reports, System) organized under a persistent sidebar.
 
 Each phase is a UI/UX and navigation phase. Backend logic, database schema, RLS, permissions, and business rules are already implemented and must be preserved.
 
