@@ -257,22 +257,23 @@ Operational rules preserved from existing implementation (unchanged by this blue
 
 1. Signs in with phone + password → routed to `/staff`.
 2. Sees the day's queue of orders needing action, plus pending registration requests.
-3. Opens an order, contacts the customer via WhatsApp, confirms payment (inventory decrements automatically), then marks Out for Delivery (QR is minted).
+3. Opens an order, contacts the customer via WhatsApp, confirms payment (reservation converts to sale and inventory decrements), then marks Out for Delivery (QR is minted).
 4. Reviews and approves/rejects new customer registration requests.
 5. Ends the day with an empty or triaged queue.
 
 ### 8.4 Administrator journey
 
 1. Signs in with phone + password → routed to `/admin`.
-2. Lands on **Overview** — sees today's KPIs (revenue, orders, customers, low stock).
+2. Lands on **Overview** — the dashboard of the Company's Operating System — sees today's KPIs (revenue, orders, customers, low stock).
 3. Navigates via the sidebar into any operational center as needed:
+   - Monitors the real-time operational timeline in **Activity**.
    - Reviews order flow in **Orders**.
-   - Restocks in **Inventory**.
+   - Restocks and tracks reservations in **Inventory**.
    - Publishes or archives products in **Catalog**.
    - Grants a staff role in **Team**.
    - Pulls a monthly report in **Reports**.
    - Updates delivery zones or company information in **System**.
-4. Uses the platform to **supervise**, not to perform Customer Service work.
+4. Uses the Company's Operating System to **supervise, configure, and monitor** the company. Can perform any operational task when necessary, but primarily focuses on oversight.
 
 ---
 
