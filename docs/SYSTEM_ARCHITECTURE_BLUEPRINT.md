@@ -219,7 +219,12 @@ Operational areas (each belongs to specific interfaces):
 Operational rules preserved from existing implementation (unchanged by this blueprint):
 
 - Order lifecycle: `new → review → paid → shipping → delivered`, terminal `cancelled` / `returned`.
-- Inventory decrements **only** when an order moves to `paid`.
+- Inventory reservation workflow:
+  - When an order is created, inventory is **reserved**.
+  - While the order is under review, the reservation is **maintained**.
+  - When the order reaches `paid`, the reservation is **converted into a sale** and inventory is **decremented**.
+  - Cancelled and archived orders **release** their reservations.
+  - Returned orders **restore** inventory.
 - Delivery assignments are created **only** when staff marks an order Out for Delivery; couriers are external.
 - Delivery is confirmed by the customer scanning the QR on their own order page.
 - Products are **soft-deleted** (`is_active = false`), never physically removed.
