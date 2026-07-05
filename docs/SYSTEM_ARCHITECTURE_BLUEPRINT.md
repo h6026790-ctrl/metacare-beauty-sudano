@@ -135,7 +135,7 @@ Each user type has its own **interface**, its own **navigation**, its own **voca
 
 **Customer Service is responsible for daily operational processing.** Administrators have full operational permissions and can perform every operational task when necessary. However, their primary responsibility is supervising, configuring, and monitoring the company. The Administrator's interface is optimized for **visibility, control, and configuration**.
 
-**Primary question the interface answers:** *"What is happening across the company today?*"
+**Primary question the interface answers:** *"What is happening across the company today?"*
 
 ---
 
@@ -187,7 +187,7 @@ Navigation is **minimal, predictable, and role-appropriate**.
 
 - **Visitor & Customer** — a single top header with the primary catalog nav (Home, Shop, Categories, Brands, Offers), a search field, and account/cart/wishlist icons. Mobile uses a slide-in sheet.
 - **Customer Service** — a task-centric layout: a queue on one side, a detail pane on the other. Global chrome is kept out of the way. Navigation between operational views is flat, not deep.
-- **Administrator** — a **persistent left sidebar** listing operational centers (Overview, Orders, Inventory, Catalog, Customers, Team, Reports, System). The sidebar is the map of the business. Each center is one click away; no more than one level of sub-navigation inside a center.
+- **Administrator** — a **persistent left sidebar** listing operational centers of the Company's Operating System (Activity, Overview, Orders, Inventory, Catalog, Customers, Team, Reports, System). The sidebar is the map of the business. Each center is one click away; no more than one level of sub-navigation inside a center.
 - **No hidden features.** Every capability a user is allowed to use is reachable from that user's primary navigation. No feature lives only behind a URL.
 - **No cross-role navigation.** The Customer interface never links to `/admin`. The Administrator interface never links to `/account` as a customer surface.
 - **URL hierarchy mirrors interfaces.** `/` and `/products/*` etc. for public + customer; `/account/*` for customer-only; `/staff/*` for Customer Service; `/admin/*` for Administrator.
