@@ -14,6 +14,12 @@ type DictShape = {
   search: Record<string, string>;
   footer: Record<string, string>;
   common: Record<string, string>;
+  visitor: Record<string, string>;
+  about: Record<string, string>;
+  contact: Record<string, string>;
+  faq: Record<string, string>;
+  delivery: Record<string, string>;
+  policies: Record<string, string>;
   panels: {
     admin: { title: string; sub: string };
     staff: { title: string; sub: string };
@@ -26,7 +32,8 @@ export const dict: Record<Lang, DictShape> = {
     brand: { name: "ميتاكير بيوتي", tagline: "تجربة تسوق فاخرة وبسيطة للجمال" },
     nav: {
       home: "الرئيسية", shop: "تسوقي", categories: "الأقسام", brands: "العلامات",
-      offers: "العروض", search: "بحث", account: "حسابي", cart: "السلة",
+      offers: "العروض", about: "عن ميتاكير", contact: "تواصل", faq: "الأسئلة الشائعة",
+      delivery: "التوصيل", search: "بحث", account: "حسابي", cart: "السلة",
       wishlist: "المفضلة", login: "تسجيل الدخول", register: "إنشاء حساب", logout: "تسجيل الخروج",
       admin: "لوحة الإدارة", staff: "خدمة العملاء",
     },
