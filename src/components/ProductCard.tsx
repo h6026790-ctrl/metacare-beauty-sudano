@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Heart } from "lucide-react";
+import { Heart, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,8 +17,6 @@ export function ProductCard({ product, index = 0 }: { product: UIProduct; index?
   const addToCart = useAddToCart();
   const isWished = !!wishlist?.some((w: any) => w.product?.id === product.id);
   const oos = !product.inStock;
-
-  const requireAuth = () => { if (!user) { navigate({ to: "/auth" }); return false; } return true; };
 
   return (
     <motion.div
@@ -41,21 +39,23 @@ export function ProductCard({ product, index = 0 }: { product: UIProduct; index?
           />
           <div className="absolute start-3 top-3 flex flex-col gap-1.5">
             {product.isNew && <span className="rounded-full bg-accent/95 px-2.5 py-0.5 text-[10px] font-medium text-accent-foreground shadow-glass">{lang === "ar" ? "جديد" : "NEW"}</span>}
-            {product.compareAt && !oos && <span className="rounded-full bg-violet/95 px-2.5 py-0.5 text-[10px] font-medium text-violet-foreground shadow-glass">{lang === "ar" ? "عرض" : "SALE"}</span>}
+            {product.compareAt && !oos && user && <span className="rounded-full bg-violet/95 px-2.5 py-0.5 text-[10px] font-medium text-violet-foreground shadow-glass">{lang === "ar" ? "عرض" : "SALE"}</span>}
           </div>
-          {oos && (
+          {oos && user && (
             <div className="absolute inset-x-0 bottom-0 bg-background/85 px-3 py-1.5 text-center text-xs font-medium text-foreground backdrop-blur">
               {t.product.outOfStock}
             </div>
           )}
-          <button
-            type="button"
-            aria-label={isWished ? t.product.removeFromWishlist : t.product.addToWishlist}
-            onClick={(e) => { e.preventDefault(); if (!requireAuth()) return; toggleWish.mutate(product.id); }}
-            className="absolute end-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-card/85 text-foreground shadow-glass backdrop-blur transition hover:bg-card"
-          >
-            <Heart className={cn("h-4 w-4 transition", isWished && "fill-violet text-violet")} />
-          </button>
+          {user && (
+            <button
+              type="button"
+              aria-label={isWished ? t.product.removeFromWishlist : t.product.addToWishlist}
+              onClick={(e) => { e.preventDefault(); toggleWish.mutate(product.id); }}
+              className="absolute end-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-card/85 text-foreground shadow-glass backdrop-blur transition hover:bg-card"
+            >
+              <Heart className={cn("h-4 w-4 transition", isWished && "fill-violet text-violet")} />
+            </button>
+          )}
         </div>
 
         <div className="space-y-2 p-4">
@@ -63,19 +63,27 @@ export function ProductCard({ product, index = 0 }: { product: UIProduct; index?
           <h3 className="line-clamp-2 text-sm font-medium text-foreground">{product.name[lang]}</h3>
           <div className="flex items-end justify-between pt-1">
             <PricePill price={product.price} compareAt={product.compareAt} size="sm" />
-            {!oos && (
+            {user ? (
+              !oos && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    addToCart.mutate(product.id, { onSuccess: () => toast.success(t.product.added) });
+                  }}
+                  className="rounded-full bg-primary px-3 py-1.5 text-[11px] font-medium text-primary-foreground transition hover:opacity-90"
+                >
+                  {t.product.addToCart}
+                </button>
+              )
+            ) : (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (!requireAuth()) return;
-                  addToCart.mutate(product.id, {
-                    onSuccess: () => toast.success(t.product.added),
-                  });
-                }}
-                className="rounded-full bg-primary px-3 py-1.5 text-[11px] font-medium text-primary-foreground transition hover:opacity-90"
+                onClick={(e) => { e.preventDefault(); navigate({ to: "/auth" }); }}
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/50 px-3 py-1.5 text-[11px] font-medium text-foreground hover:bg-muted"
               >
-                {t.product.addToCart}
+                <Lock className="h-3 w-3" />
+                {t.visitor.signInToBuy}
               </button>
             )}
           </div>
