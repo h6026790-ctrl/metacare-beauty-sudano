@@ -5,7 +5,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useProducts, useBrands, useCategories, type UIProduct } from "@/lib/api/queries";
-import { ArrowLeft, ArrowRight, ShieldCheck, Truck, MessageCircle, Sparkles, UserPlus, ChevronDown, MapPin, Clock, QrCode } from "lucide-react";
+import { ArrowLeft, ArrowRight, ShieldCheck, Truck, MessageCircle, Sparkles, UserPlus, MapPin, Clock, QrCode } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import heroImg from "@/assets/hero-serum.jpg";
 import bannerImg from "@/assets/banner-offers.jpg";
@@ -290,5 +290,3 @@ function DeliveryPoint({ icon: Icon, title, body }: { icon: typeof MapPin; title
     </div>
   );
 }
-// Suppress unused import warning (ChevronDown reserved for future use)
-void ChevronDown;
