@@ -28,6 +28,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StaffIndexRouteImport } from './routes/staff.index'
 import { Route as OrdersIndexRouteImport } from './routes/orders.index'
 import { Route as AccountIndexRouteImport } from './routes/account.index'
 import { Route as ProductsIdRouteImport } from './routes/products.$id'
@@ -133,6 +134,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StaffIndexRoute = StaffIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StaffRoute,
+} as any)
 const OrdersIndexRoute = OrdersIndexRouteImport.update({
   id: '/orders/',
   path: '/orders/',
@@ -197,7 +203,7 @@ export interface FileRoutesByFullPath {
   '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/staff': typeof StaffRoute
+  '/staff': typeof StaffRouteWithChildren
   '/support': typeof SupportRoute
   '/account/wishlist': typeof AccountWishlistRoute
   '/brands/$id': typeof BrandsIdRoute
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/products/$id': typeof ProductsIdRoute
   '/account/': typeof AccountIndexRoute
   '/orders/': typeof OrdersIndexRoute
+  '/staff/': typeof StaffIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -226,7 +233,6 @@ export interface FileRoutesByTo {
   '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/staff': typeof StaffRoute
   '/support': typeof SupportRoute
   '/account/wishlist': typeof AccountWishlistRoute
   '/brands/$id': typeof BrandsIdRoute
@@ -237,6 +243,7 @@ export interface FileRoutesByTo {
   '/products/$id': typeof ProductsIdRoute
   '/account': typeof AccountIndexRoute
   '/orders': typeof OrdersIndexRoute
+  '/staff': typeof StaffIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -257,7 +264,7 @@ export interface FileRoutesById {
   '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/staff': typeof StaffRoute
+  '/staff': typeof StaffRouteWithChildren
   '/support': typeof SupportRoute
   '/account/wishlist': typeof AccountWishlistRoute
   '/brands/$id': typeof BrandsIdRoute
@@ -268,6 +275,7 @@ export interface FileRoutesById {
   '/products/$id': typeof ProductsIdRoute
   '/account/': typeof AccountIndexRoute
   '/orders/': typeof OrdersIndexRoute
+  '/staff/': typeof StaffIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -300,6 +308,7 @@ export interface FileRouteTypes {
     | '/products/$id'
     | '/account/'
     | '/orders/'
+    | '/staff/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -318,7 +327,6 @@ export interface FileRouteTypes {
     | '/products'
     | '/search'
     | '/sitemap.xml'
-    | '/staff'
     | '/support'
     | '/account/wishlist'
     | '/brands/$id'
@@ -329,6 +337,7 @@ export interface FileRouteTypes {
     | '/products/$id'
     | '/account'
     | '/orders'
+    | '/staff'
   id:
     | '__root__'
     | '/'
@@ -359,6 +368,7 @@ export interface FileRouteTypes {
     | '/products/$id'
     | '/account/'
     | '/orders/'
+    | '/staff/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -379,7 +389,7 @@ export interface RootRouteChildren {
   ProductsRoute: typeof ProductsRouteWithChildren
   SearchRoute: typeof SearchRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  StaffRoute: typeof StaffRoute
+  StaffRoute: typeof StaffRouteWithChildren
   SupportRoute: typeof SupportRoute
   OrdersIdRoute: typeof OrdersIdRoute
   PoliciesPrivacyRoute: typeof PoliciesPrivacyRoute
@@ -523,6 +533,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/staff/': {
+      id: '/staff/'
+      path: '/'
+      fullPath: '/staff/'
+      preLoaderRoute: typeof StaffIndexRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/orders/': {
       id: '/orders/'
       path: '/orders'
@@ -625,6 +642,16 @@ const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
   ProductsRouteChildren,
 )
 
+interface StaffRouteChildren {
+  StaffIndexRoute: typeof StaffIndexRoute
+}
+
+const StaffRouteChildren: StaffRouteChildren = {
+  StaffIndexRoute: StaffIndexRoute,
+}
+
+const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -643,7 +670,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsRoute: ProductsRouteWithChildren,
   SearchRoute: SearchRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  StaffRoute: StaffRoute,
+  StaffRoute: StaffRouteWithChildren,
   SupportRoute: SupportRoute,
   OrdersIdRoute: OrdersIdRoute,
   PoliciesPrivacyRoute: PoliciesPrivacyRoute,
