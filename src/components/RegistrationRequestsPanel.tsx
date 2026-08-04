@@ -138,29 +138,41 @@ export function RegistrationRequestsPanel({ enabled = true, kind }: { enabled?: 
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
                     {lang === "ar" ? "الرمز" : "OTP"}
                   </span>
-                  <span dir="ltr" className="font-mono text-2xl font-semibold tracking-[0.3em] text-primary">
-                    {r.otp_code}
-                  </span>
-                  <button
-                    onClick={() => copyOtp(r.otp_code)}
-                    className="rounded-full p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
-                    title={lang === "ar" ? "نسخ" : "Copy"}
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                  </button>
+                  {codes[r.id] ? (
+                    <>
+                      <span dir="ltr" className="font-mono text-2xl font-semibold tracking-[0.3em] text-primary">
+                        {codes[r.id]}
+                      </span>
+                      <button
+                        onClick={() => copyOtp(codes[r.id]!)}
+                        className="rounded-full p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
+                        title={lang === "ar" ? "نسخ" : "Copy"}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  ) : (
+                    <span className="max-w-[14rem] text-[11px] leading-snug text-muted-foreground">
+                      {lang === "ar"
+                        ? "الرمز محفوظ مشفّراً — اضغطي موافقة أو رمز جديد لعرضه مرة واحدة"
+                        : "Code is stored hashed — approve or regenerate to reveal it once"}
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <a
-                  href={whatsappLink(r.whatsapp, buildWaMsg(r))}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-success px-3 py-1.5 text-xs font-medium text-success-foreground"
-                >
-                  <MessageCircle className="h-3.5 w-3.5" />
-                  {lang === "ar" ? "إرسال عبر واتساب" : "Send via WhatsApp"}
-                </a>
+                {codes[r.id] && (
+                  <a
+                    href={whatsappLink(r.whatsapp, buildWaMsg(r, codes[r.id]!))}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-success px-3 py-1.5 text-xs font-medium text-success-foreground"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    {lang === "ar" ? "إرسال عبر واتساب" : "Send via WhatsApp"}
+                  </a>
+                )}
 
                 {r.status === "pending" && (
                   <button
