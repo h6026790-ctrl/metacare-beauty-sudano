@@ -22,6 +22,9 @@ export function RegistrationRequestsPanel({ enabled = true, kind }: { enabled?: 
   const { lang } = useI18n();
   const qc = useQueryClient();
   const [status, setStatus] = useState<Status>("pending");
+  // OTPs are stored hashed; the plaintext is returned once by approve/regenerate
+  // and kept in memory only for this session.
+  const [codes, setCodes] = useState<Record<string, string>>({});
 
   const listFn = useServerFn(listRegistrationRequests);
   const approveFn = useServerFn(approveRegistrationRequest);
@@ -38,8 +41,12 @@ export function RegistrationRequestsPanel({ enabled = true, kind }: { enabled?: 
   const refresh = () => qc.invalidateQueries({ queryKey: ["registration-requests"] });
 
   const approve = useMutation({
-    mutationFn: (id: string) => approveFn({ data: { requestId: id } }),
-    onSuccess: () => { toast.success(lang === "ar" ? "تمت الموافقة" : "Approved"); refresh(); },
+    mutationFn: async (id: string) => ({ id, res: (await approveFn({ data: { requestId: id } })) as any }),
+    onSuccess: ({ id, res }) => {
+      if (res?.otp) setCodes((c) => ({ ...c, [id]: res.otp }));
+      toast.success(lang === "ar" ? "تمت الموافقة — الرمز ظاهر الآن" : "Approved — code shown now");
+      refresh();
+    },
     onError: (e: any) => toast.error(e.message),
   });
   const reject = useMutation({
@@ -48,8 +55,12 @@ export function RegistrationRequestsPanel({ enabled = true, kind }: { enabled?: 
     onError: (e: any) => toast.error(e.message),
   });
   const regen = useMutation({
-    mutationFn: (id: string) => regenFn({ data: { requestId: id } }),
-    onSuccess: () => { toast.success(lang === "ar" ? "تم توليد رمز جديد" : "New code generated"); refresh(); },
+    mutationFn: async (id: string) => ({ id, res: (await regenFn({ data: { requestId: id } })) as any }),
+    onSuccess: ({ id, res }) => {
+      if (res?.otp) setCodes((c) => ({ ...c, [id]: res.otp }));
+      toast.success(lang === "ar" ? "تم توليد رمز جديد" : "New code generated");
+      refresh();
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -65,10 +76,11 @@ export function RegistrationRequestsPanel({ enabled = true, kind }: { enabled?: 
     try { await navigator.clipboard.writeText(otp); toast.success(lang === "ar" ? "تم النسخ" : "Copied"); } catch {}
   };
 
-  const buildWaMsg = (r: any) =>
+  const buildWaMsg = (r: any, otp: string) =>
     lang === "ar"
-      ? `مرحباً ${r.full_name}، رمز التحقق الخاص بكِ في ميتاكير: ${r.otp_code}\nأدخليه على الموقع لتفعيل حسابكِ.`
-      : `Hello ${r.full_name}, your Metacare verification code is: ${r.otp_code}\nEnter it on the website to activate your account.`;
+      ? `مرحباً ${r.full_name}، رمز التحقق الخاص بكِ في ميتاكير: ${otp}\nأدخليه على الموقع لتفعيل حسابكِ.`
+      : `Hello ${r.full_name}, your Metacare verification code is: ${otp}\nEnter it on the website to activate your account.`;
+
 
   return (
     <div className="space-y-4">
