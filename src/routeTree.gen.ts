@@ -34,6 +34,7 @@ import { Route as AccountIndexRouteImport } from './routes/account.index'
 import { Route as StaffResetsRouteImport } from './routes/staff.resets'
 import { Route as StaffRegistrationsRouteImport } from './routes/staff.registrations'
 import { Route as StaffOrdersRouteImport } from './routes/staff.orders'
+import { Route as StaffNotificationsRouteImport } from './routes/staff.notifications'
 import { Route as StaffCustomersRouteImport } from './routes/staff.customers'
 import { Route as ProductsIdRouteImport } from './routes/products.$id'
 import { Route as PoliciesTermsRouteImport } from './routes/policies.terms'
@@ -168,6 +169,11 @@ const StaffOrdersRoute = StaffOrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => StaffRoute,
 } as any)
+const StaffNotificationsRoute = StaffNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => StaffRoute,
+} as any)
 const StaffCustomersRoute = StaffCustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
@@ -237,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/policies/terms': typeof PoliciesTermsRoute
   '/products/$id': typeof ProductsIdRoute
   '/staff/customers': typeof StaffCustomersRoute
+  '/staff/notifications': typeof StaffNotificationsRoute
   '/staff/orders': typeof StaffOrdersRoute
   '/staff/registrations': typeof StaffRegistrationsRoute
   '/staff/resets': typeof StaffResetsRoute
@@ -270,6 +277,7 @@ export interface FileRoutesByTo {
   '/policies/terms': typeof PoliciesTermsRoute
   '/products/$id': typeof ProductsIdRoute
   '/staff/customers': typeof StaffCustomersRoute
+  '/staff/notifications': typeof StaffNotificationsRoute
   '/staff/orders': typeof StaffOrdersRoute
   '/staff/registrations': typeof StaffRegistrationsRoute
   '/staff/resets': typeof StaffResetsRoute
@@ -306,6 +314,7 @@ export interface FileRoutesById {
   '/policies/terms': typeof PoliciesTermsRoute
   '/products/$id': typeof ProductsIdRoute
   '/staff/customers': typeof StaffCustomersRoute
+  '/staff/notifications': typeof StaffNotificationsRoute
   '/staff/orders': typeof StaffOrdersRoute
   '/staff/registrations': typeof StaffRegistrationsRoute
   '/staff/resets': typeof StaffResetsRoute
@@ -343,6 +352,7 @@ export interface FileRouteTypes {
     | '/policies/terms'
     | '/products/$id'
     | '/staff/customers'
+    | '/staff/notifications'
     | '/staff/orders'
     | '/staff/registrations'
     | '/staff/resets'
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
     | '/policies/terms'
     | '/products/$id'
     | '/staff/customers'
+    | '/staff/notifications'
     | '/staff/orders'
     | '/staff/registrations'
     | '/staff/resets'
@@ -411,6 +422,7 @@ export interface FileRouteTypes {
     | '/policies/terms'
     | '/products/$id'
     | '/staff/customers'
+    | '/staff/notifications'
     | '/staff/orders'
     | '/staff/registrations'
     | '/staff/resets'
@@ -623,6 +635,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffOrdersRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/staff/notifications': {
+      id: '/staff/notifications'
+      path: '/notifications'
+      fullPath: '/staff/notifications'
+      preLoaderRoute: typeof StaffNotificationsRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/staff/customers': {
       id: '/staff/customers'
       path: '/customers'
@@ -720,6 +739,7 @@ const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
 
 interface StaffRouteChildren {
   StaffCustomersRoute: typeof StaffCustomersRoute
+  StaffNotificationsRoute: typeof StaffNotificationsRoute
   StaffOrdersRoute: typeof StaffOrdersRoute
   StaffRegistrationsRoute: typeof StaffRegistrationsRoute
   StaffResetsRoute: typeof StaffResetsRoute
@@ -728,6 +748,7 @@ interface StaffRouteChildren {
 
 const StaffRouteChildren: StaffRouteChildren = {
   StaffCustomersRoute: StaffCustomersRoute,
+  StaffNotificationsRoute: StaffNotificationsRoute,
   StaffOrdersRoute: StaffOrdersRoute,
   StaffRegistrationsRoute: StaffRegistrationsRoute,
   StaffResetsRoute: StaffResetsRoute,
