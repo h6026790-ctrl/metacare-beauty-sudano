@@ -1,7 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { useCart, useWishlist } from "@/lib/api/queries";
+import { useCart, useWishlist, useMyOrders } from "@/lib/api/queries";
+import { buildNotifications } from "@/lib/notifications";
+import { useReadNotifications } from "@/lib/customer-local";
 import { Logo } from "@/components/brand/Logo";
 import { Heart, Menu, Search, ShoppingBag, User, Globe, UserPlus, Bell, Package, LifeBuoy } from "lucide-react";
 import { useState } from "react";
@@ -112,6 +114,16 @@ export function Header() {
           </button>
           {user && (
             <>
+              <Link to="/notifications" className="relative hidden h-10 w-10 place-items-center rounded-full hover:bg-muted md:grid" aria-label={t.customer.notifications}>
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -end-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-medium text-accent-foreground">{unreadCount}</span>
+                )}
+              </Link>
+              <Link to="/orders" className="hidden h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-foreground/80 hover:bg-muted lg:inline-flex" aria-label={t.account.orders}>
+                <Package className="h-4 w-4" />
+                {t.account.orders}
+              </Link>
               <Link to="/account/wishlist" className="relative grid h-10 w-10 place-items-center rounded-full hover:bg-muted" aria-label="wishlist">
                 <Heart className="h-5 w-5" />
                 {wishCount > 0 && (
