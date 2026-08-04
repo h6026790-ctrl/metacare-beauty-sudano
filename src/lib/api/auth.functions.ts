@@ -167,7 +167,7 @@ export const submitPasswordResetRequest = createServerFn({ method: "POST" })
         full_name: (existing.user_metadata as any)?.full_name || "—",
         phone,
         whatsapp: (existing.user_metadata as any)?.whatsapp || phone,
-        otp_code: otp,
+        otp_code: hashOtp(otp),
         password_hash: hashPassword(data.password),
         status: "pending",
         request_type: "reset",
