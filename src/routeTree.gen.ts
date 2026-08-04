@@ -36,6 +36,7 @@ import { Route as StaffRegistrationsRouteImport } from './routes/staff.registrat
 import { Route as StaffOrdersRouteImport } from './routes/staff.orders'
 import { Route as StaffNotificationsRouteImport } from './routes/staff.notifications'
 import { Route as StaffCustomersRouteImport } from './routes/staff.customers'
+import { Route as StaffActivityRouteImport } from './routes/staff.activity'
 import { Route as ProductsIdRouteImport } from './routes/products.$id'
 import { Route as PoliciesTermsRouteImport } from './routes/policies.terms'
 import { Route as PoliciesReturnsRouteImport } from './routes/policies.returns'
@@ -179,6 +180,11 @@ const StaffCustomersRoute = StaffCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => StaffRoute,
 } as any)
+const StaffActivityRoute = StaffActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => StaffRoute,
+} as any)
 const ProductsIdRoute = ProductsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -242,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/policies/returns': typeof PoliciesReturnsRoute
   '/policies/terms': typeof PoliciesTermsRoute
   '/products/$id': typeof ProductsIdRoute
+  '/staff/activity': typeof StaffActivityRoute
   '/staff/customers': typeof StaffCustomersRoute
   '/staff/notifications': typeof StaffNotificationsRoute
   '/staff/orders': typeof StaffOrdersRoute
@@ -276,6 +283,7 @@ export interface FileRoutesByTo {
   '/policies/returns': typeof PoliciesReturnsRoute
   '/policies/terms': typeof PoliciesTermsRoute
   '/products/$id': typeof ProductsIdRoute
+  '/staff/activity': typeof StaffActivityRoute
   '/staff/customers': typeof StaffCustomersRoute
   '/staff/notifications': typeof StaffNotificationsRoute
   '/staff/orders': typeof StaffOrdersRoute
@@ -313,6 +321,7 @@ export interface FileRoutesById {
   '/policies/returns': typeof PoliciesReturnsRoute
   '/policies/terms': typeof PoliciesTermsRoute
   '/products/$id': typeof ProductsIdRoute
+  '/staff/activity': typeof StaffActivityRoute
   '/staff/customers': typeof StaffCustomersRoute
   '/staff/notifications': typeof StaffNotificationsRoute
   '/staff/orders': typeof StaffOrdersRoute
@@ -351,6 +360,7 @@ export interface FileRouteTypes {
     | '/policies/returns'
     | '/policies/terms'
     | '/products/$id'
+    | '/staff/activity'
     | '/staff/customers'
     | '/staff/notifications'
     | '/staff/orders'
@@ -385,6 +395,7 @@ export interface FileRouteTypes {
     | '/policies/returns'
     | '/policies/terms'
     | '/products/$id'
+    | '/staff/activity'
     | '/staff/customers'
     | '/staff/notifications'
     | '/staff/orders'
@@ -421,6 +432,7 @@ export interface FileRouteTypes {
     | '/policies/returns'
     | '/policies/terms'
     | '/products/$id'
+    | '/staff/activity'
     | '/staff/customers'
     | '/staff/notifications'
     | '/staff/orders'
@@ -649,6 +661,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffCustomersRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/staff/activity': {
+      id: '/staff/activity'
+      path: '/activity'
+      fullPath: '/staff/activity'
+      preLoaderRoute: typeof StaffActivityRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/products/$id': {
       id: '/products/$id'
       path: '/$id'
@@ -738,6 +757,7 @@ const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
 )
 
 interface StaffRouteChildren {
+  StaffActivityRoute: typeof StaffActivityRoute
   StaffCustomersRoute: typeof StaffCustomersRoute
   StaffNotificationsRoute: typeof StaffNotificationsRoute
   StaffOrdersRoute: typeof StaffOrdersRoute
@@ -747,6 +767,7 @@ interface StaffRouteChildren {
 }
 
 const StaffRouteChildren: StaffRouteChildren = {
+  StaffActivityRoute: StaffActivityRoute,
   StaffCustomersRoute: StaffCustomersRoute,
   StaffNotificationsRoute: StaffNotificationsRoute,
   StaffOrdersRoute: StaffOrdersRoute,
