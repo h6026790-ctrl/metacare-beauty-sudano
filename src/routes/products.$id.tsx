@@ -8,6 +8,8 @@ import { ProductCard } from "@/components/ProductCard";
 import { Heart, ShieldCheck, Truck, MessageCircle, Share2, Lock, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
+import { useRecentlyViewed } from "@/lib/customer-local";
 
 export const Route = createFileRoute("/products/$id")({
   head: ({ params }) => ({
@@ -30,6 +32,9 @@ function ProductDetail() {
   const { data: wishlist } = useWishlist();
   const addToCart = useAddToCart();
   const toggleWish = useToggleWishlist();
+  const { record } = useRecentlyViewed();
+
+  useEffect(() => { if (product?.slug) record(product.slug); }, [product?.slug, record]);
 
   if (isLoading) {
     return <AppShell><div className="mx-auto max-w-7xl p-10 text-center text-muted-foreground">…</div></AppShell>;
