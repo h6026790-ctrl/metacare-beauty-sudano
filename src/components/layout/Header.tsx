@@ -3,7 +3,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart, useWishlist } from "@/lib/api/queries";
 import { Logo } from "@/components/brand/Logo";
-import { Heart, Menu, Search, ShoppingBag, User, Globe, UserPlus } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, User, Globe, UserPlus, Bell, Package, LifeBuoy } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -58,8 +58,12 @@ export function Header() {
               <div className="my-3 h-px bg-border" />
               {user ? (
                 <>
-                  <Link to="/account" onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted">{t.nav.account}</Link>
-                  <Link to="/cart" onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted">{t.nav.cart}</Link>
+                  <Link to="/account" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><User className="h-4 w-4" />{t.nav.account}</Link>
+                  <Link to="/orders" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><Package className="h-4 w-4" />{t.account.orders}</Link>
+                  <Link to="/account/wishlist" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><Heart className="h-4 w-4" />{t.nav.wishlist}</Link>
+                  <Link to="/notifications" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><Bell className="h-4 w-4" />{t.customer.notifications}</Link>
+                  <Link to="/support" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><LifeBuoy className="h-4 w-4" />{t.customer.support}</Link>
+                  <Link to="/cart" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><ShoppingBag className="h-4 w-4" />{t.nav.cart}</Link>
                 </>
               ) : (
                 <>
