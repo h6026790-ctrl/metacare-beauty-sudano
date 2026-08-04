@@ -30,8 +30,14 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
 
+  const { data: orders = [] } = useMyOrders();
+  const { readIds } = useReadNotifications();
+
   const cartCount = (cart?.items ?? []).reduce((s: number, i: any) => s + (i.qty ?? 0), 0);
   const wishCount = wishlist?.length ?? 0;
+  const unreadCount = user
+    ? buildNotifications(orders as any[], lang).filter((n) => !readIds.includes(n.id)).length
+    : 0;
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
