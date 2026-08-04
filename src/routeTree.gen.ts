@@ -31,6 +31,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as StaffIndexRouteImport } from './routes/staff.index'
 import { Route as OrdersIndexRouteImport } from './routes/orders.index'
 import { Route as AccountIndexRouteImport } from './routes/account.index'
+import { Route as StaffResetsRouteImport } from './routes/staff.resets'
 import { Route as StaffRegistrationsRouteImport } from './routes/staff.registrations'
 import { Route as StaffOrdersRouteImport } from './routes/staff.orders'
 import { Route as ProductsIdRouteImport } from './routes/products.$id'
@@ -151,6 +152,11 @@ const AccountIndexRoute = AccountIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AccountRoute,
 } as any)
+const StaffResetsRoute = StaffResetsRouteImport.update({
+  id: '/resets',
+  path: '/resets',
+  getParentRoute: () => StaffRoute,
+} as any)
 const StaffRegistrationsRoute = StaffRegistrationsRouteImport.update({
   id: '/registrations',
   path: '/registrations',
@@ -226,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/products/$id': typeof ProductsIdRoute
   '/staff/orders': typeof StaffOrdersRoute
   '/staff/registrations': typeof StaffRegistrationsRoute
+  '/staff/resets': typeof StaffResetsRoute
   '/account/': typeof AccountIndexRoute
   '/orders/': typeof OrdersIndexRoute
   '/staff/': typeof StaffIndexRoute
@@ -257,6 +264,7 @@ export interface FileRoutesByTo {
   '/products/$id': typeof ProductsIdRoute
   '/staff/orders': typeof StaffOrdersRoute
   '/staff/registrations': typeof StaffRegistrationsRoute
+  '/staff/resets': typeof StaffResetsRoute
   '/account': typeof AccountIndexRoute
   '/orders': typeof OrdersIndexRoute
   '/staff': typeof StaffIndexRoute
@@ -291,6 +299,7 @@ export interface FileRoutesById {
   '/products/$id': typeof ProductsIdRoute
   '/staff/orders': typeof StaffOrdersRoute
   '/staff/registrations': typeof StaffRegistrationsRoute
+  '/staff/resets': typeof StaffResetsRoute
   '/account/': typeof AccountIndexRoute
   '/orders/': typeof OrdersIndexRoute
   '/staff/': typeof StaffIndexRoute
@@ -326,6 +335,7 @@ export interface FileRouteTypes {
     | '/products/$id'
     | '/staff/orders'
     | '/staff/registrations'
+    | '/staff/resets'
     | '/account/'
     | '/orders/'
     | '/staff/'
@@ -357,6 +367,7 @@ export interface FileRouteTypes {
     | '/products/$id'
     | '/staff/orders'
     | '/staff/registrations'
+    | '/staff/resets'
     | '/account'
     | '/orders'
     | '/staff'
@@ -390,6 +401,7 @@ export interface FileRouteTypes {
     | '/products/$id'
     | '/staff/orders'
     | '/staff/registrations'
+    | '/staff/resets'
     | '/account/'
     | '/orders/'
     | '/staff/'
@@ -578,6 +590,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountIndexRouteImport
       parentRoute: typeof AccountRoute
     }
+    '/staff/resets': {
+      id: '/staff/resets'
+      path: '/resets'
+      fullPath: '/staff/resets'
+      preLoaderRoute: typeof StaffResetsRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/staff/registrations': {
       id: '/staff/registrations'
       path: '/registrations'
@@ -683,12 +702,14 @@ const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
 interface StaffRouteChildren {
   StaffOrdersRoute: typeof StaffOrdersRoute
   StaffRegistrationsRoute: typeof StaffRegistrationsRoute
+  StaffResetsRoute: typeof StaffResetsRoute
   StaffIndexRoute: typeof StaffIndexRoute
 }
 
 const StaffRouteChildren: StaffRouteChildren = {
   StaffOrdersRoute: StaffOrdersRoute,
   StaffRegistrationsRoute: StaffRegistrationsRoute,
+  StaffResetsRoute: StaffResetsRoute,
   StaffIndexRoute: StaffIndexRoute,
 }
 
