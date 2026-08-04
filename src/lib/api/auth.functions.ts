@@ -210,14 +210,31 @@ export const verifyRegistrationOtp = createServerFn({ method: "POST" })
     if (req.status !== "approved") {
       throw new Error("بانتظار موافقة خدمة العملاء / Awaiting Customer Service approval");
     }
-    if (req.otp_code !== data.otp) throw new Error("رمز غير صحيح / Invalid code");
+    if (!verifyOtp(data.otp, req.otp_code)) {
+      const attempts = (req.failed_attempts ?? 0) + 1;
+      if (attempts >= MAX_OTP_ATTEMPTS) {
+        await supabaseAdmin
+          .from("registration_requests")
+          .update({ status: "expired", failed_attempts: attempts })
+          .eq("id", req.id);
+        throw new Error(
+          "تم تجاوز عدد المحاولات المسموح بها. يرجى تقديم طلب جديد. / Too many failed attempts. Please submit a new request.",
+        );
+      }
+      await supabaseAdmin
+        .from("registration_requests")
+        .update({ failed_attempts: attempts })
+        .eq("id", req.id);
+      throw new Error(
+        `رمز غير صحيح (${attempts}/${MAX_OTP_ATTEMPTS}) / Invalid code (${attempts}/${MAX_OTP_ATTEMPTS})`,
+      );
+    }
     if (!verifyPassword(data.password, req.password_hash)) {
       throw new Error("كلمة المرور لا تطابق التي أدخلتِها في الطلب / Password does not match the one submitted with the request");
     }
 
     const email = phoneToEmail(phone);
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    const existing = list?.users?.find((u: any) => u.email === email);
+    const existing = await findUserByEmail(supabaseAdmin, email);
 
     let userId: string | null = null;
     if (data.request_type === "register") {
