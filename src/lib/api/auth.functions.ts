@@ -316,13 +316,23 @@ export const approveRegistrationRequest = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ requestId: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertStaff(context);
+    // A fresh code is minted on approval and returned exactly once so the
+    // agent can forward it over WhatsApp. Only its hash is persisted.
+    const otp = rand6();
     const { error } = await context.supabase
       .from("registration_requests")
-      .update({ status: "approved", approved_at: new Date().toISOString(), approved_by: context.userId })
+      .update({
+        status: "approved",
+        approved_at: new Date().toISOString(),
+        approved_by: context.userId,
+        otp_code: hashOtp(otp),
+        failed_attempts: 0,
+        expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      })
       .eq("id", data.requestId)
       .eq("status", "pending");
     if (error) throw error;
-    return { ok: true };
+    return { ok: true, otp };
   });
 
 export const rejectRegistrationRequest = createServerFn({ method: "POST" })
