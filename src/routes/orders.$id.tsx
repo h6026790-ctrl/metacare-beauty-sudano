@@ -3,10 +3,10 @@ import { z } from "zod";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useI18n } from "@/i18n/I18nProvider";
-import { useMyOrder } from "@/lib/api/queries";
+import { useMyOrder, useAddToCart } from "@/lib/api/queries";
 import { OrderTimeline, OrderStatusBadge } from "@/components/OrderTimeline";
 import { formatDate, formatPrice, whatsappLink } from "@/lib/format";
-import { CheckCircle2, MessageCircle, QrCode } from "lucide-react";
+import { CheckCircle2, MessageCircle, QrCode, ChevronLeft, ChevronRight, RotateCcw, LifeBuoy } from "lucide-react";
 import { motion } from "framer-motion";
 import { METACARE_WHATSAPP } from "@/lib/config";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +23,17 @@ function OrderPage() {
   const { confirmed } = Route.useSearch();
   const { t, lang } = useI18n();
   const { data: order, refetch } = useMyOrder(id);
+  const addToCart = useAddToCart();
   const [token, setToken] = useState("");
+  const Chevron = lang === "ar" ? ChevronRight : ChevronLeft;
+
+  const reorder = async () => {
+    const ids = ((order as any)?.order_items ?? []).map((i: any) => i.product_id).filter(Boolean);
+    for (const pid of ids) {
+      try { await addToCart.mutateAsync(pid); } catch { /* skip unavailable */ }
+    }
+    if (ids.length) toast.success(t.customer.reordered);
+  };
 
   if (!order) {
     return (
@@ -54,6 +64,10 @@ function OrderPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-4xl px-4 py-10">
+        <Link to="/orders" className="mb-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+          <Chevron className="h-3.5 w-3.5" />{t.customer.ordersCenter}
+        </Link>
+
         {confirmed && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-6 overflow-hidden rounded-3xl gradient-hero p-8 text-primary-foreground shadow-elevated">
             <div className="flex items-center gap-3">
@@ -103,6 +117,18 @@ function OrderPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button onClick={reorder} className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-border bg-card px-5 text-sm font-medium text-foreground hover:bg-muted">
+                <RotateCcw className="h-4 w-4" />{t.customer.reorder}
+              </button>
+              <a href={waHref} target="_blank" rel="noreferrer" className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-success px-5 text-sm font-medium text-success-foreground hover:opacity-95">
+                <MessageCircle className="h-4 w-4" />{t.customer.contactSupport}
+              </a>
+              <Link to="/support" className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-border bg-card px-5 text-sm font-medium text-foreground hover:bg-muted">
+                <LifeBuoy className="h-4 w-4" />{t.customer.support}
+              </Link>
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-6 shadow-glass">
