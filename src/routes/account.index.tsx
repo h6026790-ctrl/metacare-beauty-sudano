@@ -38,7 +38,7 @@ export const Route = createFileRoute("/account/")({
 
 function AccountPage() {
   const { t, lang, setLang } = useI18n();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isStaff } = useAuth();
   const { data: profileData } = useMyProfile();
   const { data: orders = [] } = useMyOrders();
   const { data: wishlist = [] } = useWishlist();
@@ -66,6 +66,7 @@ function AccountPage() {
     else if (states[0] && !addr.state_id) setAddr((a) => ({ ...a, state_id: states[0].id }));
   }, [profile, defaultAddr, states]);
 
+  if (isStaff) return <CustomerOnlyNotice />;
   if (!user) {
     return (
       <AppShell>

@@ -31,7 +31,7 @@ const NOTES_KEY = "mc.cartNotes";
 
 function CartPage() {
   const { t, lang } = useI18n();
-  const { user } = useAuth();
+  const { user, isStaff } = useAuth();
   const { data, isLoading } = useCart();
   const setQty = useSetCartQty();
   const toggleWish = useToggleWishlist();
@@ -47,6 +47,7 @@ function CartPage() {
     try { window.localStorage.setItem(NOTES_KEY, v); } catch { /* noop */ }
   };
 
+  if (isStaff) return <CustomerOnlyNotice />;
   if (!user) {
     return (
       <AppShell>

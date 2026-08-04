@@ -27,12 +27,13 @@ export const Route = createFileRoute("/account/wishlist")({
 
 function WishlistPage() {
   const { t, lang } = useI18n();
-  const { user } = useAuth();
+  const { user, isStaff } = useAuth();
   const { data: wishlist = [], isLoading } = useWishlist();
   const toggleWish = useToggleWishlist();
   const addToCart = useAddToCart();
   const [q, setQ] = useState("");
 
+  if (isStaff) return <CustomerOnlyNotice />;
   if (!user) {
     return (
       <AppShell>

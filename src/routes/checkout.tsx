@@ -21,7 +21,7 @@ export const Route = createFileRoute("/checkout")({
 
 function CheckoutPage() {
   const { t, lang } = useI18n();
-  const { user } = useAuth();
+  const { user, isStaff } = useAuth();
   const { data: cart } = useCart();
   const { data: profile } = useMyProfile();
   const { data: tree = [] } = useStatesTree();
@@ -67,6 +67,7 @@ function CheckoutPage() {
   const subtotal = items.reduce((s, l) => s + Number(l.product?.price_sdg ?? 0) * l.qty, 0);
   const total = subtotal + (items.length ? deliveryFee : 0);
 
+  if (isStaff) return <CustomerOnlyNotice />;
   if (!user) {
     return (
       <AppShell>
