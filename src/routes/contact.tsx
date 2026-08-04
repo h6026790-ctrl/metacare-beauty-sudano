@@ -3,6 +3,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useI18n } from "@/i18n/I18nProvider";
 import { MessageCircle, Phone, Mail, Clock, MapPin } from "lucide-react";
+import { COMPANY, waDigits } from "@/lib/company";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/contact")({
   component: ContactPage,
 });
 
-const WA = "249900000000";
+const WA = waDigits();
 
 function ContactPage() {
   const { t, lang } = useI18n();
@@ -41,28 +42,28 @@ function ContactPage() {
             <div className="grid h-11 w-11 place-items-center rounded-xl bg-success text-success-foreground"><MessageCircle className="h-5 w-5" /></div>
             <p className="mt-3 font-display text-lg text-foreground">{t.contact.whatsapp}</p>
             <p className="mt-1 text-sm text-muted-foreground">{t.contact.whatsappSub}</p>
-            <p className="mt-2 text-sm font-medium text-primary" dir="ltr">+249 900 000 000</p>
+            <p className="mt-2 text-sm font-medium text-primary" dir="ltr">{COMPANY.whatsappDisplay}</p>
           </a>
           <div className="rounded-2xl border border-border bg-card p-5 shadow-glass">
             <div className="grid h-11 w-11 place-items-center rounded-xl bg-muted"><Phone className="h-5 w-5" /></div>
             <p className="mt-3 font-display text-lg text-foreground">{t.contact.phone}</p>
-            <p className="mt-2 text-sm font-medium text-foreground" dir="ltr">+249 900 000 000</p>
+            <p className="mt-2 text-sm font-medium text-foreground" dir="ltr">{COMPANY.phoneDisplay}</p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-5 shadow-glass">
             <div className="grid h-11 w-11 place-items-center rounded-xl bg-muted"><Mail className="h-5 w-5" /></div>
             <p className="mt-3 font-display text-lg text-foreground">{t.contact.email}</p>
-            <p className="mt-2 text-sm font-medium text-foreground">care@metacare.sd</p>
+            <p className="mt-2 text-sm font-medium text-foreground">{COMPANY.email}</p>
           </div>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-glass">
             <div className="flex items-center gap-3"><Clock className="h-5 w-5 text-primary" /><p className="font-display text-lg text-foreground">{t.contact.hours}</p></div>
-            <p className="mt-2 text-sm text-muted-foreground">{t.contact.hoursValue}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{COMPANY.hours[lang]}</p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-5 shadow-glass">
             <div className="flex items-center gap-3"><MapPin className="h-5 w-5 text-primary" /><p className="font-display text-lg text-foreground">{t.contact.address}</p></div>
-            <p className="mt-2 text-sm text-muted-foreground">{t.contact.addressValue}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{COMPANY.address[lang]}</p>
           </div>
         </div>
 
