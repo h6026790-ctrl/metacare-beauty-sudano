@@ -62,22 +62,35 @@ Password Resets.
    payments confirmed, registrations approved, OTPs generated, deliveries
    prepared), filtered to their user id.
 
-## Technical notes
+## Operational philosophy
 
-- New files: `src/routes/staff.tsx` becomes a layout route rendering
-  `StaffSidebar` + `<Outlet />`; leaves `staff.index.tsx`, `staff.orders.tsx`,
-  `staff.registrations.tsx`, `staff.resets.tsx`, `staff.customers.tsx`,
-  `staff.notifications.tsx`, `staff.activity.tsx`.
-- Presentation components under `src/components/staff/*`
-  (`StaffSidebar`, `OrderQueue`, `OrderDetailPanel`, `RequestList`, cards).
-- Data comes from the existing server functions only: `listStaffOrders`,
-  `listUnassignedOrders`, `claimOrder`, `updateOrderStatus`, `markOutForDelivery`,
-  `addOrderNote`, `listOrderNotes`, `adminListCustomers`, `adminListAuditLogs`,
-  and the registration/reset functions in `auth.functions.ts`.
-- Existing staff guard (`useAuth().isStaff`) moves to the layout route so every
-  center is gated once; queries keep their `enabled` guards.
-- Each leaf gets its own `head()` metadata; branding, tokens, typography, RTL
-  and the shadcn component library are unchanged.
+The Customer Service Workspace is the company's operational desk. Its purpose is
+to help employees process operational work as quickly as possible: review work,
+complete work, talk to customers, and move work to the next stage. It is not an
+administration, reporting, or configuration interface. Every screen reduces
+workload and navigation, and the first question the interface answers is
+"What requires my attention right now?"
+
+## Success criteria
+
+A Customer Service employee can:
+
+- Understand today's workload immediately after login.
+- Reach every pending task in one click.
+- Complete an order end-to-end without leaving the Orders Center.
+- Process registration requests without unnecessary navigation.
+- Process password reset requests efficiently.
+- Contact any customer directly from every operational screen.
+- Spend the majority of the workday inside one unified workspace.
+
+## Implementation approach
+
+Reuse the existing backend and existing server functions as-is; the
+implementation picks the most appropriate structure. No duplicated business
+logic and no parallel implementations — the workspace is a reorganized
+presentation layer over capabilities that already exist. The staff guard is
+applied once at the workspace level; branding, tokens, typography, RTL and the
+existing component library stay unchanged.
 
 ## Guarantees
 
