@@ -6,13 +6,31 @@ removed from `app_role` — only `admin`, `staff`, and `customer` exist.
 
 ## Public catalog & geography
 
-`states · cities · neighborhoods · brands · categories · products · product_images · inventory`
+`states · cities · neighborhoods · brands · categories · product_images`
 
 | Action | Anon | Customer | Staff | Admin |
 |---|---|---|---|---|
 | SELECT (active rows) | ✓ | ✓ | ✓ | ✓ |
-| SELECT inactive | — | — | products only | ✓ |
+| SELECT inactive | — | — | — | ✓ |
 | INSERT / UPDATE / DELETE | — | — | — | ✓ |
+
+Read policies are split into dedicated `TO anon` (plain predicate, no function
+call) and `TO authenticated` (role-aware) variants, so `anon` no longer needs
+`EXECUTE` on `has_role` / `is_staff_or_admin`. Those grants are revoked.
+
+## Products, pricing, inventory (hardened)
+
+- `products` — `anon` has **column-level** SELECT only (no `price_sdg`,
+  no `compare_at_sdg`); `authenticated` reads active rows, staff/admin read all.
+- `inventory` — SELECT restricted to staff/admin; `anon` has no grant at all.
+  Quantities are never exposed to visitors or customers.
+- `products.is_available` (boolean, maintained by trigger
+  `trg_sync_product_availability`) and generated `products.is_on_sale` carry the
+  only stock/discount signals the storefront needs.
+- Catalogue feeds (`security_invoker = on` views):
+  - `catalog_public` → `anon` + `authenticated`: no prices, no quantities.
+  - `catalog_authenticated` → `authenticated` only: prices included.
+
 
 ## Identity
 
