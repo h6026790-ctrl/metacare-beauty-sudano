@@ -803,6 +803,7 @@ export type Database = {
           approved_by: string | null
           created_at: string
           expires_at: string
+          failed_attempts: number
           full_name: string
           id: string
           notes: string | null
@@ -827,6 +828,7 @@ export type Database = {
           approved_by?: string | null
           created_at?: string
           expires_at?: string
+          failed_attempts?: number
           full_name: string
           id?: string
           notes?: string | null
@@ -851,6 +853,7 @@ export type Database = {
           approved_by?: string | null
           created_at?: string
           expires_at?: string
+          failed_attempts?: number
           full_name?: string
           id?: string
           notes?: string | null
