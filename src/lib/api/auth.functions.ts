@@ -92,8 +92,7 @@ export const submitRegistrationRequest = createServerFn({ method: "POST" })
 
     // Refuse if a verified auth user already exists for this phone.
     const email = phoneToEmail(phone);
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    const existing = list?.users?.find((u: any) => u.email === email);
+    const existing = await findUserByEmail(supabaseAdmin, email);
     if (existing) {
       throw new Error(
         "يوجد حساب مسجل بهذا الرقم. استخدمي تسجيل الدخول أو استعادة كلمة المرور. / An account already exists for this phone. Please sign in or use password reset.",
