@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { CustomerOnlyNotice } from "@/components/customer/CustomerOnlyNotice";
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -26,12 +27,13 @@ export const Route = createFileRoute("/account/wishlist")({
 
 function WishlistPage() {
   const { t, lang } = useI18n();
-  const { user } = useAuth();
+  const { user, isStaff } = useAuth();
   const { data: wishlist = [], isLoading } = useWishlist();
   const toggleWish = useToggleWishlist();
   const addToCart = useAddToCart();
   const [q, setQ] = useState("");
 
+  if (isStaff) return <CustomerOnlyNotice />;
   if (!user) {
     return (
       <AppShell>

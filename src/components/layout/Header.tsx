@@ -5,7 +5,7 @@ import { useCart, useWishlist, useMyOrders } from "@/lib/api/queries";
 import { buildNotifications } from "@/lib/notifications";
 import { useReadNotifications } from "@/lib/customer-local";
 import { Logo } from "@/components/brand/Logo";
-import { Heart, Menu, Search, ShoppingBag, User, Globe, UserPlus, Bell, Package, LifeBuoy } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, User, Globe, UserPlus, Bell, Package, LifeBuoy, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,9 @@ const NAV = [
 
 export function Header() {
   const { t, lang, setLang } = useI18n();
-  const { user } = useAuth();
+  const { user, isCustomer, isAdmin, isStaff } = useAuth();
+  const staffLike = !!user && isStaff;
+  const workspaceTo = isAdmin ? "/admin" : "/staff";
   const { data: cart } = useCart();
   const { data: wishlist } = useWishlist();
   const navigate = useNavigate();
@@ -35,7 +37,7 @@ export function Header() {
 
   const cartCount = (cart?.items ?? []).reduce((s: number, i: any) => s + (i.qty ?? 0), 0);
   const wishCount = wishlist?.length ?? 0;
-  const unreadCount = user
+  const unreadCount = isCustomer
     ? buildNotifications(orders as any[], lang).filter((n) => !readIds.includes(n.id)).length
     : 0;
 
@@ -64,7 +66,12 @@ export function Header() {
               <Link to="/faq" onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium text-foreground hover:bg-muted">{t.nav.faq}</Link>
               <Link to="/delivery" onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium text-foreground hover:bg-muted">{t.nav.delivery}</Link>
               <div className="my-3 h-px bg-border" />
-              {user ? (
+              {staffLike ? (
+                <Link to={workspaceTo} onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl gradient-brand px-3 py-3 text-sm font-medium text-primary-foreground shadow-glow">
+                  <LayoutDashboard className="h-4 w-4" />
+                  {isAdmin ? (lang === "ar" ? "لوحة الإدارة" : "Admin workspace") : (lang === "ar" ? "مكتب خدمة العملاء" : "Service desk")}
+                </Link>
+              ) : user ? (
                 <>
                   <Link to="/account" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><User className="h-4 w-4" />{t.nav.account}</Link>
                   <Link to="/orders" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><Package className="h-4 w-4" />{t.account.orders}</Link>
@@ -118,7 +125,7 @@ export function Header() {
             <Globe className="h-4 w-4" />
             {lang === "ar" ? "EN" : "ع"}
           </button>
-          {user && (
+          {isCustomer && (
             <>
               <Link to="/notifications" className="relative hidden h-10 w-10 place-items-center rounded-full hover:bg-muted md:grid" aria-label={t.customer.notifications}>
                 <Bell className="h-5 w-5" />
@@ -144,7 +151,12 @@ export function Header() {
               </Link>
             </>
           )}
-          {user ? (
+          {staffLike ? (
+            <Link to={workspaceTo} className="ms-1 inline-flex h-10 items-center gap-2 rounded-full gradient-brand px-4 text-sm font-medium text-primary-foreground shadow-glow hover:opacity-95">
+              <LayoutDashboard className="h-4 w-4" />
+              {isAdmin ? (lang === "ar" ? "لوحة الإدارة" : "Admin") : (lang === "ar" ? "مكتب الخدمة" : "Service desk")}
+            </Link>
+          ) : user ? (
             <Link to="/account" className={cn("ms-1 hidden h-10 items-center gap-2 rounded-full bg-muted px-4 text-sm font-medium text-foreground hover:bg-muted/80 md:flex")}>
               <User className="h-4 w-4" />
               {t.nav.account}

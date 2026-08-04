@@ -1,12 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/i18n/I18nProvider";
-import { useAuth } from "@/hooks/useAuth";
 import { Logo } from "@/components/brand/Logo";
 import { Instagram, Facebook, MessageCircle } from "lucide-react";
 
 export function Footer() {
   const { t, lang } = useI18n();
-  const { user } = useAuth();
   return (
     <footer className="mt-20 border-t border-border bg-card">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 md:grid-cols-2 lg:grid-cols-5">
@@ -22,11 +20,6 @@ export function Footer() {
             <a className="grid h-10 w-10 place-items-center rounded-full bg-muted text-foreground hover:bg-muted/70" href="#" aria-label="Facebook"><Facebook className="h-4 w-4" /></a>
             <a className="grid h-10 w-10 place-items-center rounded-full bg-success text-success-foreground hover:opacity-90" href="https://wa.me/249900000000" target="_blank" rel="noreferrer" aria-label="WhatsApp"><MessageCircle className="h-4 w-4" /></a>
           </div>
-          {!user && (
-            <Link to="/auth" className="mt-4 inline-flex rounded-full gradient-brand px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-glow">
-              {t.footer.createAccount}
-            </Link>
-          )}
         </div>
         <FooterCol title={t.footer.shop} links={[
           { label: t.nav.categories, to: "/categories" },
