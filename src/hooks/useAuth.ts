@@ -38,6 +38,8 @@ export function useAuth() {
     hasRole: (r: AppRole) => roles.includes(r),
     isStaff: roles.includes("staff") || roles.includes("admin"),
     isAdmin: roles.includes("admin"),
+    // Customer surfaces are for pure customer accounts only.
+    isCustomer: roles.includes("customer") && !roles.includes("staff") && !roles.includes("admin"),
     signOut: () => supabase.auth.signOut(),
   };
 }
