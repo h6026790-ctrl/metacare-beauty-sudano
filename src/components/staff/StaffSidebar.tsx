@@ -9,7 +9,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 
 export type StaffBadges = Partial<Record<string, number>>;
 
-const items = [
+const items: { key: string; url: string; exact?: boolean; icon: typeof LayoutDashboard; ar: string; en: string }[] = [
   { key: "dashboard", url: "/staff", exact: true, icon: LayoutDashboard, ar: "لوحة العمل", en: "Dashboard" },
   { key: "orders", url: "/staff/orders", icon: ClipboardList, ar: "الطلبات", en: "Orders" },
   { key: "registrations", url: "/staff/registrations", icon: UserPlus, ar: "طلبات التسجيل", en: "Registrations" },
