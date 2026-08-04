@@ -33,12 +33,47 @@ export const updateMyProfile = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => profileSchema.parse(d))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+
+    const { normalizePhone, phoneToEmail } = await import("@/lib/api/phone.server");
+    const newPhone = normalizePhone(data.phone);
+    const newWhatsapp = normalizePhone(data.whatsapp);
+
+    const { data: current } = await supabase.from("profiles").select("phone").eq("id", userId).maybeSingle();
+    const currentPhone = current?.phone ? normalizePhone(current.phone) : null;
+
+    // Phone is the login identity: keep auth.users in sync with the profile.
+    if (currentPhone !== newPhone) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const email = phoneToEmail(newPhone);
+
+      const perPage = 200;
+      let taken: any = null;
+      for (let page = 1; page <= 100; page++) {
+        const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+        if (listErr) throw listErr;
+        const users = list?.users ?? [];
+        const hit = users.find((u: any) => u.email === email);
+        if (hit) { taken = hit; break; }
+        if (users.length < perPage) break;
+      }
+      if (taken && taken.id !== userId) {
+        throw new Error("هذا الرقم مستخدم في حساب آخر / This phone number is already used by another account");
+      }
+
+      const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+        email,
+        email_confirm: true,
+        user_metadata: { full_name: data.full_name, phone: newPhone, whatsapp: newWhatsapp },
+      });
+      if (authErr) throw authErr;
+    }
+
     const { error } = await supabase
       .from("profiles")
-      .update({ full_name: data.full_name, phone: data.phone, whatsapp: data.whatsapp })
+      .update({ full_name: data.full_name, phone: newPhone, whatsapp: newWhatsapp })
       .eq("id", userId);
     if (error) throw error;
-    return { ok: true };
+    return { ok: true, phoneChanged: currentPhone !== newPhone };
   });
 
 const addressSchema = z.object({
