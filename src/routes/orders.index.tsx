@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { CustomerOnlyNotice } from "@/components/customer/CustomerOnlyNotice";
 import { z } from "zod";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
