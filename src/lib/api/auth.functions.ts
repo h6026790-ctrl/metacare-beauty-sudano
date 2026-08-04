@@ -145,8 +145,7 @@ export const submitPasswordResetRequest = createServerFn({ method: "POST" })
     const email = phoneToEmail(phone);
 
     // Must reference an existing user.
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    const existing = list?.users?.find((u: any) => u.email === email);
+    const existing = await findUserByEmail(supabaseAdmin, email);
     if (!existing) {
       throw new Error(
         "لا يوجد حساب بهذا الرقم. / No account exists for this phone number.",
