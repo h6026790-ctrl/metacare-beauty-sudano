@@ -31,6 +31,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as StaffIndexRouteImport } from './routes/staff.index'
 import { Route as OrdersIndexRouteImport } from './routes/orders.index'
 import { Route as AccountIndexRouteImport } from './routes/account.index'
+import { Route as StaffOrdersRouteImport } from './routes/staff.orders'
 import { Route as ProductsIdRouteImport } from './routes/products.$id'
 import { Route as PoliciesTermsRouteImport } from './routes/policies.terms'
 import { Route as PoliciesReturnsRouteImport } from './routes/policies.returns'
@@ -149,6 +150,11 @@ const AccountIndexRoute = AccountIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AccountRoute,
 } as any)
+const StaffOrdersRoute = StaffOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => StaffRoute,
+} as any)
 const ProductsIdRoute = ProductsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/policies/returns': typeof PoliciesReturnsRoute
   '/policies/terms': typeof PoliciesTermsRoute
   '/products/$id': typeof ProductsIdRoute
+  '/staff/orders': typeof StaffOrdersRoute
   '/account/': typeof AccountIndexRoute
   '/orders/': typeof OrdersIndexRoute
   '/staff/': typeof StaffIndexRoute
@@ -241,6 +248,7 @@ export interface FileRoutesByTo {
   '/policies/returns': typeof PoliciesReturnsRoute
   '/policies/terms': typeof PoliciesTermsRoute
   '/products/$id': typeof ProductsIdRoute
+  '/staff/orders': typeof StaffOrdersRoute
   '/account': typeof AccountIndexRoute
   '/orders': typeof OrdersIndexRoute
   '/staff': typeof StaffIndexRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   '/policies/returns': typeof PoliciesReturnsRoute
   '/policies/terms': typeof PoliciesTermsRoute
   '/products/$id': typeof ProductsIdRoute
+  '/staff/orders': typeof StaffOrdersRoute
   '/account/': typeof AccountIndexRoute
   '/orders/': typeof OrdersIndexRoute
   '/staff/': typeof StaffIndexRoute
@@ -306,6 +315,7 @@ export interface FileRouteTypes {
     | '/policies/returns'
     | '/policies/terms'
     | '/products/$id'
+    | '/staff/orders'
     | '/account/'
     | '/orders/'
     | '/staff/'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/policies/returns'
     | '/policies/terms'
     | '/products/$id'
+    | '/staff/orders'
     | '/account'
     | '/orders'
     | '/staff'
@@ -366,6 +377,7 @@ export interface FileRouteTypes {
     | '/policies/returns'
     | '/policies/terms'
     | '/products/$id'
+    | '/staff/orders'
     | '/account/'
     | '/orders/'
     | '/staff/'
@@ -554,6 +566,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountIndexRouteImport
       parentRoute: typeof AccountRoute
     }
+    '/staff/orders': {
+      id: '/staff/orders'
+      path: '/orders'
+      fullPath: '/staff/orders'
+      preLoaderRoute: typeof StaffOrdersRouteImport
+      parentRoute: typeof StaffRoute
+    }
     '/products/$id': {
       id: '/products/$id'
       path: '/$id'
@@ -643,10 +662,12 @@ const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
 )
 
 interface StaffRouteChildren {
+  StaffOrdersRoute: typeof StaffOrdersRoute
   StaffIndexRoute: typeof StaffIndexRoute
 }
 
 const StaffRouteChildren: StaffRouteChildren = {
+  StaffOrdersRoute: StaffOrdersRoute,
   StaffIndexRoute: StaffIndexRoute,
 }
 
