@@ -120,7 +120,7 @@ export const submitRegistrationRequest = createServerFn({ method: "POST" })
         address_state_id: data.state_id ?? null,
         address_city_id: data.city_id ?? null,
         address_neighborhood_id: data.neighborhood_id ?? null,
-        otp_code: otp,
+        otp_code: hashOtp(otp),
         password_hash: hashPassword(data.password),
         status: "pending",
         request_type: "register",
