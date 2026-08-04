@@ -49,6 +49,26 @@ function verifyPassword(pw: string, stored: string | null | undefined): boolean 
     return actual.length === expected.length && timingSafeEqual(actual, expected);
   } catch { return false; }
 }
+// OTP codes are stored hashed with the same scheme as passwords.
+const hashOtp = hashPassword;
+const verifyOtp = verifyPassword;
+
+const MAX_OTP_ATTEMPTS = 5;
+
+// Paginated lookup: admin.listUsers caps each page, so walk pages until found.
+async function findUserByEmail(supabaseAdmin: any, email: string) {
+  const perPage = 200;
+  for (let page = 1; page <= 100; page++) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    const users = data?.users ?? [];
+    const hit = users.find((u: any) => u.email === email);
+    if (hit) return hit;
+    if (users.length < perPage) return null;
+  }
+  return null;
+}
+
 
 // ---------- 1) PUBLIC: submit registration ----------
 const submitSchema = z.object({
