@@ -18,7 +18,7 @@ import { whatsappLink } from "@/lib/format";
 const STATUSES = ["pending", "approved", "verified", "rejected", "expired", "all"] as const;
 type Status = typeof STATUSES[number];
 
-export function RegistrationRequestsPanel({ enabled = true }: { enabled?: boolean }) {
+export function RegistrationRequestsPanel({ enabled = true, kind }: { enabled?: boolean; kind?: "registration" | "reset" }) {
   const { lang } = useI18n();
   const qc = useQueryClient();
   const [status, setStatus] = useState<Status>("pending");
@@ -53,7 +53,13 @@ export function RegistrationRequestsPanel({ enabled = true }: { enabled?: boolea
     onError: (e: any) => toast.error(e.message),
   });
 
-  const rows = (q.data ?? []) as any[];
+  const allRows = (q.data ?? []) as any[];
+  const rows = kind
+    ? allRows.filter((r) => {
+        const isReset = String(r?.request_type ?? "").includes("reset");
+        return kind === "reset" ? isReset : !isReset;
+      })
+    : allRows;
 
   const copyOtp = async (otp: string) => {
     try { await navigator.clipboard.writeText(otp); toast.success(lang === "ar" ? "تم النسخ" : "Copied"); } catch {}
