@@ -83,6 +83,8 @@ export const toggleWishlist = createServerFn({ method: "POST" })
   });
 
 // ---------- CHECKOUT ----------
+const DEFAULT_DELIVERY_SDG = 3000;
+
 const checkoutSchema = z.object({
   contact_name: z.string().min(1).max(120),
   contact_phone: z.string().min(6).max(30),
@@ -92,7 +94,8 @@ const checkoutSchema = z.object({
   address_neighborhood: z.string().optional(),
   address_street: z.string().min(1),
   address_notes: z.string().max(500).optional(),
-  delivery_sdg: z.number().nonnegative().default(3000),
+  // Server resolves the fee from this id; any client-sent amount is ignored.
+  neighborhood_id: z.string().uuid().optional().nullable(),
 });
 
 export const placeOrder = createServerFn({ method: "POST" })
@@ -107,20 +110,31 @@ export const placeOrder = createServerFn({ method: "POST" })
       .eq("cart_id", cartId);
     if (!items || items.length === 0) throw new Error("Cart is empty");
 
+    // Authoritative delivery fee: read from the neighbourhood row server-side.
+    let deliveryFee = DEFAULT_DELIVERY_SDG;
+    if (data.neighborhood_id) {
+      const { data: hood } = await supabase
+        .from("neighborhoods")
+        .select("delivery_fee_sdg, is_active")
+        .eq("id", data.neighborhood_id)
+        .maybeSingle();
+      if (hood?.is_active) deliveryFee = Number(hood.delivery_fee_sdg);
+    }
+
     let subtotal = 0;
     const orderItems = items.map((i: any) => {
       const price = Number(i.product.price_sdg);
       subtotal += price * i.qty;
       return { product_id: i.product.id, name_snapshot: i.product.name_en, qty: i.qty, price_sdg: price };
     });
-    const total = subtotal + data.delivery_sdg;
+    const total = subtotal + deliveryFee;
 
     const { data: order, error: orderErr } = await supabase
       .from("orders")
       .insert({
         profile_id: userId,
         subtotal_sdg: subtotal,
-        delivery_sdg: data.delivery_sdg,
+        delivery_sdg: deliveryFee,
         total_sdg: total,
         contact_name: data.contact_name,
         contact_phone: data.contact_phone,
@@ -164,6 +178,7 @@ export const getMyOrder = createServerFn({ method: "GET" })
       .from("orders")
       .select("*, order_items(*), order_status_history(*)")
       .eq("id", data.id)
+      .eq("profile_id", context.userId)
       .maybeSingle();
     return order;
   });

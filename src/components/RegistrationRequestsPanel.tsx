@@ -22,6 +22,9 @@ export function RegistrationRequestsPanel({ enabled = true, kind }: { enabled?: 
   const { lang } = useI18n();
   const qc = useQueryClient();
   const [status, setStatus] = useState<Status>("pending");
+  // OTPs are stored hashed; the plaintext is returned once by approve/regenerate
+  // and kept in memory only for this session.
+  const [codes, setCodes] = useState<Record<string, string>>({});
 
   const listFn = useServerFn(listRegistrationRequests);
   const approveFn = useServerFn(approveRegistrationRequest);
@@ -38,8 +41,12 @@ export function RegistrationRequestsPanel({ enabled = true, kind }: { enabled?: 
   const refresh = () => qc.invalidateQueries({ queryKey: ["registration-requests"] });
 
   const approve = useMutation({
-    mutationFn: (id: string) => approveFn({ data: { requestId: id } }),
-    onSuccess: () => { toast.success(lang === "ar" ? "تمت الموافقة" : "Approved"); refresh(); },
+    mutationFn: async (id: string) => ({ id, res: (await approveFn({ data: { requestId: id } })) as any }),
+    onSuccess: ({ id, res }) => {
+      if (res?.otp) setCodes((c) => ({ ...c, [id]: res.otp }));
+      toast.success(lang === "ar" ? "تمت الموافقة — الرمز ظاهر الآن" : "Approved — code shown now");
+      refresh();
+    },
     onError: (e: any) => toast.error(e.message),
   });
   const reject = useMutation({
@@ -48,8 +55,12 @@ export function RegistrationRequestsPanel({ enabled = true, kind }: { enabled?: 
     onError: (e: any) => toast.error(e.message),
   });
   const regen = useMutation({
-    mutationFn: (id: string) => regenFn({ data: { requestId: id } }),
-    onSuccess: () => { toast.success(lang === "ar" ? "تم توليد رمز جديد" : "New code generated"); refresh(); },
+    mutationFn: async (id: string) => ({ id, res: (await regenFn({ data: { requestId: id } })) as any }),
+    onSuccess: ({ id, res }) => {
+      if (res?.otp) setCodes((c) => ({ ...c, [id]: res.otp }));
+      toast.success(lang === "ar" ? "تم توليد رمز جديد" : "New code generated");
+      refresh();
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -65,10 +76,11 @@ export function RegistrationRequestsPanel({ enabled = true, kind }: { enabled?: 
     try { await navigator.clipboard.writeText(otp); toast.success(lang === "ar" ? "تم النسخ" : "Copied"); } catch {}
   };
 
-  const buildWaMsg = (r: any) =>
+  const buildWaMsg = (r: any, otp: string) =>
     lang === "ar"
-      ? `مرحباً ${r.full_name}، رمز التحقق الخاص بكِ في ميتاكير: ${r.otp_code}\nأدخليه على الموقع لتفعيل حسابكِ.`
-      : `Hello ${r.full_name}, your Metacare verification code is: ${r.otp_code}\nEnter it on the website to activate your account.`;
+      ? `مرحباً ${r.full_name}، رمز التحقق الخاص بكِ في ميتاكير: ${otp}\nأدخليه على الموقع لتفعيل حسابكِ.`
+      : `Hello ${r.full_name}, your Metacare verification code is: ${otp}\nEnter it on the website to activate your account.`;
+
 
   return (
     <div className="space-y-4">
@@ -126,29 +138,41 @@ export function RegistrationRequestsPanel({ enabled = true, kind }: { enabled?: 
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
                     {lang === "ar" ? "الرمز" : "OTP"}
                   </span>
-                  <span dir="ltr" className="font-mono text-2xl font-semibold tracking-[0.3em] text-primary">
-                    {r.otp_code}
-                  </span>
-                  <button
-                    onClick={() => copyOtp(r.otp_code)}
-                    className="rounded-full p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
-                    title={lang === "ar" ? "نسخ" : "Copy"}
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                  </button>
+                  {codes[r.id] ? (
+                    <>
+                      <span dir="ltr" className="font-mono text-2xl font-semibold tracking-[0.3em] text-primary">
+                        {codes[r.id]}
+                      </span>
+                      <button
+                        onClick={() => copyOtp(codes[r.id]!)}
+                        className="rounded-full p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
+                        title={lang === "ar" ? "نسخ" : "Copy"}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  ) : (
+                    <span className="max-w-[14rem] text-[11px] leading-snug text-muted-foreground">
+                      {lang === "ar"
+                        ? "الرمز محفوظ مشفّراً — اضغطي موافقة أو رمز جديد لعرضه مرة واحدة"
+                        : "Code is stored hashed — approve or regenerate to reveal it once"}
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <a
-                  href={whatsappLink(r.whatsapp, buildWaMsg(r))}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-success px-3 py-1.5 text-xs font-medium text-success-foreground"
-                >
-                  <MessageCircle className="h-3.5 w-3.5" />
-                  {lang === "ar" ? "إرسال عبر واتساب" : "Send via WhatsApp"}
-                </a>
+                {codes[r.id] && (
+                  <a
+                    href={whatsappLink(r.whatsapp, buildWaMsg(r, codes[r.id]!))}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-success px-3 py-1.5 text-xs font-medium text-success-foreground"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    {lang === "ar" ? "إرسال عبر واتساب" : "Send via WhatsApp"}
+                  </a>
+                )}
 
                 {r.status === "pending" && (
                   <button

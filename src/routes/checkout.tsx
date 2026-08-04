@@ -103,7 +103,7 @@ function CheckoutPage() {
         address_neighborhood: neighborhood ? (lang === "ar" ? neighborhood.name_ar : neighborhood.name_en) : undefined,
         address_street: form.street,
         address_notes: form.notes || undefined,
-        delivery_sdg: deliveryFee,
+        neighborhood_id: neighborhoodId || undefined,
       });
       const orderId = (res as { order: { id: string } }).order.id;
       navigate({ to: "/orders/$id", params: { id: orderId }, search: { confirmed: true } });

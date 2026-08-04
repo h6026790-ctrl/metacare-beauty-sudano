@@ -49,6 +49,26 @@ function verifyPassword(pw: string, stored: string | null | undefined): boolean 
     return actual.length === expected.length && timingSafeEqual(actual, expected);
   } catch { return false; }
 }
+// OTP codes are stored hashed with the same scheme as passwords.
+const hashOtp = hashPassword;
+const verifyOtp = verifyPassword;
+
+const MAX_OTP_ATTEMPTS = 5;
+
+// Paginated lookup: admin.listUsers caps each page, so walk pages until found.
+async function findUserByEmail(supabaseAdmin: any, email: string) {
+  const perPage = 200;
+  for (let page = 1; page <= 100; page++) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    const users = data?.users ?? [];
+    const hit = users.find((u: any) => u.email === email);
+    if (hit) return hit;
+    if (users.length < perPage) return null;
+  }
+  return null;
+}
+
 
 // ---------- 1) PUBLIC: submit registration ----------
 const submitSchema = z.object({
@@ -72,8 +92,7 @@ export const submitRegistrationRequest = createServerFn({ method: "POST" })
 
     // Refuse if a verified auth user already exists for this phone.
     const email = phoneToEmail(phone);
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    const existing = list?.users?.find((u: any) => u.email === email);
+    const existing = await findUserByEmail(supabaseAdmin, email);
     if (existing) {
       throw new Error(
         "يوجد حساب مسجل بهذا الرقم. استخدمي تسجيل الدخول أو استعادة كلمة المرور. / An account already exists for this phone. Please sign in or use password reset.",
@@ -101,7 +120,7 @@ export const submitRegistrationRequest = createServerFn({ method: "POST" })
         address_state_id: data.state_id ?? null,
         address_city_id: data.city_id ?? null,
         address_neighborhood_id: data.neighborhood_id ?? null,
-        otp_code: otp,
+        otp_code: hashOtp(otp),
         password_hash: hashPassword(data.password),
         status: "pending",
         request_type: "register",
@@ -126,8 +145,7 @@ export const submitPasswordResetRequest = createServerFn({ method: "POST" })
     const email = phoneToEmail(phone);
 
     // Must reference an existing user.
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    const existing = list?.users?.find((u: any) => u.email === email);
+    const existing = await findUserByEmail(supabaseAdmin, email);
     if (!existing) {
       throw new Error(
         "لا يوجد حساب بهذا الرقم. / No account exists for this phone number.",
@@ -149,7 +167,7 @@ export const submitPasswordResetRequest = createServerFn({ method: "POST" })
         full_name: (existing.user_metadata as any)?.full_name || "—",
         phone,
         whatsapp: (existing.user_metadata as any)?.whatsapp || phone,
-        otp_code: otp,
+        otp_code: hashOtp(otp),
         password_hash: hashPassword(data.password),
         status: "pending",
         request_type: "reset",
@@ -192,14 +210,31 @@ export const verifyRegistrationOtp = createServerFn({ method: "POST" })
     if (req.status !== "approved") {
       throw new Error("بانتظار موافقة خدمة العملاء / Awaiting Customer Service approval");
     }
-    if (req.otp_code !== data.otp) throw new Error("رمز غير صحيح / Invalid code");
+    if (!verifyOtp(data.otp, req.otp_code)) {
+      const attempts = (req.failed_attempts ?? 0) + 1;
+      if (attempts >= MAX_OTP_ATTEMPTS) {
+        await supabaseAdmin
+          .from("registration_requests")
+          .update({ status: "expired", failed_attempts: attempts })
+          .eq("id", req.id);
+        throw new Error(
+          "تم تجاوز عدد المحاولات المسموح بها. يرجى تقديم طلب جديد. / Too many failed attempts. Please submit a new request.",
+        );
+      }
+      await supabaseAdmin
+        .from("registration_requests")
+        .update({ failed_attempts: attempts })
+        .eq("id", req.id);
+      throw new Error(
+        `رمز غير صحيح (${attempts}/${MAX_OTP_ATTEMPTS}) / Invalid code (${attempts}/${MAX_OTP_ATTEMPTS})`,
+      );
+    }
     if (!verifyPassword(data.password, req.password_hash)) {
       throw new Error("كلمة المرور لا تطابق التي أدخلتِها في الطلب / Password does not match the one submitted with the request");
     }
 
     const email = phoneToEmail(phone);
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    const existing = list?.users?.find((u: any) => u.email === email);
+    const existing = await findUserByEmail(supabaseAdmin, email);
 
     let userId: string | null = null;
     if (data.request_type === "register") {
@@ -263,7 +298,9 @@ export const listRegistrationRequests = createServerFn({ method: "GET" })
     let q = context.supabase
       .from("registration_requests")
       .select(
-        "id, full_name, phone, whatsapp, street, notes, otp_code, status, request_type, created_at, expires_at, approved_at, verified_at, rejected_at, reject_reason, address_state:states(name_ar,name_en), address_city:cities(name_ar,name_en), address_neighborhood:neighborhoods(name_ar,name_en)",
+        // otp_code is stored hashed and never exposed; the plaintext code is
+        // returned once by approve/regenerate.
+        "id, full_name, phone, whatsapp, street, notes, status, request_type, failed_attempts, created_at, expires_at, approved_at, verified_at, rejected_at, reject_reason, address_state:states(name_ar,name_en), address_city:cities(name_ar,name_en), address_neighborhood:neighborhoods(name_ar,name_en)",
       )
       .order("created_at", { ascending: false })
       .limit(200);
@@ -279,13 +316,23 @@ export const approveRegistrationRequest = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ requestId: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertStaff(context);
+    // A fresh code is minted on approval and returned exactly once so the
+    // agent can forward it over WhatsApp. Only its hash is persisted.
+    const otp = rand6();
     const { error } = await context.supabase
       .from("registration_requests")
-      .update({ status: "approved", approved_at: new Date().toISOString(), approved_by: context.userId })
+      .update({
+        status: "approved",
+        approved_at: new Date().toISOString(),
+        approved_by: context.userId,
+        otp_code: hashOtp(otp),
+        failed_attempts: 0,
+        expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      })
       .eq("id", data.requestId)
       .eq("status", "pending");
     if (error) throw error;
-    return { ok: true };
+    return { ok: true, otp };
   });
 
 export const rejectRegistrationRequest = createServerFn({ method: "POST" })
@@ -318,7 +365,12 @@ export const regenerateRegistrationOtp = createServerFn({ method: "POST" })
     const otp = rand6();
     const { error } = await context.supabase
       .from("registration_requests")
-      .update({ otp_code: otp, status: "pending", expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString() })
+      .update({
+        otp_code: hashOtp(otp),
+        status: "pending",
+        failed_attempts: 0,
+        expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      })
       .eq("id", data.requestId)
       .in("status", ["pending", "approved", "expired"]);
     if (error) throw error;
