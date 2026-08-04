@@ -1,9 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { useCart, useWishlist } from "@/lib/api/queries";
+import { useCart, useWishlist, useMyOrders } from "@/lib/api/queries";
+import { buildNotifications } from "@/lib/notifications";
+import { useReadNotifications } from "@/lib/customer-local";
 import { Logo } from "@/components/brand/Logo";
-import { Heart, Menu, Search, ShoppingBag, User, Globe, UserPlus } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, User, Globe, UserPlus, Bell, Package, LifeBuoy } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -28,8 +30,14 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
 
+  const { data: orders = [] } = useMyOrders();
+  const { readIds } = useReadNotifications();
+
   const cartCount = (cart?.items ?? []).reduce((s: number, i: any) => s + (i.qty ?? 0), 0);
   const wishCount = wishlist?.length ?? 0;
+  const unreadCount = user
+    ? buildNotifications(orders as any[], lang).filter((n) => !readIds.includes(n.id)).length
+    : 0;
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,8 +66,12 @@ export function Header() {
               <div className="my-3 h-px bg-border" />
               {user ? (
                 <>
-                  <Link to="/account" onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted">{t.nav.account}</Link>
-                  <Link to="/cart" onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted">{t.nav.cart}</Link>
+                  <Link to="/account" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><User className="h-4 w-4" />{t.nav.account}</Link>
+                  <Link to="/orders" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><Package className="h-4 w-4" />{t.account.orders}</Link>
+                  <Link to="/account/wishlist" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><Heart className="h-4 w-4" />{t.nav.wishlist}</Link>
+                  <Link to="/notifications" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><Bell className="h-4 w-4" />{t.customer.notifications}</Link>
+                  <Link to="/support" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><LifeBuoy className="h-4 w-4" />{t.customer.support}</Link>
+                  <Link to="/cart" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium hover:bg-muted"><ShoppingBag className="h-4 w-4" />{t.nav.cart}</Link>
                 </>
               ) : (
                 <>
@@ -108,6 +120,16 @@ export function Header() {
           </button>
           {user && (
             <>
+              <Link to="/notifications" className="relative hidden h-10 w-10 place-items-center rounded-full hover:bg-muted md:grid" aria-label={t.customer.notifications}>
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -end-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-medium text-accent-foreground">{unreadCount}</span>
+                )}
+              </Link>
+              <Link to="/orders" className="hidden h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-foreground/80 hover:bg-muted lg:inline-flex" aria-label={t.account.orders}>
+                <Package className="h-4 w-4" />
+                {t.account.orders}
+              </Link>
               <Link to="/account/wishlist" className="relative grid h-10 w-10 place-items-center rounded-full hover:bg-muted" aria-label="wishlist">
                 <Heart className="h-5 w-5" />
                 {wishCount > 0 && (

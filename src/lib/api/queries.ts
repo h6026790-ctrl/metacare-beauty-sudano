@@ -12,6 +12,7 @@ import {
 } from "./commerce.functions";
 import { getMyProfile, updateMyProfile, upsertDefaultAddress } from "./account.functions";
 import type { Lang } from "@/i18n/dict";
+import { useAuth } from "@/hooks/useAuth";
 
 // ---------- CATALOG (public reads via browser client) ----------
 export type UIProduct = {
@@ -172,7 +173,8 @@ export function useStatesTree() {
 // ---------- CART ----------
 export function useCart() {
   const fn = useServerFn(getMyCart);
-  return useQuery({ queryKey: ["cart"], queryFn: () => fn(), staleTime: 5_000 });
+  const { user } = useAuth();
+  return useQuery({ queryKey: ["cart"], queryFn: () => fn(), staleTime: 5_000, enabled: !!user });
 }
 export function useAddToCart() {
   const fn = useServerFn(addToCart);
@@ -199,7 +201,8 @@ export function useClearCart() {
 // ---------- WISHLIST ----------
 export function useWishlist() {
   const fn = useServerFn(getMyWishlist);
-  return useQuery({ queryKey: ["wishlist"], queryFn: () => fn(), staleTime: 10_000 });
+  const { user } = useAuth();
+  return useQuery({ queryKey: ["wishlist"], queryFn: () => fn(), staleTime: 10_000, enabled: !!user });
 }
 export function useToggleWishlist() {
   const fn = useServerFn(toggleWishlist);
@@ -213,11 +216,13 @@ export function useToggleWishlist() {
 // ---------- ORDERS (customer) ----------
 export function useMyOrders() {
   const fn = useServerFn(listMyOrders);
-  return useQuery({ queryKey: ["my-orders"], queryFn: () => fn() });
+  const { user } = useAuth();
+  return useQuery({ queryKey: ["my-orders"], queryFn: () => fn(), enabled: !!user });
 }
 export function useMyOrder(id: string) {
   const fn = useServerFn(getMyOrder);
-  return useQuery({ queryKey: ["my-order", id], queryFn: () => fn({ data: { id } }), enabled: !!id });
+  const { user } = useAuth();
+  return useQuery({ queryKey: ["my-order", id], queryFn: () => fn({ data: { id } }), enabled: !!id && !!user });
 }
 export function usePlaceOrder() {
   const fn = useServerFn(placeOrder);
@@ -234,7 +239,8 @@ export function usePlaceOrder() {
 // ---------- PROFILE ----------
 export function useMyProfile() {
   const fn = useServerFn(getMyProfile);
-  return useQuery({ queryKey: ["my-profile"], queryFn: () => fn() });
+  const { user } = useAuth();
+  return useQuery({ queryKey: ["my-profile"], queryFn: () => fn(), enabled: !!user });
 }
 export function useUpdateProfile() {
   const fn = useServerFn(updateMyProfile);

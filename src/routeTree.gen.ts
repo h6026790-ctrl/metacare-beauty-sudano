@@ -9,11 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as OffersRouteImport } from './routes/offers'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as DeliveryRouteImport } from './routes/delivery'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -26,6 +28,8 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OrdersIndexRouteImport } from './routes/orders.index'
+import { Route as AccountIndexRouteImport } from './routes/account.index'
 import { Route as ProductsIdRouteImport } from './routes/products.$id'
 import { Route as PoliciesTermsRouteImport } from './routes/policies.terms'
 import { Route as PoliciesReturnsRouteImport } from './routes/policies.returns'
@@ -34,6 +38,11 @@ import { Route as OrdersIdRouteImport } from './routes/orders.$id'
 import { Route as BrandsIdRouteImport } from './routes/brands.$id'
 import { Route as AccountWishlistRouteImport } from './routes/account.wishlist'
 
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StaffRoute = StaffRouteImport.update({
   id: '/staff',
   path: '/staff',
@@ -57,6 +66,11 @@ const ProductsRoute = ProductsRouteImport.update({
 const OffersRoute = OffersRouteImport.update({
   id: '/offers',
   path: '/offers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -119,6 +133,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrdersIndexRoute = OrdersIndexRouteImport.update({
+  id: '/orders/',
+  path: '/orders/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AccountRoute,
+} as any)
 const ProductsIdRoute = ProductsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -168,11 +192,13 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/delivery': typeof DeliveryRoute
   '/faq': typeof FaqRoute
+  '/notifications': typeof NotificationsRoute
   '/offers': typeof OffersRoute
   '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
+  '/support': typeof SupportRoute
   '/account/wishlist': typeof AccountWishlistRoute
   '/brands/$id': typeof BrandsIdRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -180,11 +206,12 @@ export interface FileRoutesByFullPath {
   '/policies/returns': typeof PoliciesReturnsRoute
   '/policies/terms': typeof PoliciesTermsRoute
   '/products/$id': typeof ProductsIdRoute
+  '/account/': typeof AccountIndexRoute
+  '/orders/': typeof OrdersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/account': typeof AccountRouteWithChildren
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/brands': typeof BrandsRouteWithChildren
@@ -194,11 +221,13 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/delivery': typeof DeliveryRoute
   '/faq': typeof FaqRoute
+  '/notifications': typeof NotificationsRoute
   '/offers': typeof OffersRoute
   '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
+  '/support': typeof SupportRoute
   '/account/wishlist': typeof AccountWishlistRoute
   '/brands/$id': typeof BrandsIdRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -206,6 +235,8 @@ export interface FileRoutesByTo {
   '/policies/returns': typeof PoliciesReturnsRoute
   '/policies/terms': typeof PoliciesTermsRoute
   '/products/$id': typeof ProductsIdRoute
+  '/account': typeof AccountIndexRoute
+  '/orders': typeof OrdersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -221,11 +252,13 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/delivery': typeof DeliveryRoute
   '/faq': typeof FaqRoute
+  '/notifications': typeof NotificationsRoute
   '/offers': typeof OffersRoute
   '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
+  '/support': typeof SupportRoute
   '/account/wishlist': typeof AccountWishlistRoute
   '/brands/$id': typeof BrandsIdRoute
   '/orders/$id': typeof OrdersIdRoute
@@ -233,6 +266,8 @@ export interface FileRoutesById {
   '/policies/returns': typeof PoliciesReturnsRoute
   '/policies/terms': typeof PoliciesTermsRoute
   '/products/$id': typeof ProductsIdRoute
+  '/account/': typeof AccountIndexRoute
+  '/orders/': typeof OrdersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -249,11 +284,13 @@ export interface FileRouteTypes {
     | '/contact'
     | '/delivery'
     | '/faq'
+    | '/notifications'
     | '/offers'
     | '/products'
     | '/search'
     | '/sitemap.xml'
     | '/staff'
+    | '/support'
     | '/account/wishlist'
     | '/brands/$id'
     | '/orders/$id'
@@ -261,11 +298,12 @@ export interface FileRouteTypes {
     | '/policies/returns'
     | '/policies/terms'
     | '/products/$id'
+    | '/account/'
+    | '/orders/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
-    | '/account'
     | '/admin'
     | '/auth'
     | '/brands'
@@ -275,11 +313,13 @@ export interface FileRouteTypes {
     | '/contact'
     | '/delivery'
     | '/faq'
+    | '/notifications'
     | '/offers'
     | '/products'
     | '/search'
     | '/sitemap.xml'
     | '/staff'
+    | '/support'
     | '/account/wishlist'
     | '/brands/$id'
     | '/orders/$id'
@@ -287,6 +327,8 @@ export interface FileRouteTypes {
     | '/policies/returns'
     | '/policies/terms'
     | '/products/$id'
+    | '/account'
+    | '/orders'
   id:
     | '__root__'
     | '/'
@@ -301,11 +343,13 @@ export interface FileRouteTypes {
     | '/contact'
     | '/delivery'
     | '/faq'
+    | '/notifications'
     | '/offers'
     | '/products'
     | '/search'
     | '/sitemap.xml'
     | '/staff'
+    | '/support'
     | '/account/wishlist'
     | '/brands/$id'
     | '/orders/$id'
@@ -313,6 +357,8 @@ export interface FileRouteTypes {
     | '/policies/returns'
     | '/policies/terms'
     | '/products/$id'
+    | '/account/'
+    | '/orders/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -328,19 +374,29 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DeliveryRoute: typeof DeliveryRoute
   FaqRoute: typeof FaqRoute
+  NotificationsRoute: typeof NotificationsRoute
   OffersRoute: typeof OffersRoute
   ProductsRoute: typeof ProductsRouteWithChildren
   SearchRoute: typeof SearchRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StaffRoute: typeof StaffRoute
+  SupportRoute: typeof SupportRoute
   OrdersIdRoute: typeof OrdersIdRoute
   PoliciesPrivacyRoute: typeof PoliciesPrivacyRoute
   PoliciesReturnsRoute: typeof PoliciesReturnsRoute
   PoliciesTermsRoute: typeof PoliciesTermsRoute
+  OrdersIndexRoute: typeof OrdersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/staff': {
       id: '/staff'
       path: '/staff'
@@ -374,6 +430,13 @@ declare module '@tanstack/react-router' {
       path: '/offers'
       fullPath: '/offers'
       preLoaderRoute: typeof OffersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -460,6 +523,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/orders/': {
+      id: '/orders/'
+      path: '/orders'
+      fullPath: '/orders/'
+      preLoaderRoute: typeof OrdersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/': {
+      id: '/account/'
+      path: '/'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof AccountRoute
+    }
     '/products/$id': {
       id: '/products/$id'
       path: '/$id'
@@ -514,10 +591,12 @@ declare module '@tanstack/react-router' {
 
 interface AccountRouteChildren {
   AccountWishlistRoute: typeof AccountWishlistRoute
+  AccountIndexRoute: typeof AccountIndexRoute
 }
 
 const AccountRouteChildren: AccountRouteChildren = {
   AccountWishlistRoute: AccountWishlistRoute,
+  AccountIndexRoute: AccountIndexRoute,
 }
 
 const AccountRouteWithChildren =
@@ -559,15 +638,18 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DeliveryRoute: DeliveryRoute,
   FaqRoute: FaqRoute,
+  NotificationsRoute: NotificationsRoute,
   OffersRoute: OffersRoute,
   ProductsRoute: ProductsRouteWithChildren,
   SearchRoute: SearchRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StaffRoute: StaffRoute,
+  SupportRoute: SupportRoute,
   OrdersIdRoute: OrdersIdRoute,
   PoliciesPrivacyRoute: PoliciesPrivacyRoute,
   PoliciesReturnsRoute: PoliciesReturnsRoute,
   PoliciesTermsRoute: PoliciesTermsRoute,
+  OrdersIndexRoute: OrdersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
