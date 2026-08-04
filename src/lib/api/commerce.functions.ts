@@ -134,7 +134,7 @@ export const placeOrder = createServerFn({ method: "POST" })
       .insert({
         profile_id: userId,
         subtotal_sdg: subtotal,
-        delivery_sdg: data.delivery_sdg,
+        delivery_sdg: deliveryFee,
         total_sdg: total,
         contact_name: data.contact_name,
         contact_phone: data.contact_phone,
