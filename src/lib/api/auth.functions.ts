@@ -365,7 +365,12 @@ export const regenerateRegistrationOtp = createServerFn({ method: "POST" })
     const otp = rand6();
     const { error } = await context.supabase
       .from("registration_requests")
-      .update({ otp_code: otp, status: "pending", expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString() })
+      .update({
+        otp_code: hashOtp(otp),
+        status: "pending",
+        failed_attempts: 0,
+        expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+      })
       .eq("id", data.requestId)
       .in("status", ["pending", "approved", "expired"]);
     if (error) throw error;
