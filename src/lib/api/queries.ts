@@ -1,7 +1,9 @@
-// Client-side React Query hooks. Catalog reads use the browser supabase client
-// (public RLS already permits anon reads on active rows). Cart/wishlist/orders
-// go through server functions defined in `commerce.functions.ts` and
-// `ops.functions.ts`.
+// Client-side React Query hooks. Catalog reads go through the hardened
+// catalogue feeds: `catalog_public` (visitors — no prices, no quantities) and
+// `catalog_authenticated` (signed-in users — prices included). Prices and
+// inventory numbers are enforced at the database layer, not in the UI.
+// Cart/wishlist/orders go through server functions defined in
+// `commerce.functions.ts` and `ops.functions.ts`.
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +16,7 @@ import { getMyProfile, updateMyProfile, upsertDefaultAddress } from "./account.f
 import type { Lang } from "@/i18n/dict";
 import { useAuth } from "@/hooks/useAuth";
 
-// ---------- CATALOG (public reads via browser client) ----------
+// ---------- CATALOG ----------
 export type UIProduct = {
   id: string;
   slug: string;
@@ -32,21 +34,32 @@ export type UIProduct = {
   isFeatured: boolean;
 };
 
+/** Catalogue feed name for the current viewer. */
+function feedFor(signedIn: boolean) {
+  return signedIn ? "catalog_authenticated" : "catalog_public";
+}
+
 function rowToProduct(r: any): UIProduct {
+  // Rows may come from the catalogue feeds (flattened brand columns, boolean
+  // `in_stock`) or from a joined product row (server functions / admin).
   const stock = Array.isArray(r.inventory) ? (r.inventory[0]?.stock ?? 0) : (r.inventory?.stock ?? 0);
+  const inStock = typeof r.in_stock === "boolean" ? r.in_stock : stock > 0;
   const brand = r.brand
     ? { id: r.brand.id, slug: r.brand.slug, name: { ar: r.brand.name_ar, en: r.brand.name_en } }
-    : null;
+    : r.brand_id && r.brand_slug
+      ? { id: r.brand_id, slug: r.brand_slug, name: { ar: r.brand_name_ar, en: r.brand_name_en } }
+      : null;
   return {
     id: r.id, slug: r.slug,
     name: { ar: r.name_ar, en: r.name_en },
     brandId: r.brand_id, brand,
     categoryId: r.category_id,
-    price: Number(r.price_sdg),
+    // Visitors never receive `price_sdg` from the API; the UI gates pricing anyway.
+    price: r.price_sdg != null ? Number(r.price_sdg) : 0,
     compareAt: r.compare_at_sdg != null ? Number(r.compare_at_sdg) : null,
     image: r.image_url || "/placeholder.svg",
     description: { ar: r.description_ar ?? "", en: r.description_en ?? "" },
-    inStock: stock > 0,
+    inStock,
     isNew: !!r.is_new, isBestSeller: !!r.is_best_seller, isFeatured: !!r.is_featured,
   };
 }
@@ -55,25 +68,18 @@ export type UIBrand = { id: string; slug: string; name: { ar: string; en: string
 export type UICategory = { id: string; slug: string; name: { ar: string; en: string }; icon?: string | null };
 
 export function useProducts(filter?: { brand?: string; category?: string; featured?: boolean; isNew?: boolean; isBest?: boolean; onSale?: boolean }) {
+  const { user } = useAuth();
+  const signedIn = !!user;
   return useQuery({
-    queryKey: ["products", filter ?? {}],
+    queryKey: ["products", signedIn, filter ?? {}],
     queryFn: async (): Promise<UIProduct[]> => {
-      let q = supabase
-        .from("products")
-        .select("*, brand:brands(id, slug, name_ar, name_en), inventory(stock)")
-        .eq("is_active", true);
+      let q = (supabase as any).from(feedFor(signedIn)).select("*");
       if (filter?.featured) q = q.eq("is_featured", true);
       if (filter?.isNew) q = q.eq("is_new", true);
       if (filter?.isBest) q = q.eq("is_best_seller", true);
-      if (filter?.onSale) q = q.not("compare_at_sdg", "is", null);
-      if (filter?.brand) {
-        const { data: b } = await supabase.from("brands").select("id").eq("slug", filter.brand).maybeSingle();
-        if (b) q = q.eq("brand_id", b.id); else return [];
-      }
-      if (filter?.category) {
-        const { data: c } = await supabase.from("categories").select("id").eq("slug", filter.category).maybeSingle();
-        if (c) q = q.eq("category_id", c.id); else return [];
-      }
+      if (filter?.onSale) q = q.eq("has_discount", true);
+      if (filter?.brand) q = q.eq("brand_slug", filter.brand);
+      if (filter?.category) q = q.eq("category_slug", filter.category);
       const { data, error } = await q.order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []).map(rowToProduct);
@@ -82,12 +88,14 @@ export function useProducts(filter?: { brand?: string; category?: string; featur
 }
 
 export function useProduct(slug: string) {
+  const { user } = useAuth();
+  const signedIn = !!user;
   return useQuery({
-    queryKey: ["product", slug],
+    queryKey: ["product", signedIn, slug],
     queryFn: async (): Promise<UIProduct | null> => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*, brand:brands(id, slug, name_ar, name_en), category:categories(id, slug, name_ar, name_en), inventory(stock)")
+      const { data, error } = await (supabase as any)
+        .from(feedFor(signedIn))
+        .select("*")
         .eq("slug", slug)
         .maybeSingle();
       if (error) throw error;
@@ -98,15 +106,16 @@ export function useProduct(slug: string) {
 }
 
 export function useSearchProducts(term: string) {
+  const { user } = useAuth();
+  const signedIn = !!user;
   return useQuery({
-    queryKey: ["search", term],
+    queryKey: ["search", signedIn, term],
     queryFn: async (): Promise<UIProduct[]> => {
       if (!term.trim()) return [];
       const like = `%${term}%`;
-      const { data, error } = await supabase
-        .from("products")
-        .select("*, brand:brands(id, slug, name_ar, name_en), inventory(stock)")
-        .eq("is_active", true)
+      const { data, error } = await (supabase as any)
+        .from(feedFor(signedIn))
+        .select("*")
         .or(`name_ar.ilike.${like},name_en.ilike.${like},slug.ilike.${like}`)
         .limit(60);
       if (error) throw error;
@@ -115,6 +124,7 @@ export function useSearchProducts(term: string) {
     enabled: term.trim().length > 0,
   });
 }
+
 
 export function useBrands() {
   return useQuery({
