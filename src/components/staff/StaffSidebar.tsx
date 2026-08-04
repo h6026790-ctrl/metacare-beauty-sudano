@@ -17,7 +17,7 @@ const items: { key: string; url: string; exact?: boolean; icon: typeof LayoutDas
   { key: "customers", url: "/staff/customers", icon: Users, ar: "العملاء", en: "Customers" },
   { key: "notifications", url: "/staff/notifications", icon: Bell, ar: "التنبيهات", en: "Notifications" },
   { key: "activity", url: "/staff/activity", icon: Activity, ar: "نشاطي", en: "My activity" },
-] as const;
+];
 
 export function StaffSidebar({ badges = {} }: { badges?: StaffBadges }) {
   const { lang } = useI18n();
