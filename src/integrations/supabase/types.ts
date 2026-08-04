@@ -697,9 +697,11 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          is_available: boolean
           is_best_seller: boolean
           is_featured: boolean
           is_new: boolean
+          is_on_sale: boolean | null
           name_ar: string
           name_en: string
           price_sdg: number
@@ -716,9 +718,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_available?: boolean
           is_best_seller?: boolean
           is_featured?: boolean
           is_new?: boolean
+          is_on_sale?: boolean | null
           name_ar: string
           name_en: string
           price_sdg: number
@@ -735,9 +739,11 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_available?: boolean
           is_best_seller?: boolean
           is_featured?: boolean
           is_new?: boolean
+          is_on_sale?: boolean | null
           name_ar?: string
           name_en?: string
           price_sdg?: number
