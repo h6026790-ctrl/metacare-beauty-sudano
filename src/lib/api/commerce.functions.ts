@@ -178,6 +178,7 @@ export const getMyOrder = createServerFn({ method: "GET" })
       .from("orders")
       .select("*, order_items(*), order_status_history(*)")
       .eq("id", data.id)
+      .eq("profile_id", context.userId)
       .maybeSingle();
     return order;
   });
