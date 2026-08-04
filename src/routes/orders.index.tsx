@@ -33,7 +33,7 @@ export const Route = createFileRoute("/orders/")({
 
 function OrdersCenter() {
   const { t, lang } = useI18n();
-  const { user } = useAuth();
+  const { user, isStaff } = useAuth();
   const { data: orders = [], isLoading } = useMyOrders();
   const addToCart = useAddToCart();
   const [q, setQ] = useState("");
@@ -60,6 +60,8 @@ function OrdersCenter() {
     }
     toast.success(t.customer.reordered);
   };
+
+  if (isStaff) return <CustomerOnlyNotice />;
 
   if (!user) return <SignedOut />;
 

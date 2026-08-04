@@ -26,6 +26,7 @@ function OrderPage() {
   const { t, lang } = useI18n();
   const { data: order, refetch } = useMyOrder(id);
   const addToCart = useAddToCart();
+  const { isStaff } = useAuth();
   const [token, setToken] = useState("");
   const Chevron = lang === "ar" ? ChevronRight : ChevronLeft;
 
@@ -36,6 +37,8 @@ function OrderPage() {
     }
     if (ids.length) toast.success(t.customer.reordered);
   };
+
+  if (isStaff) return <CustomerOnlyNotice />;
 
   if (!order) {
     return (
