@@ -298,7 +298,9 @@ export const listRegistrationRequests = createServerFn({ method: "GET" })
     let q = context.supabase
       .from("registration_requests")
       .select(
-        "id, full_name, phone, whatsapp, street, notes, otp_code, status, request_type, created_at, expires_at, approved_at, verified_at, rejected_at, reject_reason, address_state:states(name_ar,name_en), address_city:cities(name_ar,name_en), address_neighborhood:neighborhoods(name_ar,name_en)",
+        // otp_code is stored hashed and never exposed; the plaintext code is
+        // returned once by approve/regenerate.
+        "id, full_name, phone, whatsapp, street, notes, status, request_type, failed_attempts, created_at, expires_at, approved_at, verified_at, rejected_at, reject_reason, address_state:states(name_ar,name_en), address_city:cities(name_ar,name_en), address_neighborhood:neighborhoods(name_ar,name_en)",
       )
       .order("created_at", { ascending: false })
       .limit(200);
