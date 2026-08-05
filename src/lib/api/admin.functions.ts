@@ -96,3 +96,83 @@ export const adminReports = createServerFn({ method: "GET" })
       lowStock: lowStock ?? [],
     };
   });
+
+// ---------- STAFF ACCOUNT MANAGEMENT (admin only) ----------
+// Staff accounts are created manually with a strong random password that is
+// returned exactly once to the creating admin and never stored in plain text.
+export const adminCreateStaffAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { full_name: string; phone: string }) =>
+    z.object({
+      full_name: z.string().trim().min(2).max(120),
+      phone: z.string().trim().min(6).max(30),
+    }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { normalizePhone, phoneToEmail } = await import("./phone.server");
+    const { randomBytes } = await import("node:crypto");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const phone = normalizePhone(data.phone);
+    const email = phoneToEmail(phone);
+    const password = randomBytes(15).toString("base64url");
+
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        full_name: data.full_name,
+        phone,
+        whatsapp: phone,
+        skip_customer_role: true,
+      },
+    });
+    if (error) throw new Error(error.message);
+    const userId = created.user!.id;
+
+    // Single role per user — staff only, never customer.
+    const { error: roleErr } = await supabaseAdmin
+      .from("user_roles")
+      .upsert({ user_id: userId, role: "staff" }, { onConflict: "user_id" });
+    if (roleErr) throw roleErr;
+
+    await supabaseAdmin.from("profiles").upsert({
+      id: userId, full_name: data.full_name, phone, whatsapp: phone,
+    });
+
+    await context.supabase.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "admin.staff_created",
+      entity_type: "user", entity_id: userId, metadata: { phone },
+    });
+
+    // Password is shown once to the admin, then irrecoverable.
+    return { userId, phone, password };
+  });
+
+export const adminDeleteStaffAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string }) => z.object({ userId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    if (data.userId === context.userId) throw new Error("Cannot delete your own account");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", data.userId).maybeSingle();
+    if (!roleRow || (roleRow.role !== "staff" && roleRow.role !== "admin")) {
+      throw new Error("Not a team account");
+    }
+
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+
+    await context.supabase.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "admin.staff_deleted",
+      entity_type: "user", entity_id: data.userId, metadata: {},
+    });
+    return { ok: true };
+  });
