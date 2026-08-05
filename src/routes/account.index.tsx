@@ -5,7 +5,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
 import {
   useMyOrders, useMyProfile, useUpdateProfile, useUpsertAddress, useStatesTree,
-  useWishlist, useProducts, useCart,
+  useWishlist, useProducts, useCart, useChangePassword,
 } from "@/lib/api/queries";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductCard } from "@/components/ProductCard";
@@ -48,6 +48,7 @@ function AccountPage() {
   const { viewed, clear: clearViewed } = useRecentlyViewed();
   const updateProfile = useUpdateProfile();
   const upsertAddr = useUpsertAddress();
+  const changePassword = useChangePassword();
   const navigate = useNavigate();
 
   const profile = profileData?.profile;
@@ -55,6 +56,7 @@ function AccountPage() {
 
   const [form, setForm] = useState({ full_name: "", phone: "", whatsapp: "" });
   const [addr, setAddr] = useState({ state_id: "", city_id: "", neighborhood_id: "", street: "", notes: "" });
+  const [pw, setPw] = useState({ current_password: "", new_password: "", confirm_password: "" });
 
   useEffect(() => {
     if (profile) setForm({ full_name: profile.full_name ?? "", phone: profile.phone ?? "", whatsapp: profile.whatsapp ?? "" });
