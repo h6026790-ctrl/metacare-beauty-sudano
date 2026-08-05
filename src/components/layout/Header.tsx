@@ -23,7 +23,7 @@ const NAV = [
 
 export function Header() {
   const { t, lang, setLang } = useI18n();
-  const { user, isCustomer, isAdmin, isStaff } = useAuth();
+  const { user, isCustomer, isAdmin, isStaff, signOut } = useAuth();
   const staffLike = !!user && isStaff;
   const workspaceTo = isAdmin ? "/admin" : "/staff";
   const { data: cart } = useCart();
