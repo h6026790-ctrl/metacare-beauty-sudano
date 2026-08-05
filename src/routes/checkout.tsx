@@ -134,11 +134,25 @@ function CheckoutPage() {
             <Card>
               <h3 className="mb-4 font-display text-lg text-foreground">{t.checkout.contact}</h3>
               <div className="grid gap-3 md:grid-cols-2">
-                <Field label={t.checkout.fullName}><Input required value={form.name} onChange={(e) => set("name", e.target.value)} /></Field>
-                <Field label={t.checkout.phone}><Input required type="tel" dir="ltr" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="09xxxxxxxx" /></Field>
-                <Field label={t.checkout.whatsapp} className="md:col-span-2"><Input required type="tel" dir="ltr" value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} placeholder="09xxxxxxxx" /></Field>
+                <Field label={t.checkout.fullName}>
+                  <Input readOnly aria-readonly value={identity.name} className="bg-muted/50 text-muted-foreground" />
+                </Field>
+                <Field label={t.checkout.phone}>
+                  <Input readOnly aria-readonly type="tel" dir="ltr" value={identity.phone} className="bg-muted/50 text-muted-foreground" />
+                </Field>
+                <Field label={t.checkout.whatsapp} className="md:col-span-2">
+                  <Input readOnly aria-readonly type="tel" dir="ltr" value={identity.whatsapp} className="bg-muted/50 text-muted-foreground" />
+                </Field>
               </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                {lang === "ar" ? (
+                  <>الاسم ورقم الواتساب مأخوذان من حسابك. لتعديلهما انتقلي إلى <Link to="/account" className="text-primary underline underline-offset-2">إعدادات الحساب</Link>.</>
+                ) : (
+                  <>Name and WhatsApp number come from your account. To change them, go to <Link to="/account" className="text-primary underline underline-offset-2">account settings</Link>.</>
+                )}
+              </p>
             </Card>
+
 
             <Card>
               <h3 className="mb-1 flex items-center gap-2 font-display text-lg text-foreground"><MapPin className="h-4 w-4 text-primary" />{t.checkout.address}</h3>
