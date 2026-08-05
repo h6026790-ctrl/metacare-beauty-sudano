@@ -5,7 +5,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
 import {
   useMyOrders, useMyProfile, useUpdateProfile, useUpsertAddress, useStatesTree,
-  useWishlist, useProducts, useCart,
+  useWishlist, useProducts, useCart, useChangePassword,
 } from "@/lib/api/queries";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductCard } from "@/components/ProductCard";
@@ -48,6 +48,7 @@ function AccountPage() {
   const { viewed, clear: clearViewed } = useRecentlyViewed();
   const updateProfile = useUpdateProfile();
   const upsertAddr = useUpsertAddress();
+  const changePassword = useChangePassword();
   const navigate = useNavigate();
 
   const profile = profileData?.profile;
@@ -55,6 +56,7 @@ function AccountPage() {
 
   const [form, setForm] = useState({ full_name: "", phone: "", whatsapp: "" });
   const [addr, setAddr] = useState({ state_id: "", city_id: "", neighborhood_id: "", street: "", notes: "" });
+  const [pw, setPw] = useState({ current_password: "", new_password: "", confirm_password: "" });
 
   useEffect(() => {
     if (profile) setForm({ full_name: profile.full_name ?? "", phone: profile.phone ?? "", whatsapp: profile.whatsapp ?? "" });
@@ -99,17 +101,62 @@ function AccountPage() {
 
   const profileComplete = !!(profile?.full_name && profile?.phone && profile?.whatsapp && defaultAddr);
 
+  const errMsg = (e: any) => {
+    const raw = e?.message ?? String(e ?? "");
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed[0]?.message) return parsed[0].message;
+    } catch { /* not a zod payload */ }
+    return raw || (lang === "ar" ? "حدث خطأ غير متوقع" : "Something went wrong");
+  };
+
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateProfile.mutateAsync(form);
-    if (addr.state_id && addr.city_id && addr.street) {
+    try {
+      const res: any = await updateProfile.mutateAsync(form);
+      toast.success(
+        res?.phoneChanged
+          ? lang === "ar"
+            ? "تم الحفظ. رقم الجوال الجديد هو بيانات الدخول الآن."
+            : "Saved. Your new phone number is now your login."
+          : lang === "ar" ? "تم حفظ بياناتك" : "Your details were saved",
+      );
+    } catch (err) {
+      toast.error(errMsg(err));
+    }
+  };
+
+  const saveAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addr.state_id || !addr.city_id || !addr.street.trim()) {
+      toast.error(lang === "ar" ? "أكملي الولاية والمدينة والشارع" : "Please fill in state, city and street");
+      return;
+    }
+    try {
       await upsertAddr.mutateAsync({
         state_id: addr.state_id, city_id: addr.city_id,
         neighborhood_id: addr.neighborhood_id || null,
         street: addr.street, notes: addr.notes || null, is_default: true,
       });
+      toast.success(lang === "ar" ? "تم حفظ العنوان" : "Address saved");
+    } catch (err) {
+      toast.error(errMsg(err));
     }
-    toast.success(lang === "ar" ? "تم الحفظ" : "Saved");
+  };
+
+  const savePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pw.new_password !== pw.confirm_password) {
+      toast.error(lang === "ar" ? "كلمتا المرور غير متطابقتين" : "Passwords do not match");
+      return;
+    }
+    try {
+      await changePassword.mutateAsync({ current_password: pw.current_password, new_password: pw.new_password });
+      setPw({ current_password: "", new_password: "", confirm_password: "" });
+      toast.success(lang === "ar" ? "تم تغيير كلمة المرور" : "Password updated");
+    } catch (err) {
+      toast.error(errMsg(err));
+    }
   };
 
   return (
@@ -208,19 +255,30 @@ function AccountPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="profile">
+          <TabsContent value="profile" className="space-y-5">
             <form onSubmit={saveProfile} className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-glass">
               <h3 className="font-display text-lg text-foreground">{t.account.profile}</h3>
               <div className="grid gap-3 md:grid-cols-2">
                 <Field label={t.checkout.fullName}><Input required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></Field>
-                <Field label={t.checkout.phone}><Input required dir="ltr" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
-                <Field label={t.checkout.whatsapp} className="md:col-span-2"><Input required dir="ltr" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} /></Field>
+                <Field label={t.checkout.phone}><Input required dir="ltr" inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
+                <Field label={t.checkout.whatsapp} className="md:col-span-2"><Input required dir="ltr" inputMode="tel" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} /></Field>
               </div>
-              <div className="my-2 h-px bg-border" />
+              <p className="text-xs text-muted-foreground">
+                {lang === "ar"
+                  ? "تنبيه: رقم الجوال هو بيانات الدخول، وتغييره يعني تسجيل الدخول بالرقم الجديد لاحقاً."
+                  : "Note: your phone number is your login. Changing it means you sign in with the new number."}
+              </p>
+              <button type="submit" disabled={updateProfile.isPending} className="min-h-[44px] rounded-full gradient-brand px-6 text-sm font-medium text-primary-foreground shadow-glow disabled:opacity-60">
+                {updateProfile.isPending ? (lang === "ar" ? "جارٍ الحفظ…" : "Saving…") : (lang === "ar" ? "حفظ" : "Save")}
+              </button>
+            </form>
+
+            <form onSubmit={saveAddress} className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-glass">
               <h3 className="flex items-center gap-2 font-display text-lg text-foreground"><MapPin className="h-4 w-4 text-primary" />{t.customer.addresses}</h3>
               <div className="grid gap-3 md:grid-cols-2">
                 <Field label={t.checkout.state}>
                   <select value={addr.state_id} onChange={(e) => setAddr({ ...addr, state_id: e.target.value, city_id: "", neighborhood_id: "" })} className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">—</option>
                     {states.map((s: any) => <option key={s.id} value={s.id}>{lang === "ar" ? s.name_ar : s.name_en}</option>)}
                   </select>
                 </Field>
@@ -236,9 +294,30 @@ function AccountPage() {
                     {neighborhoods.map((n: any) => <option key={n.id} value={n.id}>{lang === "ar" ? n.name_ar : n.name_en}</option>)}
                   </select>
                 </Field>
-                <Field label={t.checkout.street} className="md:col-span-2"><Input required value={addr.street} onChange={(e) => setAddr({ ...addr, street: e.target.value })} /></Field>
+                <Field label={t.checkout.street} className="md:col-span-2"><Input value={addr.street} onChange={(e) => setAddr({ ...addr, street: e.target.value })} /></Field>
               </div>
-              <button type="submit" className="min-h-[44px] rounded-full gradient-brand px-6 text-sm font-medium text-primary-foreground shadow-glow">{lang === "ar" ? "حفظ" : "Save"}</button>
+              <button type="submit" disabled={upsertAddr.isPending} className="min-h-[44px] rounded-full border border-border px-6 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-60">
+                {upsertAddr.isPending ? (lang === "ar" ? "جارٍ الحفظ…" : "Saving…") : (lang === "ar" ? "حفظ العنوان" : "Save address")}
+              </button>
+            </form>
+
+            <form onSubmit={savePassword} className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-glass">
+              <h3 className="flex items-center gap-2 font-display text-lg text-foreground"><ShieldCheck className="h-4 w-4 text-primary" />{lang === "ar" ? "تغيير كلمة المرور" : "Change password"}</h3>
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field label={lang === "ar" ? "كلمة المرور الحالية" : "Current password"} className="md:col-span-2">
+                  <Input required type="password" autoComplete="current-password" value={pw.current_password} onChange={(e) => setPw({ ...pw, current_password: e.target.value })} />
+                </Field>
+                <Field label={lang === "ar" ? "كلمة المرور الجديدة" : "New password"}>
+                  <Input required type="password" minLength={8} autoComplete="new-password" value={pw.new_password} onChange={(e) => setPw({ ...pw, new_password: e.target.value })} />
+                </Field>
+                <Field label={lang === "ar" ? "تأكيد كلمة المرور" : "Confirm password"}>
+                  <Input required type="password" minLength={8} autoComplete="new-password" value={pw.confirm_password} onChange={(e) => setPw({ ...pw, confirm_password: e.target.value })} />
+                </Field>
+              </div>
+              <p className="text-xs text-muted-foreground">{lang === "ar" ? "٨ أحرف على الأقل." : "At least 8 characters."}</p>
+              <button type="submit" disabled={changePassword.isPending} className="min-h-[44px] rounded-full border border-border px-6 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-60">
+                {changePassword.isPending ? (lang === "ar" ? "جارٍ التحديث…" : "Updating…") : (lang === "ar" ? "تحديث كلمة المرور" : "Update password")}
+              </button>
             </form>
           </TabsContent>
 

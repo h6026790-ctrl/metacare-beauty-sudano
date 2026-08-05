@@ -12,7 +12,7 @@ import {
   getMyWishlist, toggleWishlist,
   placeOrder, listMyOrders, getMyOrder,
 } from "./commerce.functions";
-import { getMyProfile, updateMyProfile, upsertDefaultAddress } from "./account.functions";
+import { getMyProfile, updateMyProfile, upsertDefaultAddress, changeMyPassword } from "./account.functions";
 import type { Lang } from "@/i18n/dict";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -258,6 +258,12 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: (vars: { full_name: string; phone: string; whatsapp: string }) => fn({ data: vars }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["my-profile"] }),
+  });
+}
+export function useChangePassword() {
+  const fn = useServerFn(changeMyPassword);
+  return useMutation({
+    mutationFn: (vars: { current_password: string; new_password: string }) => fn({ data: vars }),
   });
 }
 export function useUpsertAddress() {

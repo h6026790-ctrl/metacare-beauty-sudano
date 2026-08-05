@@ -534,6 +534,24 @@ export type Database = {
           },
         ]
       }
+      order_number_counters: {
+        Row: {
+          bucket: string
+          last_seq: number
+          updated_at: string
+        }
+        Insert: {
+          bucket: string
+          last_seq?: number
+          updated_at?: string
+        }
+        Update: {
+          bucket?: string
+          last_seq?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_status_history: {
         Row: {
           actor_id: string | null
