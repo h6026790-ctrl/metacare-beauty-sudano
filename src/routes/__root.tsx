@@ -103,7 +103,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
-        <Outlet />
+        <WorkspaceGuard>
+          <Outlet />
+        </WorkspaceGuard>
         <Toaster richColors position="top-center" />
       </I18nProvider>
     </QueryClientProvider>
