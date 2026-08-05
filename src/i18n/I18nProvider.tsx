@@ -34,7 +34,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 }
 
 export function useI18n() {
-  const ctx = useContext(I18nCtx);
-  if (!ctx) throw new Error("useI18n must be used inside I18nProvider");
-  return ctx;
+  return useContext(I18nCtx) ?? FALLBACK;
 }
+
