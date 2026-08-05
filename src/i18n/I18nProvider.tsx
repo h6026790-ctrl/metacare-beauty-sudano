@@ -2,7 +2,12 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { dict, type Lang, type Dict } from "./dict";
 
 type Ctx = { lang: Lang; setLang: (l: Lang) => void; t: Dict; dir: "rtl" | "ltr" };
+
+// Arabic-first default so a consumer rendered before the provider is reachable
+// (e.g. a split route chunk during SSR) still renders instead of crashing.
+const FALLBACK: Ctx = { lang: "ar", setLang: () => {}, t: dict.ar, dir: "rtl" };
 const I18nCtx = createContext<Ctx | null>(null);
+
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("ar");
