@@ -2,7 +2,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, ShoppingBag, Tags, Boxes, Users, UserCog,
-  UserPlus, BarChart3, Activity, Settings,
+  UserPlus, BarChart3, Activity, Settings, Sparkles, Truck,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -16,7 +16,9 @@ const items: { key: string; url: string; exact?: boolean; icon: typeof LayoutDas
   { key: "overview", url: "/admin", exact: true, icon: LayoutDashboard, ar: "نظرة عامة", en: "Overview" },
   { key: "orders", url: "/admin/orders", icon: ShoppingBag, ar: "الطلبات", en: "Orders" },
   { key: "catalog", url: "/admin/catalog", icon: Tags, ar: "الكتالوج", en: "Catalogue" },
+  { key: "offers", url: "/admin/offers", icon: Sparkles, ar: "العروض ومنتج اليوم", en: "Offers" },
   { key: "inventory", url: "/admin/inventory", icon: Boxes, ar: "المخزون", en: "Inventory" },
+  { key: "delivery", url: "/admin/delivery", icon: Truck, ar: "التوصيل والرسوم", en: "Delivery" },
   { key: "customers", url: "/admin/customers", icon: Users, ar: "العملاء", en: "Customers" },
   { key: "team", url: "/admin/team", icon: UserCog, ar: "الفريق", en: "Team" },
   { key: "registrations", url: "/admin/registrations", icon: UserPlus, ar: "طلبات التسجيل", en: "Registrations" },
@@ -24,6 +26,7 @@ const items: { key: string; url: string; exact?: boolean; icon: typeof LayoutDas
   { key: "activity", url: "/admin/activity", icon: Activity, ar: "سجل النشاط", en: "Activity" },
   { key: "system", url: "/admin/system", icon: Settings, ar: "النظام", en: "System" },
 ];
+
 
 export function AdminSidebar({ badges = {} }: { badges?: AdminBadges }) {
   const { lang } = useI18n();
