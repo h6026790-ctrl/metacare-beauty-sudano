@@ -31,9 +31,11 @@ function HomePage() {
   const { data: all = [] } = useProducts();
   const { data: brands = [] } = useBrands();
   const { data: categories = [] } = useCategories();
+  const pickOfDay = all.find((p) => p.isPickOfDay);
   const featured = all.filter((p) => p.isFeatured);
   const newArrivals = all.filter((p) => p.isNew);
   const bestSellers = all.filter((p) => p.isBestSeller);
+
 
   return (
     <AppShell>
