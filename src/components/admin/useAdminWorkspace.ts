@@ -6,7 +6,8 @@ import {
   adminListAllOrders, adminListProducts, adminListAuditLogs,
   adminListCustomers, adminListBrands, listTeam,
 } from "@/lib/api/ops.functions";
-import { adminReports } from "@/lib/api/admin.functions";
+import { adminReports, adminListNeighborhoods } from "@/lib/api/admin.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { listRegistrationRequests } from "@/lib/api/auth.functions";
 
 export function useAdminOrders(enabled: boolean) {
@@ -61,3 +62,33 @@ export function stockOf(p: any): number {
 }
 
 export const LOW_STOCK_THRESHOLD = 5;
+
+export function useAdminNeighborhoods(enabled: boolean) {
+  const fn = useServerFn(adminListNeighborhoods);
+  return useQuery({ queryKey: ["adm-neighborhoods"], queryFn: () => fn(), enabled });
+}
+
+export function useAdminCities(enabled: boolean) {
+  return useQuery({
+    queryKey: ["adm-cities"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cities").select("id, name_ar, name_en, state:states(name_ar, name_en)").order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled,
+  });
+}
+
+export function useAdminCategories(enabled: boolean) {
+  return useQuery({
+    queryKey: ["adm-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("categories").select("*").order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled,
+  });
+}
