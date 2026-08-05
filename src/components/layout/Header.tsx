@@ -5,7 +5,7 @@ import { useCart, useWishlist, useMyOrders } from "@/lib/api/queries";
 import { buildNotifications } from "@/lib/notifications";
 import { useReadNotifications } from "@/lib/customer-local";
 import { Logo } from "@/components/brand/Logo";
-import { Heart, Menu, Search, ShoppingBag, User, Globe, UserPlus, Bell, Package, LifeBuoy, LayoutDashboard } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, User, Globe, UserPlus, Bell, Package, LifeBuoy, LayoutDashboard, LogOut } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
