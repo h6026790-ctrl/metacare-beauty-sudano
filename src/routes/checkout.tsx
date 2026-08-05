@@ -102,9 +102,10 @@ function CheckoutPage() {
     setSubmitting(true);
     try {
       const res = await place.mutateAsync({
-        contact_name: form.name,
-        contact_phone: form.phone,
-        contact_whatsapp: form.whatsapp || form.phone,
+        contact_name: identity.name,
+        contact_phone: identity.phone,
+        contact_whatsapp: identity.whatsapp || identity.phone,
+
         address_state: lang === "ar" ? stateRow.name_ar : stateRow.name_en,
         address_city: lang === "ar" ? cityRow.name_ar : cityRow.name_en,
         address_neighborhood: neighborhood ? (lang === "ar" ? neighborhood.name_ar : neighborhood.name_en) : undefined,
