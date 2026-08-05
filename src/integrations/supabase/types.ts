@@ -720,6 +720,7 @@ export type Database = {
           is_featured: boolean
           is_new: boolean
           is_on_sale: boolean | null
+          is_pick_of_day: boolean
           name_ar: string
           name_en: string
           price_sdg: number
@@ -741,6 +742,7 @@ export type Database = {
           is_featured?: boolean
           is_new?: boolean
           is_on_sale?: boolean | null
+          is_pick_of_day?: boolean
           name_ar: string
           name_en: string
           price_sdg: number
@@ -762,6 +764,7 @@ export type Database = {
           is_featured?: boolean
           is_new?: boolean
           is_on_sale?: boolean | null
+          is_pick_of_day?: boolean
           name_ar?: string
           name_en?: string
           price_sdg?: number
@@ -912,6 +915,30 @@ export type Database = {
           },
         ]
       }
+      site_settings: {
+        Row: {
+          id: boolean
+          maintenance_message_ar: string
+          maintenance_message_en: string
+          maintenance_mode: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          maintenance_message_ar?: string
+          maintenance_message_en?: string
+          maintenance_mode?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          maintenance_message_ar?: string
+          maintenance_message_en?: string
+          maintenance_mode?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       states: {
         Row: {
           id: string
@@ -1027,6 +1054,7 @@ export type Database = {
           is_best_seller: boolean | null
           is_featured: boolean | null
           is_new: boolean | null
+          is_pick_of_day: boolean | null
           name_ar: string | null
           name_en: string | null
           price_sdg: number | null
@@ -1069,6 +1097,7 @@ export type Database = {
           is_best_seller: boolean | null
           is_featured: boolean | null
           is_new: boolean | null
+          is_pick_of_day: boolean | null
           name_ar: string | null
           name_en: string | null
           slug: string | null

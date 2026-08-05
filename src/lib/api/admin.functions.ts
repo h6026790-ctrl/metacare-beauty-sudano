@@ -176,3 +176,125 @@ export const adminDeleteStaffAccount = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+// ---------- PROMOTIONS: PICK OF THE DAY & FEATURED OFFERS ----------
+// Only one product may carry `is_pick_of_day` at a time (enforced by a partial
+// unique index), so the previous pick is always cleared first.
+export const adminSetPickOfDay = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { productId: string | null }) =>
+    z.object({ productId: z.string().uuid().nullable() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { error: clearErr } = await context.supabase
+      .from("products").update({ is_pick_of_day: false }).eq("is_pick_of_day", true);
+    if (clearErr) throw clearErr;
+    if (data.productId) {
+      const { error } = await context.supabase
+        .from("products").update({ is_pick_of_day: true }).eq("id", data.productId);
+      if (error) throw error;
+    }
+    await context.supabase.from("audit_logs").insert({
+      actor_id: context.userId, action: "admin.pick_of_day_set",
+      entity_type: "product", entity_id: data.productId, metadata: {},
+    });
+    return { ok: true };
+  });
+
+export const adminSetProductFlags = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    productId: z.string().uuid(),
+    is_featured: z.boolean().optional(),
+    is_new: z.boolean().optional(),
+    is_best_seller: z.boolean().optional(),
+    is_on_sale: z.boolean().optional(),
+  }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { productId, ...flags } = data;
+    if (Object.keys(flags).length === 0) return { ok: true };
+    const { error } = await context.supabase.from("products").update(flags).eq("id", productId);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+// ---------- SITE SETTINGS (maintenance mode) ----------
+export const adminUpdateSiteSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    maintenance_mode: z.boolean(),
+    maintenance_message_ar: z.string().trim().min(1).max(300),
+    maintenance_message_en: z.string().trim().min(1).max(300),
+  }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase
+      .from("site_settings").update(data).eq("id", true);
+    if (error) throw error;
+    await context.supabase.from("audit_logs").insert({
+      actor_id: context.userId, action: "admin.site_settings_updated",
+      entity_type: "site_settings", entity_id: "singleton",
+      metadata: { maintenance_mode: data.maintenance_mode },
+    });
+    return { ok: true };
+  });
+
+// ---------- DELIVERY GEOGRAPHY (neighborhoods & fees) ----------
+export const adminListNeighborhoods = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { data, error } = await context.supabase
+      .from("neighborhoods")
+      .select("*, city:cities(id, name_ar, name_en, state_id)")
+      .order("sort_order");
+    if (error) throw error;
+    return data ?? [];
+  });
+
+export const adminUpsertNeighborhood = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    id: z.string().uuid().optional(),
+    city_id: z.string().uuid(),
+    name_ar: z.string().trim().min(1).max(120),
+    name_en: z.string().trim().min(1).max(120),
+    delivery_fee_sdg: z.number().nonnegative(),
+    is_active: z.boolean().default(true),
+    sort_order: z.number().int().min(0).default(0),
+  }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    if (data.id) {
+      const { id, ...rest } = data;
+      const { error } = await context.supabase.from("neighborhoods").update(rest).eq("id", id);
+      if (error) throw error;
+      return { id };
+    }
+    const { data: ins, error } = await context.supabase
+      .from("neighborhoods").insert(data).select("id").single();
+    if (error) throw error;
+    return { id: ins.id };
+  });
+
+// A neighborhood referenced by a saved customer address is never hard-deleted;
+// it is disabled instead so historical orders and addresses stay intact.
+export const adminDeleteNeighborhood = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { count } = await context.supabase
+      .from("addresses").select("*", { count: "exact", head: true })
+      .eq("neighborhood_id", data.id);
+    if ((count ?? 0) > 0) {
+      const { error } = await context.supabase
+        .from("neighborhoods").update({ is_active: false }).eq("id", data.id);
+      if (error) throw error;
+      return { softDisabled: true };
+    }
+    const { error } = await context.supabase.from("neighborhoods").delete().eq("id", data.id);
+    if (error) throw error;
+    return { softDisabled: false };
+  });

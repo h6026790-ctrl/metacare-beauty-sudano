@@ -32,6 +32,7 @@ export type UIProduct = {
   isNew: boolean;
   isBestSeller: boolean;
   isFeatured: boolean;
+  isPickOfDay: boolean;
 };
 
 /** Catalogue feed name for the current viewer. */
@@ -61,6 +62,7 @@ function rowToProduct(r: any): UIProduct {
     description: { ar: r.description_ar ?? "", en: r.description_en ?? "" },
     inStock,
     isNew: !!r.is_new, isBestSeller: !!r.is_best_seller, isFeatured: !!r.is_featured,
+    isPickOfDay: !!r.is_pick_of_day,
   };
 }
 
@@ -272,6 +274,27 @@ export function useUpsertAddress() {
   return useMutation({
     mutationFn: (vars: any) => (fn as any)({ data: vars }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["my-profile"] }),
+  });
+}
+
+// ---------- SITE SETTINGS (public read) ----------
+export type SiteSettings = {
+  maintenance_mode: boolean;
+  maintenance_message_ar: string;
+  maintenance_message_en: string;
+};
+
+export function useSiteSettings() {
+  return useQuery({
+    queryKey: ["site-settings"],
+    queryFn: async (): Promise<SiteSettings | null> => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("maintenance_mode, maintenance_message_ar, maintenance_message_en")
+        .maybeSingle();
+      return (data as SiteSettings) ?? null;
+    },
+    staleTime: 30_000,
   });
 }
 

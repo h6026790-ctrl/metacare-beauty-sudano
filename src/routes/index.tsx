@@ -31,9 +31,11 @@ function HomePage() {
   const { data: all = [] } = useProducts();
   const { data: brands = [] } = useBrands();
   const { data: categories = [] } = useCategories();
+  const pickOfDay = all.find((p) => p.isPickOfDay);
   const featured = all.filter((p) => p.isFeatured);
   const newArrivals = all.filter((p) => p.isNew);
   const bestSellers = all.filter((p) => p.isBestSeller);
+
 
   return (
     <AppShell>
@@ -148,10 +150,19 @@ function HomePage() {
         </div>
       </section>
 
+      {/* Pick of the Day */}
+      {pickOfDay && (
+        <Section title={lang === "ar" ? "منتج اليوم" : "Pick of the Day"} link="/products">
+          <ProductGrid items={[pickOfDay]} />
+        </Section>
+      )}
+
       {/* Featured products */}
       {featured.length > 0 && (
         <Section title={t.home.featured} link="/products"><ProductGrid items={featured} /></Section>
       )}
+
+
 
       {/* Why Metacare */}
       <section className="mx-auto max-w-7xl px-4 py-14">
