@@ -120,3 +120,53 @@ export const upsertDefaultAddress = createServerFn({ method: "POST" })
     if (error) throw error;
     return { id: ins.id };
   });
+
+// ---------- PASSWORD ----------
+const passwordSchema = z.object({
+  current_password: z.string().min(1, "أدخلي كلمة المرور الحالية / Enter your current password"),
+  new_password: z
+    .string()
+    .min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل / Password must be at least 8 characters")
+    .max(128),
+});
+
+export const changeMyPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => passwordSchema.parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+
+    if (data.current_password === data.new_password) {
+      throw new Error("كلمة المرور الجديدة مطابقة للحالية / The new password is the same as the current one");
+    }
+
+    const { data: profile } = await supabase.from("profiles").select("phone").eq("id", userId).maybeSingle();
+    if (!profile?.phone) {
+      throw new Error("تعذّر تحديد الحساب / Could not resolve your account");
+    }
+
+    const { normalizePhone, phoneToEmail } = await import("@/lib/api/phone.server");
+    const email = phoneToEmail(normalizePhone(profile.phone));
+
+    // Verify the current password with a throwaway, session-less client.
+    const { createClient } = await import("@supabase/supabase-js");
+    const apiKey = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
+    const verifier = createClient(process.env["SUPABASE_URL"]!, apiKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { error: signInErr } = await verifier.auth.signInWithPassword({
+      email,
+      password: data.current_password,
+    });
+    if (signInErr) {
+      throw new Error("كلمة المرور الحالية غير صحيحة / Current password is incorrect");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      password: data.new_password,
+    });
+    if (error) throw error;
+
+    return { ok: true };
+  });
