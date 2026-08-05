@@ -46,6 +46,25 @@ export function Header() {
     if (q.trim()) navigate({ to: "/search", search: { q: q.trim() } });
   };
 
+  // Admin / staff accounts are fully isolated from the storefront:
+  // logo → their workspace, plus sign out. Nothing else.
+  if (staffLike) {
+    return (
+      <header className="sticky top-0 z-40 border-b border-border/60 glass">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
+          <Link to={workspaceTo}><Logo /></Link>
+          <button
+            onClick={async () => { await signOut(); navigate({ to: "/auth" }); }}
+            className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-medium text-foreground hover:bg-muted"
+          >
+            <LogOut className="h-4 w-4" />
+            {lang === "ar" ? "تسجيل الخروج" : "Sign out"}
+          </button>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 glass">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
