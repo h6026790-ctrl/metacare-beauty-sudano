@@ -22,10 +22,17 @@ export const getMyProfile = createServerFn({ method: "GET" })
     };
   });
 
+const phoneField = z
+  .string()
+  .trim()
+  .min(6, "رقم غير صالح / Invalid phone number")
+  .max(30, "رقم غير صالح / Invalid phone number")
+  .regex(/^[0-9+\s-]+$/, "رقم غير صالح / Invalid phone number");
+
 const profileSchema = z.object({
-  full_name: z.string().min(1).max(120),
-  phone: z.string().min(6).max(30),
-  whatsapp: z.string().min(6).max(30),
+  full_name: z.string().trim().min(2, "الاسم قصير جداً / Name is too short").max(120),
+  phone: phoneField,
+  whatsapp: phoneField,
 });
 
 export const updateMyProfile = createServerFn({ method: "POST" })
