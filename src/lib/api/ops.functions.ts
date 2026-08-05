@@ -269,7 +269,10 @@ export const adminSetUserRole = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     if (data.grant) {
-      await context.supabase.from("user_roles").insert({ user_id: data.userId, role: data.role });
+      // One role per user: replace whatever role the user currently holds.
+      await context.supabase
+        .from("user_roles")
+        .upsert({ user_id: data.userId, role: data.role }, { onConflict: "user_id" });
     } else {
       await context.supabase.from("user_roles").delete()
         .eq("user_id", data.userId).eq("role", data.role);
