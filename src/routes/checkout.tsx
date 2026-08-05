@@ -32,17 +32,21 @@ function CheckoutPage() {
   const [stateId, setStateId] = useState("");
   const [cityId, setCityId] = useState("");
   const [neighborhoodId, setNeighborhoodId] = useState("");
-  const [form, setForm] = useState({ name: "", phone: "", whatsapp: "", street: "", notes: "" });
+  // Name and WhatsApp/phone are identity fields: they mirror the account profile
+  // and are not editable here — they change only from account settings.
+  const [form, setForm] = useState({ street: "", notes: "" });
   const [submitting, setSubmitting] = useState(false);
 
-  // Prefill from profile + default address
+  const identity = {
+    name: profile?.profile?.full_name ?? "",
+    phone: profile?.profile?.phone ?? "",
+    whatsapp: profile?.profile?.whatsapp || profile?.profile?.phone || "",
+  };
+
+  // Prefill the editable address fields from the saved default address.
   useEffect(() => {
     if (!profile?.profile) return;
     setForm((p) => ({
-      ...p,
-      name: p.name || profile.profile?.full_name || "",
-      phone: p.phone || profile.profile?.phone || "",
-      whatsapp: p.whatsapp || profile.profile?.whatsapp || "",
       street: p.street || profile.defaultAddress?.street || "",
       notes: p.notes || profile.defaultAddress?.notes || "",
     }));
@@ -54,6 +58,7 @@ function CheckoutPage() {
       setStateId(tree[0].id);
     }
   }, [profile, tree]);
+
 
   const stateRow = tree.find((s: any) => s.id === stateId);
   const cities = stateRow?.cities ?? [];
@@ -97,9 +102,10 @@ function CheckoutPage() {
     setSubmitting(true);
     try {
       const res = await place.mutateAsync({
-        contact_name: form.name,
-        contact_phone: form.phone,
-        contact_whatsapp: form.whatsapp || form.phone,
+        contact_name: identity.name,
+        contact_phone: identity.phone,
+        contact_whatsapp: identity.whatsapp || identity.phone,
+
         address_state: lang === "ar" ? stateRow.name_ar : stateRow.name_en,
         address_city: lang === "ar" ? cityRow.name_ar : cityRow.name_en,
         address_neighborhood: neighborhood ? (lang === "ar" ? neighborhood.name_ar : neighborhood.name_en) : undefined,
@@ -128,11 +134,25 @@ function CheckoutPage() {
             <Card>
               <h3 className="mb-4 font-display text-lg text-foreground">{t.checkout.contact}</h3>
               <div className="grid gap-3 md:grid-cols-2">
-                <Field label={t.checkout.fullName}><Input required value={form.name} onChange={(e) => set("name", e.target.value)} /></Field>
-                <Field label={t.checkout.phone}><Input required type="tel" dir="ltr" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="09xxxxxxxx" /></Field>
-                <Field label={t.checkout.whatsapp} className="md:col-span-2"><Input required type="tel" dir="ltr" value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} placeholder="09xxxxxxxx" /></Field>
+                <Field label={t.checkout.fullName}>
+                  <Input readOnly aria-readonly value={identity.name} className="bg-muted/50 text-muted-foreground" />
+                </Field>
+                <Field label={t.checkout.phone}>
+                  <Input readOnly aria-readonly type="tel" dir="ltr" value={identity.phone} className="bg-muted/50 text-muted-foreground" />
+                </Field>
+                <Field label={t.checkout.whatsapp} className="md:col-span-2">
+                  <Input readOnly aria-readonly type="tel" dir="ltr" value={identity.whatsapp} className="bg-muted/50 text-muted-foreground" />
+                </Field>
               </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                {lang === "ar" ? (
+                  <>الاسم ورقم الواتساب مأخوذان من حسابك. لتعديلهما انتقلي إلى <Link to="/account" className="text-primary underline underline-offset-2">إعدادات الحساب</Link>.</>
+                ) : (
+                  <>Name and WhatsApp number come from your account. To change them, go to <Link to="/account" className="text-primary underline underline-offset-2">account settings</Link>.</>
+                )}
+              </p>
             </Card>
+
 
             <Card>
               <h3 className="mb-1 flex items-center gap-2 font-display text-lg text-foreground"><MapPin className="h-4 w-4 text-primary" />{t.checkout.address}</h3>
