@@ -32,17 +32,21 @@ function CheckoutPage() {
   const [stateId, setStateId] = useState("");
   const [cityId, setCityId] = useState("");
   const [neighborhoodId, setNeighborhoodId] = useState("");
-  const [form, setForm] = useState({ name: "", phone: "", whatsapp: "", street: "", notes: "" });
+  // Name and WhatsApp/phone are identity fields: they mirror the account profile
+  // and are not editable here — they change only from account settings.
+  const [form, setForm] = useState({ street: "", notes: "" });
   const [submitting, setSubmitting] = useState(false);
 
-  // Prefill from profile + default address
+  const identity = {
+    name: profile?.profile?.full_name ?? "",
+    phone: profile?.profile?.phone ?? "",
+    whatsapp: profile?.profile?.whatsapp || profile?.profile?.phone || "",
+  };
+
+  // Prefill the editable address fields from the saved default address.
   useEffect(() => {
     if (!profile?.profile) return;
     setForm((p) => ({
-      ...p,
-      name: p.name || profile.profile?.full_name || "",
-      phone: p.phone || profile.profile?.phone || "",
-      whatsapp: p.whatsapp || profile.profile?.whatsapp || "",
       street: p.street || profile.defaultAddress?.street || "",
       notes: p.notes || profile.defaultAddress?.notes || "",
     }));
@@ -54,6 +58,7 @@ function CheckoutPage() {
       setStateId(tree[0].id);
     }
   }, [profile, tree]);
+
 
   const stateRow = tree.find((s: any) => s.id === stateId);
   const cities = stateRow?.cities ?? [];
