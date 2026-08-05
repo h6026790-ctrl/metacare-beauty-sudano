@@ -99,17 +99,62 @@ function AccountPage() {
 
   const profileComplete = !!(profile?.full_name && profile?.phone && profile?.whatsapp && defaultAddr);
 
+  const errMsg = (e: any) => {
+    const raw = e?.message ?? String(e ?? "");
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed[0]?.message) return parsed[0].message;
+    } catch { /* not a zod payload */ }
+    return raw || (lang === "ar" ? "حدث خطأ غير متوقع" : "Something went wrong");
+  };
+
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateProfile.mutateAsync(form);
-    if (addr.state_id && addr.city_id && addr.street) {
+    try {
+      const res: any = await updateProfile.mutateAsync(form);
+      toast.success(
+        res?.phoneChanged
+          ? lang === "ar"
+            ? "تم الحفظ. رقم الجوال الجديد هو بيانات الدخول الآن."
+            : "Saved. Your new phone number is now your login."
+          : lang === "ar" ? "تم حفظ بياناتك" : "Your details were saved",
+      );
+    } catch (err) {
+      toast.error(errMsg(err));
+    }
+  };
+
+  const saveAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addr.state_id || !addr.city_id || !addr.street.trim()) {
+      toast.error(lang === "ar" ? "أكملي الولاية والمدينة والشارع" : "Please fill in state, city and street");
+      return;
+    }
+    try {
       await upsertAddr.mutateAsync({
         state_id: addr.state_id, city_id: addr.city_id,
         neighborhood_id: addr.neighborhood_id || null,
         street: addr.street, notes: addr.notes || null, is_default: true,
       });
+      toast.success(lang === "ar" ? "تم حفظ العنوان" : "Address saved");
+    } catch (err) {
+      toast.error(errMsg(err));
     }
-    toast.success(lang === "ar" ? "تم الحفظ" : "Saved");
+  };
+
+  const savePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pw.new_password !== pw.confirm_password) {
+      toast.error(lang === "ar" ? "كلمتا المرور غير متطابقتين" : "Passwords do not match");
+      return;
+    }
+    try {
+      await changePassword.mutateAsync({ current_password: pw.current_password, new_password: pw.new_password });
+      setPw({ current_password: "", new_password: "", confirm_password: "" });
+      toast.success(lang === "ar" ? "تم تغيير كلمة المرور" : "Password updated");
+    } catch (err) {
+      toast.error(errMsg(err));
+    }
   };
 
   return (
