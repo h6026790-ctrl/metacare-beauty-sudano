@@ -5,7 +5,7 @@ import { useCart, useWishlist, useMyOrders } from "@/lib/api/queries";
 import { buildNotifications } from "@/lib/notifications";
 import { useReadNotifications } from "@/lib/customer-local";
 import { Logo } from "@/components/brand/Logo";
-import { Heart, Menu, Search, ShoppingBag, User, Globe, UserPlus, Bell, Package, LifeBuoy, LayoutDashboard } from "lucide-react";
+import { Heart, Menu, Search, ShoppingBag, User, Globe, UserPlus, Bell, Package, LifeBuoy, LayoutDashboard, LogOut } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ const NAV = [
 
 export function Header() {
   const { t, lang, setLang } = useI18n();
-  const { user, isCustomer, isAdmin, isStaff } = useAuth();
+  const { user, isCustomer, isAdmin, isStaff, signOut } = useAuth();
   const staffLike = !!user && isStaff;
   const workspaceTo = isAdmin ? "/admin" : "/staff";
   const { data: cart } = useCart();
@@ -45,6 +45,25 @@ export function Header() {
     e.preventDefault();
     if (q.trim()) navigate({ to: "/search", search: { q: q.trim() } });
   };
+
+  // Admin / staff accounts are fully isolated from the storefront:
+  // logo → their workspace, plus sign out. Nothing else.
+  if (staffLike) {
+    return (
+      <header className="sticky top-0 z-40 border-b border-border/60 glass">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
+          <Link to={workspaceTo}><Logo /></Link>
+          <button
+            onClick={async () => { await signOut(); navigate({ to: "/auth" }); }}
+            className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-medium text-foreground hover:bg-muted"
+          >
+            <LogOut className="h-4 w-4" />
+            {lang === "ar" ? "تسجيل الخروج" : "Sign out"}
+          </button>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 glass">

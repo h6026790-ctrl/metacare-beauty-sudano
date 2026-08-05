@@ -103,6 +103,10 @@ export const placeOrder = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => checkoutSchema.parse(d))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    // Only customer accounts may place orders — staff/admin are rejected server-side.
+    const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const roles = (roleRows ?? []).map((r: any) => r.role);
+    if (!roles.includes("customer")) throw new Error("Only customer accounts can place orders");
     const cartId = await ensureCart(supabase, userId);
     const { data: items } = await supabase
       .from("cart_items")
