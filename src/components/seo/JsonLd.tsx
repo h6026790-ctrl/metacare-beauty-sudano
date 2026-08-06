@@ -1,20 +1,22 @@
 import { useEffect } from "react";
 
 /**
- * Injects a schema.org JSON-LD block into <head>.
+ * Injects a schema.org JSON-LD block into the document.
  *
- * React does not reliably render inline <script> children inside route
- * components, so the tag is created imperatively and cleaned up on unmount.
+ * It is appended to <body>: the router owns <head> and prunes tags it did not
+ * create, and crawlers accept JSON-LD anywhere in the document.
  */
 export function JsonLd({ data, id = "app-jsonld" }: { data: unknown; id?: string }) {
   const json = JSON.stringify(data);
   useEffect(() => {
+    document.getElementById(id)?.remove();
     const el = document.createElement("script");
     el.type = "application/ld+json";
     el.id = id;
     el.textContent = json;
-    document.head.appendChild(el);
+    document.body.appendChild(el);
     return () => { el.remove(); };
   }, [json, id]);
   return null;
 }
+
