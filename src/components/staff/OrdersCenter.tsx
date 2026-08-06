@@ -247,13 +247,30 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
                 </p>
               </div>
 
+              <div className="mt-2 rounded-xl border border-border bg-muted/30 p-3">
+                <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                  {lang === "ar" ? "مرجع الدفع (إلزامي لتأكيد الدفع)" : "Payment reference (required to confirm payment)"}
+                </p>
+                <Input
+                  value={payRef}
+                  onChange={(e) => setPayRef(e.target.value)}
+                  placeholder={lang === "ar" ? "رقم العملية / الإيصال" : "Transaction / receipt number"}
+                  className="h-9 text-xs"
+                />
+              </div>
+
               <div className="mt-1 grid grid-cols-2 gap-2">
                 <button onClick={() => onStatus("review")} className="rounded-full border border-border bg-card px-3 py-2 text-xs">
                   {lang === "ar" ? "تحت المراجعة" : "Mark review"}
                 </button>
-                <button onClick={() => onStatus("paid")} className="inline-flex items-center justify-center gap-1.5 rounded-full bg-success px-3 py-2 text-xs font-medium text-success-foreground">
+                <button
+                  onClick={() => onStatus("paid")}
+                  disabled={payRef.trim().length < 3}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full bg-success px-3 py-2 text-xs font-medium text-success-foreground disabled:opacity-50"
+                >
                   <CheckCircle2 className="h-3.5 w-3.5" />{lang === "ar" ? "تأكيد الدفع" : "Confirm paid"}
                 </button>
+
                 <button onClick={() => onStatus("delivered")} className="rounded-full border border-border bg-card px-3 py-2 text-xs">
                   {lang === "ar" ? "تم التسليم" : "Delivered"}
                 </button>
