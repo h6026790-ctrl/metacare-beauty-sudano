@@ -55,8 +55,20 @@ const verifyOtp = verifyPassword;
 
 const MAX_OTP_ATTEMPTS = 5;
 
-// Paginated lookup: admin.listUsers caps each page, so walk pages until found.
-async function findUserByEmail(supabaseAdmin: any, email: string) {
+// Look the account up by its normalized phone number via public.profiles
+// (indexed) instead of paging through every auth user. The page-walk stays
+// only as a fallback for accounts that predate a profile row.
+async function findUserByPhone(supabaseAdmin: any, phone: string) {
+  const email = phoneToEmail(phone);
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("phone", phone)
+    .maybeSingle();
+  if (profile?.id) {
+    const { data, error } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+    if (!error && data?.user) return data.user;
+  }
   const perPage = 200;
   for (let page = 1; page <= 100; page++) {
     const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
@@ -68,6 +80,7 @@ async function findUserByEmail(supabaseAdmin: any, email: string) {
   }
   return null;
 }
+
 
 
 // ---------- 1) PUBLIC: submit registration ----------
