@@ -103,9 +103,10 @@ export const submitRegistrationRequest = createServerFn({ method: "POST" })
     const phone = normalizePhone(data.phone);
     const whatsapp = normalizePhone(data.whatsapp || data.phone);
 
+    await enforceRateLimit(supabaseAdmin, `register:${phone}`, RATE_LIMITS.register);
+
     // Refuse if a verified auth user already exists for this phone.
-    const email = phoneToEmail(phone);
-    const existing = await findUserByEmail(supabaseAdmin, email);
+    const existing = await findUserByPhone(supabaseAdmin, phone);
     if (existing) {
       throw new Error(
         "يوجد حساب مسجل بهذا الرقم. استخدمي تسجيل الدخول أو استعادة كلمة المرور. / An account already exists for this phone. Please sign in or use password reset.",
@@ -155,14 +156,21 @@ export const submitPasswordResetRequest = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const phone = normalizePhone(data.phone);
-    const email = phoneToEmail(phone);
 
-    // Must reference an existing user.
-    const existing = await findUserByEmail(supabaseAdmin, email);
+    await enforceRateLimit(supabaseAdmin, `reset:${phone}`, RATE_LIMITS.reset);
+
+    const existing = await findUserByPhone(supabaseAdmin, phone);
+
+    // Anti-enumeration: an unknown phone gets the same success-shaped answer
+    // as a known one. The real outcome is recorded in audit_logs instead.
     if (!existing) {
-      throw new Error(
-        "لا يوجد حساب بهذا الرقم. / No account exists for this phone number.",
-      );
+      await supabaseAdmin.from("audit_logs").insert({
+        action: "registration.reset_requested_unknown_phone",
+        entity_type: "registration_request",
+        entity_id: null,
+        metadata: { phone },
+      });
+      return { requestId: null, phone };
     }
 
     // Expire any earlier pending reset requests for the same phone.
@@ -188,8 +196,9 @@ export const submitPasswordResetRequest = createServerFn({ method: "POST" })
       .select("id, phone")
       .single();
     if (error) throw error;
-    return { requestId: row.id, phone: row.phone };
+    return { requestId: row.id as string | null, phone: row.phone };
   });
+
 
 // ---------- 3) PUBLIC: verify OTP (register or reset) ----------
 const verifySchema = z.object({
