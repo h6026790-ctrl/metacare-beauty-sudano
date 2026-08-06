@@ -62,17 +62,43 @@ export const listUnassignedOrders = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+// Claiming goes through the SECURITY DEFINER RPC public.claim_order, which
+// only assigns orders where assigned_staff_id IS NULL. Two agents clicking at
+// the same moment: the second one gets order_already_claimed.
 export const claimOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { orderId: string }) => z.object({ orderId: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertStaff(context);
-    const { error } = await context.supabase.from("orders")
-      .update({ assigned_staff_id: context.userId })
-      .eq("id", data.orderId);
-    if (error) throw error;
+    const { error } = await context.supabase.rpc("claim_order", { _order_id: data.orderId });
+    if (error) {
+      const msg = error.message || "";
+      if (msg.includes("order_already_claimed")) {
+        throw new Error("تم استلام هذا الطلب من زميل آخر / This order was just claimed by another agent");
+      }
+      if (msg.includes("order_not_found")) {
+        throw new Error("الطلب غير موجود / Order not found");
+      }
+      if (msg.includes("forbidden")) throw new Error("Forbidden");
+      throw error;
+    }
     return { ok: true };
   });
+
+// Valid order lifecycle, enforced on the server (the UI is only a hint).
+//   new → review → paid → shipping → delivered
+//   new / review        → cancelled
+//   paid / shipping     → cancelled or returned
+//   delivered           → returned
+const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  new: ["review", "paid", "cancelled"],
+  review: ["paid", "cancelled"],
+  paid: ["shipping", "cancelled", "returned"],
+  shipping: ["delivered", "cancelled", "returned"],
+  delivered: ["returned"],
+  cancelled: [],
+  returned: [],
+};
 
 export const updateOrderStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -92,7 +118,24 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       throw new Error("مرجع الدفع مطلوب لتأكيد الدفع / A payment reference is required to confirm payment");
     }
 
-    const { error } = await context.supabase.from("orders").update({ status: data.status }).eq("id", data.orderId);
+    // Server-side state machine.
+    const { data: current, error: readErr } = await context.supabase
+      .from("orders").select("status").eq("id", data.orderId).maybeSingle();
+    if (readErr) throw readErr;
+    if (!current) throw new Error("الطلب غير موجود / Order not found");
+    const from = current.status as OrderStatus;
+    if (from === data.status) return { ok: true };
+    if (!ALLOWED_TRANSITIONS[from].includes(data.status)) {
+      throw new Error(
+        `لا يمكن نقل الطلب من "${from}" إلى "${data.status}" / Invalid status transition: ${from} → ${data.status}`,
+      );
+    }
+
+    // The status write keeps going through the orders table so the existing
+    // handle_order_status_change trigger runs (history, audit, stock restore).
+    const { error } = await context.supabase
+      .from("orders").update({ status: data.status })
+      .eq("id", data.orderId).eq("status", from);
     if (error) throw error;
     if (data.status === "paid") {
       await context.supabase.from("order_notes").insert({
@@ -111,6 +154,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
 
 
 export const addOrderNote = createServerFn({ method: "POST" })
