@@ -101,6 +101,9 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    purgeCustomerLocalData();
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
