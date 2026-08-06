@@ -76,23 +76,42 @@ export const claimOrder = createServerFn({ method: "POST" })
 
 export const updateOrderStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { orderId: string; status: string; note?: string }) =>
+  .inputValidator((d: { orderId: string; status: string; note?: string; paymentReference?: string }) =>
     z.object({
       orderId: z.string().uuid(),
       status: z.enum(ORDER_STATUSES),
       note: z.string().max(500).optional(),
+      paymentReference: z.string().trim().max(120).optional(),
     }).parse(d))
   .handler(async ({ context, data }) => {
     await assertStaff(context);
+
+    // Marking an order as paid requires a payment reference for accountability.
+    const paymentRef = (data.paymentReference ?? "").trim();
+    if (data.status === "paid" && paymentRef.length < 3) {
+      throw new Error("مرجع الدفع مطلوب لتأكيد الدفع / A payment reference is required to confirm payment");
+    }
+
     const { error } = await context.supabase.from("orders").update({ status: data.status }).eq("id", data.orderId);
     if (error) throw error;
-    if (data.note) {
+    if (data.status === "paid") {
+      await context.supabase.from("order_notes").insert({
+        order_id: data.orderId, author_id: context.userId,
+        body: `Payment reference: ${paymentRef}${data.note ? ` — ${data.note}` : ""}`,
+      });
+      await context.supabase.from("audit_logs").insert({
+        actor_id: context.userId, action: "order.payment_confirmed",
+        entity_type: "order", entity_id: data.orderId,
+        metadata: { payment_reference: paymentRef },
+      });
+    } else if (data.note) {
       await context.supabase.from("order_notes").insert({
         order_id: data.orderId, author_id: context.userId, body: data.note,
       });
     }
     return { ok: true };
   });
+
 
 export const addOrderNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
