@@ -8,7 +8,7 @@ import { Pencil, Plus } from "lucide-react";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice } from "@/lib/format";
-import { adminSoftDeleteProduct, adminRestoreProduct } from "@/lib/api/admin.functions";
+import { adminSoftDeleteProduct, adminRestoreProduct, adminUploadProductImage } from "@/lib/api/admin.functions";
 import { adminUpsertProduct, adminUpsertBrand } from "@/lib/api/ops.functions";
 import { CenterHeader, TableCard, Th, Td, EmptyRow } from "@/components/admin/ui";
 import { useAdminProducts, useAdminBrands, useAdminCategories } from "@/components/admin/useAdminWorkspace";
