@@ -110,21 +110,8 @@ function AccountPage() {
     return raw || (lang === "ar" ? "حدث خطأ غير متوقع" : "Something went wrong");
   };
 
-  const saveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res: any = await updateProfile.mutateAsync(form);
-      toast.success(
-        res?.phoneChanged
-          ? lang === "ar"
-            ? "تم الحفظ. رقم الجوال الجديد هو بيانات الدخول الآن."
-            : "Saved. Your new phone number is now your login."
-          : lang === "ar" ? "تم حفظ بياناتك" : "Your details were saved",
-      );
-    } catch (err) {
-      toast.error(errMsg(err));
-    }
-  };
+
+
 
   const saveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
