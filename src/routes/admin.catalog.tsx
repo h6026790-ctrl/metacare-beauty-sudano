@@ -142,8 +142,9 @@ function AdminCatalog() {
           category_id: product.category_id || null,
           image_url: product.image_url.trim() || null,
           is_active: product.is_active,
-          is_featured: false, is_new: false, is_best_seller: false,
+          // Promotional flags are managed in the Offers center — never reset here.
         },
+
       } as any);
       toast.success(ar ? "تم حفظ المنتج" : "Product saved");
       setProduct(null);
