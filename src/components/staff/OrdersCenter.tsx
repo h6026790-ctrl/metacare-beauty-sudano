@@ -35,6 +35,8 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
   const [tab, setTab] = useState(initialTab);
   const [selected, setSelected] = useState<any | null>(null);
   const [courierNote, setCourierNote] = useState("");
+  const [payRef, setPayRef] = useState("");
+
 
   const ordersQ = useStaffOrders(enabled, q);
   const unassQ = useUnassignedOrders(enabled);
