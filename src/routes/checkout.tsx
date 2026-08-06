@@ -43,12 +43,15 @@ function CheckoutPage() {
     whatsapp: profile?.profile?.whatsapp || profile?.profile?.phone || "",
   };
 
-  // Prefill the editable address fields from the saved default address.
+  // Prefill the editable address fields from the saved default address, and
+  // carry over any delivery note the customer typed on the cart page.
   useEffect(() => {
     if (!profile?.profile) return;
+    let cartNotes = "";
+    try { cartNotes = window.localStorage.getItem("mc.cartNotes") ?? ""; } catch { /* noop */ }
     setForm((p) => ({
       street: p.street || profile.defaultAddress?.street || "",
-      notes: p.notes || profile.defaultAddress?.notes || "",
+      notes: p.notes || cartNotes || profile.defaultAddress?.notes || "",
     }));
     if (profile.defaultAddress) {
       setStateId((s) => s || profile.defaultAddress.state_id);
@@ -58,6 +61,7 @@ function CheckoutPage() {
       setStateId(tree[0].id);
     }
   }, [profile, tree]);
+
 
 
   const stateRow = tree.find((s: any) => s.id === stateId);
