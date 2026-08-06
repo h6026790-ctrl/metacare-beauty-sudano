@@ -107,60 +107,35 @@ export const placeOrder = createServerFn({ method: "POST" })
     const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", userId);
     const roles = (roleRows ?? []).map((r: any) => r.role);
     if (!roles.includes("customer")) throw new Error("Only customer accounts can place orders");
-    const cartId = await ensureCart(supabase, userId);
-    const { data: items } = await supabase
-      .from("cart_items")
-      .select("qty, product:products(id, name_ar, name_en, price_sdg, is_active)")
-      .eq("cart_id", cartId);
-    if (!items || items.length === 0) throw new Error("Cart is empty");
 
-    // Authoritative delivery fee: read from the neighbourhood row server-side.
-    let deliveryFee = DEFAULT_DELIVERY_SDG;
-    if (data.neighborhood_id) {
-      const { data: hood } = await supabase
-        .from("neighborhoods")
-        .select("delivery_fee_sdg, is_active")
-        .eq("id", data.neighborhood_id)
-        .maybeSingle();
-      if (hood?.is_active) deliveryFee = Number(hood.delivery_fee_sdg);
-    }
+    // Site closure is enforced server-side, whatever the already-loaded page shows.
+    const { data: settings } = await supabase
+      .from("site_settings").select("maintenance_mode").maybeSingle();
+    if (settings?.maintenance_mode) throw new Error("site_closed");
 
-    let subtotal = 0;
-    const orderItems = items.map((i: any) => {
-      const price = Number(i.product.price_sdg);
-      subtotal += price * i.qty;
-      return { product_id: i.product.id, name_snapshot: i.product.name_en, qty: i.qty, price_sdg: price };
+    // Atomic: locks each product's inventory row, verifies availability,
+    // reserves the stock, creates the order (expires in 6h) and clears the cart.
+    const { data: order, error } = await (supabase as any).rpc("place_order", {
+      _contact_name: data.contact_name,
+      _contact_phone: data.contact_phone,
+      _contact_whatsapp: data.contact_whatsapp,
+      _address_state: data.address_state,
+      _address_city: data.address_city,
+      _address_neighborhood: data.address_neighborhood ?? null,
+      _address_street: data.address_street,
+      _address_notes: data.address_notes ?? null,
+      _neighborhood_id: data.neighborhood_id ?? null,
     });
-    const total = subtotal + deliveryFee;
-
-    const { data: order, error: orderErr } = await supabase
-      .from("orders")
-      .insert({
-        profile_id: userId,
-        subtotal_sdg: subtotal,
-        delivery_sdg: deliveryFee,
-        total_sdg: total,
-        contact_name: data.contact_name,
-        contact_phone: data.contact_phone,
-        contact_whatsapp: data.contact_whatsapp,
-        address_state: data.address_state,
-        address_city: data.address_city,
-        address_neighborhood: data.address_neighborhood,
-        address_street: data.address_street,
-        address_notes: data.address_notes,
-      })
-      .select()
-      .single();
-    if (orderErr) throw orderErr;
-
-    const { error: itemsErr } = await supabase
-      .from("order_items")
-      .insert(orderItems.map((i) => ({ ...i, order_id: order.id })));
-    if (itemsErr) throw itemsErr;
-
-    await supabase.from("cart_items").delete().eq("cart_id", cartId);
+    if (error) {
+      const msg = String(error.message ?? "");
+      if (msg.includes("insufficient_stock")) throw new Error("insufficient_stock:" + msg.split("insufficient_stock:")[1]);
+      if (msg.includes("cart_empty")) throw new Error("Cart is empty");
+      if (msg.includes("product_unavailable")) throw new Error("product_unavailable");
+      throw new Error(msg || "order_failed");
+    }
     return { order };
   });
+
 
 // ---------- ORDERS (customer view) ----------
 export const listMyOrders = createServerFn({ method: "GET" })
