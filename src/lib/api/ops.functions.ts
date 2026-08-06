@@ -285,9 +285,12 @@ const productInputSchema = z.object({
   price_sdg: z.number().nonnegative(),
   compare_at_sdg: z.number().nonnegative().nullable().optional(),
   image_url: z.string().optional().nullable(),
-  is_featured: z.boolean().default(false),
-  is_new: z.boolean().default(false),
-  is_best_seller: z.boolean().default(false),
+  // Promotional flags are owned by the Offers center. They stay optional here
+  // so editing a product never silently clears "featured" / "new" / "best".
+  is_featured: z.boolean().optional(),
+  is_new: z.boolean().optional(),
+  is_best_seller: z.boolean().optional(),
+
   is_active: z.boolean().default(true),
 });
 
