@@ -89,8 +89,9 @@ function ProductDetail() {
 
   return (
     <AppShell>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={jsonLd} />
       <div className="mx-auto max-w-7xl px-4 py-6 pb-28 md:py-10 md:pb-10">
+
 
         <nav className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
           <Link to="/" className="hover:text-foreground">{t.nav.home}</Link>
