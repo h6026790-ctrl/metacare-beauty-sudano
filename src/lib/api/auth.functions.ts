@@ -16,6 +16,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { scryptSync, randomBytes, timingSafeEqual } from "node:crypto";
+import { enforceRateLimit, RATE_LIMITS } from "./rate-limit.server";
+
 
 // ---------- helpers ----------
 function normalizePhone(input: string): string {
