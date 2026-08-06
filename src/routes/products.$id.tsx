@@ -11,16 +11,31 @@ import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { useRecentlyViewed } from "@/lib/customer-local";
 
+function titleFromSlug(slug: string) {
+  return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export const Route = createFileRoute("/products/$id")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `${params.id} — Metacare` },
-      { property: "og:url", content: `https://metacare-beauty-sudano.lovable.app/products/${params.id}` },
-    ],
-    links: [{ rel: "canonical", href: `https://metacare-beauty-sudano.lovable.app/products/${params.id}` }],
-  }),
+  head: ({ params }) => {
+    const name = titleFromSlug(params.id);
+    const url = `https://metacare-beauty-sudano.lovable.app/products/${params.id}`;
+    const description = `${name} — منتج أصلي من ميتاكير بيوتي مع توصيل داخل السودان. / Authentic ${name} from Metacare Beauty with delivery across Sudan.`;
+    return {
+      meta: [
+        { title: `${name} — ميتاكير بيوتي` },
+        { name: "description", content: description.slice(0, 158) },
+        { property: "og:title", content: `${name} — ميتاكير بيوتي` },
+        { property: "og:description", content: description.slice(0, 158) },
+        { property: "og:type", content: "product" },
+        { property: "og:url", content: url },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: ProductDetail,
 });
+
 
 function ProductDetail() {
   const { id } = Route.useParams();
