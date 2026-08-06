@@ -10,17 +10,34 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { useRecentlyViewed } from "@/lib/customer-local";
+import { JsonLd } from "@/components/seo/JsonLd";
+
+
+function titleFromSlug(slug: string) {
+  return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 export const Route = createFileRoute("/products/$id")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `${params.id} — Metacare` },
-      { property: "og:url", content: `https://metacare-beauty-sudano.lovable.app/products/${params.id}` },
-    ],
-    links: [{ rel: "canonical", href: `https://metacare-beauty-sudano.lovable.app/products/${params.id}` }],
-  }),
+  head: ({ params }) => {
+    const name = titleFromSlug(params.id);
+    const url = `https://metacare-beauty-sudano.lovable.app/products/${params.id}`;
+    const description = `${name} — منتج أصلي من ميتاكير بيوتي مع توصيل داخل السودان. / Authentic ${name} from Metacare Beauty with delivery across Sudan.`;
+    return {
+      meta: [
+        { title: `${name} — ميتاكير بيوتي` },
+        { name: "description", content: description.slice(0, 158) },
+        { property: "og:title", content: `${name} — ميتاكير بيوتي` },
+        { property: "og:description", content: description.slice(0, 158) },
+        { property: "og:type", content: "product" },
+        { property: "og:url", content: url },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: ProductDetail,
 });
+
 
 function ProductDetail() {
   const { id } = Route.useParams();
@@ -54,9 +71,30 @@ function ProductDetail() {
     try { await navigator.clipboard.writeText(url); toast.success(t.visitor.linkCopied); } catch { /* noop */ }
   };
 
+  // Product structured data. Price is deliberately omitted: prices are only
+  // visible to signed-in customers, so they must not leak through JSON-LD.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name[lang],
+    description: product.description?.[lang] ?? undefined,
+    image: product.image ? [product.image] : undefined,
+    sku: product.slug,
+    brand: product.brand ? { "@type": "Brand", name: product.brand.name[lang] } : undefined,
+    offers: {
+      "@type": "Offer",
+      url: `https://metacare-beauty-sudano.lovable.app/products/${product.slug}`,
+      priceCurrency: "SDG",
+      availability: oos ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+    },
+  };
+
   return (
     <AppShell>
+      <JsonLd data={jsonLd} />
       <div className="mx-auto max-w-7xl px-4 py-6 pb-28 md:py-10 md:pb-10">
+
+
         <nav className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
           <Link to="/" className="hover:text-foreground">{t.nav.home}</Link>
           <span>/</span>

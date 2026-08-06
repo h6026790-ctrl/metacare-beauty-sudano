@@ -16,6 +16,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { scryptSync, randomBytes, timingSafeEqual } from "node:crypto";
+import { enforceRateLimit, RATE_LIMITS } from "./rate-limit.server";
+
 
 // ---------- helpers ----------
 function normalizePhone(input: string): string {
@@ -55,8 +57,20 @@ const verifyOtp = verifyPassword;
 
 const MAX_OTP_ATTEMPTS = 5;
 
-// Paginated lookup: admin.listUsers caps each page, so walk pages until found.
-async function findUserByEmail(supabaseAdmin: any, email: string) {
+// Look the account up by its normalized phone number via public.profiles
+// (indexed) instead of paging through every auth user. The page-walk stays
+// only as a fallback for accounts that predate a profile row.
+async function findUserByPhone(supabaseAdmin: any, phone: string) {
+  const email = phoneToEmail(phone);
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("phone", phone)
+    .maybeSingle();
+  if (profile?.id) {
+    const { data, error } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+    if (!error && data?.user) return data.user;
+  }
   const perPage = 200;
   for (let page = 1; page <= 100; page++) {
     const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
@@ -68,6 +82,7 @@ async function findUserByEmail(supabaseAdmin: any, email: string) {
   }
   return null;
 }
+
 
 
 // ---------- 1) PUBLIC: submit registration ----------
@@ -90,9 +105,10 @@ export const submitRegistrationRequest = createServerFn({ method: "POST" })
     const phone = normalizePhone(data.phone);
     const whatsapp = normalizePhone(data.whatsapp || data.phone);
 
+    await enforceRateLimit(supabaseAdmin, `register:${phone}`, RATE_LIMITS.register);
+
     // Refuse if a verified auth user already exists for this phone.
-    const email = phoneToEmail(phone);
-    const existing = await findUserByEmail(supabaseAdmin, email);
+    const existing = await findUserByPhone(supabaseAdmin, phone);
     if (existing) {
       throw new Error(
         "يوجد حساب مسجل بهذا الرقم. استخدمي تسجيل الدخول أو استعادة كلمة المرور. / An account already exists for this phone. Please sign in or use password reset.",
@@ -142,14 +158,21 @@ export const submitPasswordResetRequest = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const phone = normalizePhone(data.phone);
-    const email = phoneToEmail(phone);
 
-    // Must reference an existing user.
-    const existing = await findUserByEmail(supabaseAdmin, email);
+    await enforceRateLimit(supabaseAdmin, `reset:${phone}`, RATE_LIMITS.reset);
+
+    const existing = await findUserByPhone(supabaseAdmin, phone);
+
+    // Anti-enumeration: an unknown phone gets the same success-shaped answer
+    // as a known one. The real outcome is recorded in audit_logs instead.
     if (!existing) {
-      throw new Error(
-        "لا يوجد حساب بهذا الرقم. / No account exists for this phone number.",
-      );
+      await supabaseAdmin.from("audit_logs").insert({
+        action: "registration.reset_requested_unknown_phone",
+        entity_type: "registration_request",
+        entity_id: null,
+        metadata: { phone },
+      });
+      return { requestId: null, phone };
     }
 
     // Expire any earlier pending reset requests for the same phone.
@@ -175,8 +198,9 @@ export const submitPasswordResetRequest = createServerFn({ method: "POST" })
       .select("id, phone")
       .single();
     if (error) throw error;
-    return { requestId: row.id, phone: row.phone };
+    return { requestId: row.id as string | null, phone: row.phone };
   });
+
 
 // ---------- 3) PUBLIC: verify OTP (register or reset) ----------
 const verifySchema = z.object({
@@ -191,6 +215,10 @@ export const verifyRegistrationOtp = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const phone = normalizePhone(data.phone);
+
+    await enforceRateLimit(supabaseAdmin, `verify:${phone}`, RATE_LIMITS.verify);
+
+
 
     const { data: req, error: reqErr } = await supabaseAdmin
       .from("registration_requests")
@@ -234,7 +262,8 @@ export const verifyRegistrationOtp = createServerFn({ method: "POST" })
     }
 
     const email = phoneToEmail(phone);
-    const existing = await findUserByEmail(supabaseAdmin, email);
+    const existing = await findUserByPhone(supabaseAdmin, phone);
+
 
     let userId: string | null = null;
     if (data.request_type === "register") {

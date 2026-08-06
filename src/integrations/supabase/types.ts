@@ -109,6 +109,27 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_rate_limits: {
+        Row: {
+          attempts: number
+          bucket: string
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          attempts?: number
+          bucket: string
+          updated_at?: string
+          window_start?: string
+        }
+        Update: {
+          attempts?: number
+          bucket?: string
+          updated_at?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       brands: {
         Row: {
           created_at: string
@@ -1127,6 +1148,7 @@ export type Database = {
       }
     }
     Functions: {
+      claim_order: { Args: { _order_id: string }; Returns: Json }
       confirm_delivery_by_qr: {
         Args: { _order_id: string; _token: string }
         Returns: Json

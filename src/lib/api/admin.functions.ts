@@ -214,10 +214,31 @@ export const adminSetProductFlags = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const { productId, ...flags } = data;
     if (Object.keys(flags).length === 0) return { ok: true };
+
+    // "On sale" only means something when there is a higher compare-at price
+    // to strike through; otherwise the badge shows with no visible discount.
+    if (flags.is_on_sale === true) {
+      const { data: p, error: readErr } = await context.supabase
+        .from("products").select("price_sdg, compare_at_sdg").eq("id", productId).maybeSingle();
+      if (readErr) throw readErr;
+      if (!p) throw new Error("المنتج غير موجود / Product not found");
+      const compare = p.compare_at_sdg != null ? Number(p.compare_at_sdg) : null;
+      if (compare == null || compare <= Number(p.price_sdg)) {
+        throw new Error(
+          "لتفعيل العرض، أدخلي سعر المقارنة أعلى من السعر الحالي في صفحة الكتالوج. / To mark this product on sale, set a compare-at price higher than the current price in the Catalogue center.",
+        );
+      }
+    }
+
     const { error } = await context.supabase.from("products").update(flags).eq("id", productId);
     if (error) throw error;
+    await context.supabase.from("audit_logs").insert({
+      actor_id: context.userId, action: "admin.product_flags_set",
+      entity_type: "product", entity_id: productId, metadata: flags,
+    });
     return { ok: true };
   });
+
 
 // ---------- SITE SETTINGS (maintenance mode) ----------
 export const adminUpdateSiteSettings = createServerFn({ method: "POST" })
@@ -297,4 +318,45 @@ export const adminDeleteNeighborhood = createServerFn({ method: "POST" })
     const { error } = await context.supabase.from("neighborhoods").delete().eq("id", data.id);
     if (error) throw error;
     return { softDisabled: false };
+  });
+
+// ---------- PRODUCT IMAGE UPLOAD ----------
+// Photos go to the private `product-images` bucket and are served back to the
+// storefront through /api/public/product-image/<path>. Uploads are admin-only,
+// size-capped, and restricted to image MIME types.
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"] as const;
+
+export const adminUploadProductImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    fileName: z.string().trim().min(1).max(120),
+    contentType: z.enum(ALLOWED_IMAGE_TYPES),
+    // data URL body, base64-encoded
+    base64: z.string().min(16).max(6_000_000),
+  }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+
+    const bytes = Buffer.from(data.base64, "base64");
+    if (bytes.byteLength === 0) throw new Error("ملف غير صالح / Invalid file");
+    if (bytes.byteLength > MAX_IMAGE_BYTES) {
+      throw new Error("حجم الصورة يتجاوز 3 ميجابايت / Image exceeds the 3 MB limit");
+    }
+
+    const ext = (data.fileName.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5);
+    const path = `${new Date().getFullYear()}/${crypto.randomUUID()}.${ext || "jpg"}`;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.storage
+      .from("product-images")
+      .upload(path, bytes, { contentType: data.contentType, upsert: false });
+    if (error) throw new Error(error.message);
+
+    await context.supabase.from("audit_logs").insert({
+      actor_id: context.userId, action: "admin.product_image_uploaded",
+      entity_type: "storage", entity_id: path, metadata: { bytes: bytes.byteLength },
+    });
+
+    return { url: `/api/public/product-image/${path}` };
   });

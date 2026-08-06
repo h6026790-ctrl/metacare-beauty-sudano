@@ -8,7 +8,7 @@ import { Pencil, Plus } from "lucide-react";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice } from "@/lib/format";
-import { adminSoftDeleteProduct, adminRestoreProduct } from "@/lib/api/admin.functions";
+import { adminSoftDeleteProduct, adminRestoreProduct, adminUploadProductImage } from "@/lib/api/admin.functions";
 import { adminUpsertProduct, adminUpsertBrand } from "@/lib/api/ops.functions";
 import { CenterHeader, TableCard, Th, Td, EmptyRow } from "@/components/admin/ui";
 import { useAdminProducts, useAdminBrands, useAdminCategories } from "@/components/admin/useAdminWorkspace";
@@ -84,6 +84,31 @@ function AdminCatalog() {
   const [product, setProduct] = useState<ProductForm | null>(null);
   const [brand, setBrand] = useState<BrandForm | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const uploadFn = useServerFn(adminUploadProductImage);
+
+  // Photos are uploaded to private storage and referenced by their served URL.
+  const uploadImage = async (file: File) => {
+    setUploading(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+        reader.onerror = () => reject(new Error("read_failed"));
+        reader.readAsDataURL(file);
+      });
+      const res: any = await uploadFn({
+        data: { fileName: file.name, contentType: file.type, base64 },
+      } as any);
+      setProduct((p) => (p ? { ...p, image_url: res.url } : p));
+      toast.success(ar ? "تم رفع الصورة" : "Image uploaded");
+    } catch (err: any) {
+      toast.error(err?.message ?? (ar ? "تعذر رفع الصورة" : "Upload failed"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
 
   const all = (productsQ.data ?? []) as any[];
   const products = showArchived ? all : all.filter((p) => p.is_active);
@@ -142,8 +167,9 @@ function AdminCatalog() {
           category_id: product.category_id || null,
           image_url: product.image_url.trim() || null,
           is_active: product.is_active,
-          is_featured: false, is_new: false, is_best_seller: false,
+          // Promotional flags are managed in the Offers center — never reset here.
         },
+
       } as any);
       toast.success(ar ? "تم حفظ المنتج" : "Product saved");
       setProduct(null);
@@ -319,12 +345,25 @@ function AdminCatalog() {
                     {categories.map((c: any) => <option key={c.id} value={c.id}>{ar ? c.name_ar : c.name_en}</option>)}
                   </select>
                 </Field>
-                <Field label={ar ? "رابط الصورة" : "Image URL"} className="md:col-span-2">
-                  <Input dir="ltr" placeholder="https://…" value={product.image_url} onChange={(e) => setProduct({ ...product, image_url: e.target.value })} />
+                <Field label={ar ? "صورة المنتج" : "Product image"} className="md:col-span-2">
+                  <div className="space-y-2">
+                    <Input dir="ltr" placeholder="https://…" value={product.image_url} onChange={(e) => setProduct({ ...product, image_url: e.target.value })} />
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/avif"
+                      disabled={uploading}
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f); e.target.value = ""; }}
+                      className="block w-full text-xs text-muted-foreground file:me-3 file:rounded-full file:border-0 file:bg-muted file:px-4 file:py-2 file:text-xs file:font-medium"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      {ar ? "JPG أو PNG أو WEBP، بحد أقصى ٣ ميجابايت." : "JPG, PNG or WEBP — up to 3 MB."}
+                    </p>
+                  </div>
                 </Field>
                 {product.image_url && (
                   <img src={product.image_url} alt="" className="h-24 w-24 rounded-xl object-cover md:col-span-2" />
                 )}
+
                 <Field label={ar ? "الوصف بالعربية" : "Description (Arabic)"} className="md:col-span-2">
                   <Textarea rows={3} value={product.description_ar} onChange={(e) => setProduct({ ...product, description_ar: e.target.value })} />
                 </Field>
