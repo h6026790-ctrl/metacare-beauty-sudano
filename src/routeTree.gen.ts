@@ -13,7 +13,6 @@ import { Route as SupportRouteImport } from './routes/support'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SearchRouteImport } from './routes/search'
-import { Route as ProductsRouteImport } from './routes/products'
 import { Route as OffersRouteImport } from './routes/offers'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as FaqRouteImport } from './routes/faq'
@@ -29,6 +28,7 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StaffIndexRouteImport } from './routes/staff.index'
+import { Route as ProductsIndexRouteImport } from './routes/products.index'
 import { Route as OrdersIndexRouteImport } from './routes/orders.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AccountIndexRouteImport } from './routes/account.index'
@@ -77,11 +77,6 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductsRoute = ProductsRouteImport.update({
-  id: '/products',
-  path: '/products',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OffersRoute = OffersRouteImport.update({
@@ -159,6 +154,11 @@ const StaffIndexRoute = StaffIndexRouteImport.update({
   path: '/',
   getParentRoute: () => StaffRoute,
 } as any)
+const ProductsIndexRoute = ProductsIndexRouteImport.update({
+  id: '/products/',
+  path: '/products/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrdersIndexRoute = OrdersIndexRouteImport.update({
   id: '/orders/',
   path: '/orders/',
@@ -210,9 +210,9 @@ const StaffActivityRoute = StaffActivityRouteImport.update({
   getParentRoute: () => StaffRoute,
 } as any)
 const ProductsIdRoute = ProductsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => ProductsRoute,
+  id: '/products/$id',
+  path: '/products/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PoliciesTermsRoute = PoliciesTermsRouteImport.update({
   id: '/policies/terms',
@@ -321,7 +321,6 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/notifications': typeof NotificationsRoute
   '/offers': typeof OffersRoute
-  '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRouteWithChildren
@@ -354,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/account/': typeof AccountIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/orders/': typeof OrdersIndexRoute
+  '/products/': typeof ProductsIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
 }
@@ -370,7 +370,6 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/notifications': typeof NotificationsRoute
   '/offers': typeof OffersRoute
-  '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
@@ -402,6 +401,7 @@ export interface FileRoutesByTo {
   '/account': typeof AccountIndexRoute
   '/admin': typeof AdminIndexRoute
   '/orders': typeof OrdersIndexRoute
+  '/products': typeof ProductsIndexRoute
   '/staff': typeof StaffIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
 }
@@ -421,7 +421,6 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/notifications': typeof NotificationsRoute
   '/offers': typeof OffersRoute
-  '/products': typeof ProductsRouteWithChildren
   '/search': typeof SearchRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRouteWithChildren
@@ -454,6 +453,7 @@ export interface FileRoutesById {
   '/account/': typeof AccountIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/orders/': typeof OrdersIndexRoute
+  '/products/': typeof ProductsIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
 }
@@ -474,7 +474,6 @@ export interface FileRouteTypes {
     | '/faq'
     | '/notifications'
     | '/offers'
-    | '/products'
     | '/search'
     | '/sitemap.xml'
     | '/staff'
@@ -507,6 +506,7 @@ export interface FileRouteTypes {
     | '/account/'
     | '/admin/'
     | '/orders/'
+    | '/products/'
     | '/staff/'
     | '/api/public/product-image/$'
   fileRoutesByTo: FileRoutesByTo
@@ -523,7 +523,6 @@ export interface FileRouteTypes {
     | '/faq'
     | '/notifications'
     | '/offers'
-    | '/products'
     | '/search'
     | '/sitemap.xml'
     | '/support'
@@ -555,6 +554,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/orders'
+    | '/products'
     | '/staff'
     | '/api/public/product-image/$'
   id:
@@ -573,7 +573,6 @@ export interface FileRouteTypes {
     | '/faq'
     | '/notifications'
     | '/offers'
-    | '/products'
     | '/search'
     | '/sitemap.xml'
     | '/staff'
@@ -606,6 +605,7 @@ export interface FileRouteTypes {
     | '/account/'
     | '/admin/'
     | '/orders/'
+    | '/products/'
     | '/staff/'
     | '/api/public/product-image/$'
   fileRoutesById: FileRoutesById
@@ -625,7 +625,6 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   NotificationsRoute: typeof NotificationsRoute
   OffersRoute: typeof OffersRoute
-  ProductsRoute: typeof ProductsRouteWithChildren
   SearchRoute: typeof SearchRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StaffRoute: typeof StaffRouteWithChildren
@@ -634,7 +633,9 @@ export interface RootRouteChildren {
   PoliciesPrivacyRoute: typeof PoliciesPrivacyRoute
   PoliciesReturnsRoute: typeof PoliciesReturnsRoute
   PoliciesTermsRoute: typeof PoliciesTermsRoute
+  ProductsIdRoute: typeof ProductsIdRoute
   OrdersIndexRoute: typeof OrdersIndexRoute
+  ProductsIndexRoute: typeof ProductsIndexRoute
   ApiPublicProductImageSplatRoute: typeof ApiPublicProductImageSplatRoute
 }
 
@@ -666,13 +667,6 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/products': {
-      id: '/products'
-      path: '/products'
-      fullPath: '/products'
-      preLoaderRoute: typeof ProductsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/offers': {
@@ -780,6 +774,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffIndexRouteImport
       parentRoute: typeof StaffRoute
     }
+    '/products/': {
+      id: '/products/'
+      path: '/products'
+      fullPath: '/products/'
+      preLoaderRoute: typeof ProductsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/orders/': {
       id: '/orders/'
       path: '/orders'
@@ -852,10 +853,10 @@ declare module '@tanstack/react-router' {
     }
     '/products/$id': {
       id: '/products/$id'
-      path: '/$id'
+      path: '/products/$id'
       fullPath: '/products/$id'
       preLoaderRoute: typeof ProductsIdRouteImport
-      parentRoute: typeof ProductsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/policies/terms': {
       id: '/policies/terms'
@@ -1042,18 +1043,6 @@ const BrandsRouteChildren: BrandsRouteChildren = {
 const BrandsRouteWithChildren =
   BrandsRoute._addFileChildren(BrandsRouteChildren)
 
-interface ProductsRouteChildren {
-  ProductsIdRoute: typeof ProductsIdRoute
-}
-
-const ProductsRouteChildren: ProductsRouteChildren = {
-  ProductsIdRoute: ProductsIdRoute,
-}
-
-const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
-  ProductsRouteChildren,
-)
-
 interface StaffRouteChildren {
   StaffActivityRoute: typeof StaffActivityRoute
   StaffCustomersRoute: typeof StaffCustomersRoute
@@ -1093,7 +1082,6 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   NotificationsRoute: NotificationsRoute,
   OffersRoute: OffersRoute,
-  ProductsRoute: ProductsRouteWithChildren,
   SearchRoute: SearchRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StaffRoute: StaffRouteWithChildren,
@@ -1102,7 +1090,9 @@ const rootRouteChildren: RootRouteChildren = {
   PoliciesPrivacyRoute: PoliciesPrivacyRoute,
   PoliciesReturnsRoute: PoliciesReturnsRoute,
   PoliciesTermsRoute: PoliciesTermsRoute,
+  ProductsIdRoute: ProductsIdRoute,
   OrdersIndexRoute: OrdersIndexRoute,
+  ProductsIndexRoute: ProductsIndexRoute,
   ApiPublicProductImageSplatRoute: ApiPublicProductImageSplatRoute,
 }
 export const routeTree = rootRouteImport
