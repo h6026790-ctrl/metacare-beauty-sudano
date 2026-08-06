@@ -256,7 +256,8 @@ export const verifyRegistrationOtp = createServerFn({ method: "POST" })
     }
 
     const email = phoneToEmail(phone);
-    const existing = await findUserByEmail(supabaseAdmin, email);
+    const existing = await findUserByPhone(supabaseAdmin, phone);
+
 
     let userId: string | null = null;
     if (data.request_type === "register") {
