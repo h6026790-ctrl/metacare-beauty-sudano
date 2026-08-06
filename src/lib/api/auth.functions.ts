@@ -216,6 +216,10 @@ export const verifyRegistrationOtp = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const phone = normalizePhone(data.phone);
 
+    await enforceRateLimit(supabaseAdmin, `verify:${phone}`, RATE_LIMITS.verify);
+
+
+
     const { data: req, error: reqErr } = await supabaseAdmin
       .from("registration_requests")
       .select("*")
