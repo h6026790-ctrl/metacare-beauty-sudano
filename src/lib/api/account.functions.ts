@@ -35,52 +35,33 @@ const profileSchema = z.object({
   whatsapp: phoneField,
 });
 
+// Identity fields (name / phone / WhatsApp) are locked after registration.
+// This function no longer mutates them; it only verifies the submitted values
+// still match what is stored and rejects any attempt to change them.
 export const updateMyProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => profileSchema.parse(d))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
 
-    const { normalizePhone, phoneToEmail } = await import("@/lib/api/phone.server");
-    const newPhone = normalizePhone(data.phone);
-    const newWhatsapp = normalizePhone(data.whatsapp);
+    const { normalizePhone } = await import("@/lib/api/phone.server");
 
-    const { data: current } = await supabase.from("profiles").select("phone").eq("id", userId).maybeSingle();
-    const currentPhone = current?.phone ? normalizePhone(current.phone) : null;
+    const { data: current } = await supabase
+      .from("profiles").select("full_name, phone, whatsapp").eq("id", userId).maybeSingle();
+    if (!current) throw new Error("تعذّر تحديد الحساب / Could not resolve your account");
 
-    // Phone is the login identity: keep auth.users in sync with the profile.
-    if (currentPhone !== newPhone) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const email = phoneToEmail(newPhone);
+    const locked =
+      (current.full_name ?? "").trim() !== data.full_name.trim() ||
+      normalizePhone(current.phone ?? "") !== normalizePhone(data.phone) ||
+      normalizePhone(current.whatsapp ?? "") !== normalizePhone(data.whatsapp);
 
-      const perPage = 200;
-      let taken: any = null;
-      for (let page = 1; page <= 100; page++) {
-        const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
-        if (listErr) throw listErr;
-        const users = list?.users ?? [];
-        const hit = users.find((u: any) => u.email === email);
-        if (hit) { taken = hit; break; }
-        if (users.length < perPage) break;
-      }
-      if (taken && taken.id !== userId) {
-        throw new Error("هذا الرقم مستخدم في حساب آخر / This phone number is already used by another account");
-      }
-
-      const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-        email,
-        email_confirm: true,
-        user_metadata: { full_name: data.full_name, phone: newPhone, whatsapp: newWhatsapp },
-      });
-      if (authErr) throw authErr;
+    if (locked) {
+      throw new Error(
+        "الاسم ورقم الجوال/واتساب لا يمكن تعديلهما بعد التسجيل، يرجى التواصل مع خدمة العملاء / Name and phone/WhatsApp cannot be changed after registration; please contact customer service",
+      );
     }
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({ full_name: data.full_name, phone: newPhone, whatsapp: newWhatsapp })
-      .eq("id", userId);
-    if (error) throw error;
-    return { ok: true, phoneChanged: currentPhone !== newPhone };
+    return { ok: true, phoneChanged: false };
   });
 
 const addressSchema = z.object({
