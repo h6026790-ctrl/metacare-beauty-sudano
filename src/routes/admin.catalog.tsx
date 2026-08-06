@@ -294,8 +294,13 @@ function AdminCatalog() {
                     })} />
                 </Field>
                 <Field label={ar ? "المعرّف (slug)" : "Slug"}>
-                  <Input required dir="ltr" value={product.slug} onChange={(e) => setProduct({ ...product, slug: slugify(e.target.value) })} />
+                  {product.id ? (
+                    <Input readOnly dir="ltr" value={product.slug} className="bg-muted text-muted-foreground" />
+                  ) : (
+                    <Input required dir="ltr" value={product.slug} onChange={(e) => setProduct({ ...product, slug: slugify(e.target.value) })} />
+                  )}
                 </Field>
+
                 <Field label={ar ? "السعر (ج.س)" : "Price (SDG)"}>
                   <Input required type="number" min={0} step="0.01" dir="ltr" value={product.price_sdg} onChange={(e) => setProduct({ ...product, price_sdg: e.target.value })} />
                 </Field>
