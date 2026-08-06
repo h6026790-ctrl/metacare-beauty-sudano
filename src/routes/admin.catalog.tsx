@@ -320,12 +320,25 @@ function AdminCatalog() {
                     {categories.map((c: any) => <option key={c.id} value={c.id}>{ar ? c.name_ar : c.name_en}</option>)}
                   </select>
                 </Field>
-                <Field label={ar ? "رابط الصورة" : "Image URL"} className="md:col-span-2">
-                  <Input dir="ltr" placeholder="https://…" value={product.image_url} onChange={(e) => setProduct({ ...product, image_url: e.target.value })} />
+                <Field label={ar ? "صورة المنتج" : "Product image"} className="md:col-span-2">
+                  <div className="space-y-2">
+                    <Input dir="ltr" placeholder="https://…" value={product.image_url} onChange={(e) => setProduct({ ...product, image_url: e.target.value })} />
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/avif"
+                      disabled={uploading}
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f); e.target.value = ""; }}
+                      className="block w-full text-xs text-muted-foreground file:me-3 file:rounded-full file:border-0 file:bg-muted file:px-4 file:py-2 file:text-xs file:font-medium"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      {ar ? "JPG أو PNG أو WEBP، بحد أقصى ٣ ميجابايت." : "JPG, PNG or WEBP — up to 3 MB."}
+                    </p>
+                  </div>
                 </Field>
                 {product.image_url && (
                   <img src={product.image_url} alt="" className="h-24 w-24 rounded-xl object-cover md:col-span-2" />
                 )}
+
                 <Field label={ar ? "الوصف بالعربية" : "Description (Arabic)"} className="md:col-span-2">
                   <Textarea rows={3} value={product.description_ar} onChange={(e) => setProduct({ ...product, description_ar: e.target.value })} />
                 </Field>
