@@ -46,7 +46,6 @@ function AccountPage() {
   const { data: states = [] } = useStatesTree();
   const { data: allProducts = [] } = useProducts();
   const { viewed, clear: clearViewed } = useRecentlyViewed();
-  const updateProfile = useUpdateProfile();
   const upsertAddr = useUpsertAddress();
   const changePassword = useChangePassword();
   const navigate = useNavigate();
@@ -54,12 +53,10 @@ function AccountPage() {
   const profile = profileData?.profile;
   const defaultAddr = profileData?.defaultAddress;
 
-  const [form, setForm] = useState({ full_name: "", phone: "", whatsapp: "" });
   const [addr, setAddr] = useState({ state_id: "", city_id: "", neighborhood_id: "", street: "", notes: "" });
   const [pw, setPw] = useState({ current_password: "", new_password: "", confirm_password: "" });
 
   useEffect(() => {
-    if (profile) setForm({ full_name: profile.full_name ?? "", phone: profile.phone ?? "", whatsapp: profile.whatsapp ?? "" });
     if (defaultAddr) setAddr({
       state_id: defaultAddr.state_id, city_id: defaultAddr.city_id,
       neighborhood_id: defaultAddr.neighborhood_id ?? "",
