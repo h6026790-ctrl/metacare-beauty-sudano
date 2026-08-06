@@ -214,10 +214,31 @@ export const adminSetProductFlags = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const { productId, ...flags } = data;
     if (Object.keys(flags).length === 0) return { ok: true };
+
+    // "On sale" only means something when there is a higher compare-at price
+    // to strike through; otherwise the badge shows with no visible discount.
+    if (flags.is_on_sale === true) {
+      const { data: p, error: readErr } = await context.supabase
+        .from("products").select("price_sdg, compare_at_sdg").eq("id", productId).maybeSingle();
+      if (readErr) throw readErr;
+      if (!p) throw new Error("المنتج غير موجود / Product not found");
+      const compare = p.compare_at_sdg != null ? Number(p.compare_at_sdg) : null;
+      if (compare == null || compare <= Number(p.price_sdg)) {
+        throw new Error(
+          "لتفعيل العرض، أدخلي سعر المقارنة أعلى من السعر الحالي في صفحة الكتالوج. / To mark this product on sale, set a compare-at price higher than the current price in the Catalogue center.",
+        );
+      }
+    }
+
     const { error } = await context.supabase.from("products").update(flags).eq("id", productId);
     if (error) throw error;
+    await context.supabase.from("audit_logs").insert({
+      actor_id: context.userId, action: "admin.product_flags_set",
+      entity_type: "product", entity_id: productId, metadata: flags,
+    });
     return { ok: true };
   });
+
 
 // ---------- SITE SETTINGS (maintenance mode) ----------
 export const adminUpdateSiteSettings = createServerFn({ method: "POST" })
