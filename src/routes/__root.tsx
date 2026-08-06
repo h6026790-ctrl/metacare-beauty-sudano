@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/i18n/I18nProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { WorkspaceGuard } from "@/components/layout/WorkspaceGuard";
+import { purgeCustomerLocalData } from "@/lib/customer-local";
 
 function NotFoundComponent() {
   return (
@@ -101,6 +102,9 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    purgeCustomerLocalData();
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
