@@ -35,6 +35,8 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
   const [tab, setTab] = useState(initialTab);
   const [selected, setSelected] = useState<any | null>(null);
   const [courierNote, setCourierNote] = useState("");
+  const [payRef, setPayRef] = useState("");
+
 
   const ordersQ = useStaffOrders(enabled, q);
   const unassQ = useUnassignedOrders(enabled);
@@ -69,13 +71,20 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
 
   const onStatus = async (status: string) => {
     if (!selected) return;
+    const ref = payRef.trim();
+    if (status === "paid" && ref.length < 3) {
+      toast.error(lang === "ar" ? "أدخلي مرجع الدفع أولاً" : "Enter the payment reference first");
+      return;
+    }
     try {
-      await setStatus({ data: { orderId: selected.id, status } } as any);
+      await setStatus({ data: { orderId: selected.id, status, paymentReference: status === "paid" ? ref : undefined } } as any);
       toast.success(lang === "ar" ? "تم التحديث" : "Updated");
+      if (status === "paid") setPayRef("");
       setSelected({ ...selected, status });
       refresh();
     } catch (e: any) { toast.error(e.message); }
   };
+
 
   const onClaim = async (orderId: string) => {
     try {
@@ -238,13 +247,30 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
                 </p>
               </div>
 
+              <div className="mt-2 rounded-xl border border-border bg-muted/30 p-3">
+                <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                  {lang === "ar" ? "مرجع الدفع (إلزامي لتأكيد الدفع)" : "Payment reference (required to confirm payment)"}
+                </p>
+                <Input
+                  value={payRef}
+                  onChange={(e) => setPayRef(e.target.value)}
+                  placeholder={lang === "ar" ? "رقم العملية / الإيصال" : "Transaction / receipt number"}
+                  className="h-9 text-xs"
+                />
+              </div>
+
               <div className="mt-1 grid grid-cols-2 gap-2">
                 <button onClick={() => onStatus("review")} className="rounded-full border border-border bg-card px-3 py-2 text-xs">
                   {lang === "ar" ? "تحت المراجعة" : "Mark review"}
                 </button>
-                <button onClick={() => onStatus("paid")} className="inline-flex items-center justify-center gap-1.5 rounded-full bg-success px-3 py-2 text-xs font-medium text-success-foreground">
+                <button
+                  onClick={() => onStatus("paid")}
+                  disabled={payRef.trim().length < 3}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full bg-success px-3 py-2 text-xs font-medium text-success-foreground disabled:opacity-50"
+                >
                   <CheckCircle2 className="h-3.5 w-3.5" />{lang === "ar" ? "تأكيد الدفع" : "Confirm paid"}
                 </button>
+
                 <button onClick={() => onStatus("delivered")} className="rounded-full border border-border bg-card px-3 py-2 text-xs">
                   {lang === "ar" ? "تم التسليم" : "Delivered"}
                 </button>

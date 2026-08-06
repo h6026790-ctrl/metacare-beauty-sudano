@@ -4,7 +4,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  useMyOrders, useMyProfile, useUpdateProfile, useUpsertAddress, useStatesTree,
+  useMyOrders, useMyProfile, useUpsertAddress, useStatesTree,
   useWishlist, useProducts, useCart, useChangePassword,
 } from "@/lib/api/queries";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,7 +46,6 @@ function AccountPage() {
   const { data: states = [] } = useStatesTree();
   const { data: allProducts = [] } = useProducts();
   const { viewed, clear: clearViewed } = useRecentlyViewed();
-  const updateProfile = useUpdateProfile();
   const upsertAddr = useUpsertAddress();
   const changePassword = useChangePassword();
   const navigate = useNavigate();
@@ -54,12 +53,10 @@ function AccountPage() {
   const profile = profileData?.profile;
   const defaultAddr = profileData?.defaultAddress;
 
-  const [form, setForm] = useState({ full_name: "", phone: "", whatsapp: "" });
   const [addr, setAddr] = useState({ state_id: "", city_id: "", neighborhood_id: "", street: "", notes: "" });
   const [pw, setPw] = useState({ current_password: "", new_password: "", confirm_password: "" });
 
   useEffect(() => {
-    if (profile) setForm({ full_name: profile.full_name ?? "", phone: profile.phone ?? "", whatsapp: profile.whatsapp ?? "" });
     if (defaultAddr) setAddr({
       state_id: defaultAddr.state_id, city_id: defaultAddr.city_id,
       neighborhood_id: defaultAddr.neighborhood_id ?? "",
@@ -110,21 +107,8 @@ function AccountPage() {
     return raw || (lang === "ar" ? "حدث خطأ غير متوقع" : "Something went wrong");
   };
 
-  const saveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res: any = await updateProfile.mutateAsync(form);
-      toast.success(
-        res?.phoneChanged
-          ? lang === "ar"
-            ? "تم الحفظ. رقم الجوال الجديد هو بيانات الدخول الآن."
-            : "Saved. Your new phone number is now your login."
-          : lang === "ar" ? "تم حفظ بياناتك" : "Your details were saved",
-      );
-    } catch (err) {
-      toast.error(errMsg(err));
-    }
-  };
+
+
 
   const saveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -256,22 +240,20 @@ function AccountPage() {
           </TabsContent>
 
           <TabsContent value="profile" className="space-y-5">
-            <form onSubmit={saveProfile} className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-glass">
+            <div className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-glass">
               <h3 className="font-display text-lg text-foreground">{t.account.profile}</h3>
               <div className="grid gap-3 md:grid-cols-2">
-                <Field label={t.checkout.fullName}><Input required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></Field>
-                <Field label={t.checkout.phone}><Input required dir="ltr" inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
-                <Field label={t.checkout.whatsapp} className="md:col-span-2"><Input required dir="ltr" inputMode="tel" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} /></Field>
+                <Field label={t.checkout.fullName}><Input readOnly disabled value={profile?.full_name ?? ""} className="bg-muted/50" /></Field>
+                <Field label={t.checkout.phone}><Input readOnly disabled dir="ltr" value={profile?.phone ?? ""} className="bg-muted/50" /></Field>
+                <Field label={t.checkout.whatsapp} className="md:col-span-2"><Input readOnly disabled dir="ltr" value={profile?.whatsapp ?? ""} className="bg-muted/50" /></Field>
               </div>
               <p className="text-xs text-muted-foreground">
                 {lang === "ar"
-                  ? "تنبيه: رقم الجوال هو بيانات الدخول، وتغييره يعني تسجيل الدخول بالرقم الجديد لاحقاً."
-                  : "Note: your phone number is your login. Changing it means you sign in with the new number."}
+                  ? "الاسم ورقم الجوال/واتساب ثابتة بعد التسجيل ولا يمكن تعديلها. للتعديل يرجى التواصل مع خدمة العملاء."
+                  : "Your name and phone/WhatsApp number are locked after registration. Contact customer service to change them."}
               </p>
-              <button type="submit" disabled={updateProfile.isPending} className="min-h-[44px] rounded-full gradient-brand px-6 text-sm font-medium text-primary-foreground shadow-glow disabled:opacity-60">
-                {updateProfile.isPending ? (lang === "ar" ? "جارٍ الحفظ…" : "Saving…") : (lang === "ar" ? "حفظ" : "Save")}
-              </button>
-            </form>
+            </div>
+
 
             <form onSubmit={saveAddress} className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-glass">
               <h3 className="flex items-center gap-2 font-display text-lg text-foreground"><MapPin className="h-4 w-4 text-primary" />{t.customer.addresses}</h3>

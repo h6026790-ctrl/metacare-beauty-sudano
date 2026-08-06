@@ -76,23 +76,42 @@ export const claimOrder = createServerFn({ method: "POST" })
 
 export const updateOrderStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { orderId: string; status: string; note?: string }) =>
+  .inputValidator((d: { orderId: string; status: string; note?: string; paymentReference?: string }) =>
     z.object({
       orderId: z.string().uuid(),
       status: z.enum(ORDER_STATUSES),
       note: z.string().max(500).optional(),
+      paymentReference: z.string().trim().max(120).optional(),
     }).parse(d))
   .handler(async ({ context, data }) => {
     await assertStaff(context);
+
+    // Marking an order as paid requires a payment reference for accountability.
+    const paymentRef = (data.paymentReference ?? "").trim();
+    if (data.status === "paid" && paymentRef.length < 3) {
+      throw new Error("مرجع الدفع مطلوب لتأكيد الدفع / A payment reference is required to confirm payment");
+    }
+
     const { error } = await context.supabase.from("orders").update({ status: data.status }).eq("id", data.orderId);
     if (error) throw error;
-    if (data.note) {
+    if (data.status === "paid") {
+      await context.supabase.from("order_notes").insert({
+        order_id: data.orderId, author_id: context.userId,
+        body: `Payment reference: ${paymentRef}${data.note ? ` — ${data.note}` : ""}`,
+      });
+      await context.supabase.from("audit_logs").insert({
+        actor_id: context.userId, action: "order.payment_confirmed",
+        entity_type: "order", entity_id: data.orderId,
+        metadata: { payment_reference: paymentRef },
+      });
+    } else if (data.note) {
       await context.supabase.from("order_notes").insert({
         order_id: data.orderId, author_id: context.userId, body: data.note,
       });
     }
     return { ok: true };
   });
+
 
 export const addOrderNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -268,6 +287,25 @@ export const adminSetUserRole = createServerFn({ method: "POST" })
     }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
+
+    // Does this request remove admin rights from the target user?
+    const removesAdmin = data.grant ? data.role !== "admin" : data.role === "admin";
+
+    if (removesAdmin) {
+      // 1) Never let an admin demote themselves.
+      if (context.userId === data.userId) {
+        throw new Error("لا يمكنك إزالة صلاحية المدير عن حسابك / You cannot remove your own admin role");
+      }
+      // 2) Never leave the system without an admin.
+      const { data: admins } = await context.supabase
+        .from("user_roles").select("user_id").eq("role", "admin");
+      const targetIsAdmin = (admins ?? []).some((r: any) => r.user_id === data.userId);
+      if (targetIsAdmin && (admins ?? []).length <= 1) {
+        throw new Error("يجب أن يبقى مدير واحد على الأقل في النظام / At least one admin must remain in the system");
+      }
+    }
+
+
     if (data.grant) {
       // One role per user: replace whatever role the user currently holds.
       await context.supabase
