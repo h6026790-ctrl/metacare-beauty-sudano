@@ -76,7 +76,7 @@ function ProductDetail() {
     "@type": "Product",
     name: product.name[lang],
     description: product.description?.[lang] ?? undefined,
-    image: product.imageUrl ? [product.imageUrl] : undefined,
+    image: product.image ? [product.image] : undefined,
     sku: product.slug,
     brand: product.brand ? { "@type": "Brand", name: product.brand.name[lang] } : undefined,
     offers: {
