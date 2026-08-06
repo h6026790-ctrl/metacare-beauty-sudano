@@ -8,11 +8,12 @@
 export const COMPANY = {
   name: { ar: "ميتاكير بيوتي", en: "Metacare Beauty" },
   /** Local format used for wa.me links after normalization. */
-  whatsapp: "0900000000",
+  whatsapp: "0993373874",
   /** International display form of the WhatsApp/business line. */
-  whatsappDisplay: "+249 900 000 000",
-  phone: "0900000000",
-  phoneDisplay: "+249 900 000 000",
+  whatsappDisplay: "+249 99 337 3874",
+  phone: "0993373874",
+  phoneDisplay: "+249 99 337 3874",
+
   email: "care@metacare.sd",
   address: {
     ar: "ود مدني، الجزيرة، السودان",
