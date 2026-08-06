@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { useRecentlyViewed } from "@/lib/customer-local";
+import { JsonLd } from "@/components/seo/JsonLd";
+
 
 function titleFromSlug(slug: string) {
   return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
