@@ -4,7 +4,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  useMyOrders, useMyProfile, useUpdateProfile, useUpsertAddress, useStatesTree,
+  useMyOrders, useMyProfile, useUpsertAddress, useStatesTree,
   useWishlist, useProducts, useCart, useChangePassword,
 } from "@/lib/api/queries";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
