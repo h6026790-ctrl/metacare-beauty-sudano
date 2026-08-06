@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/i18n/I18nProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { WorkspaceGuard } from "@/components/layout/WorkspaceGuard";
+import { purgeCustomerLocalData } from "@/lib/customer-local";
 
 function NotFoundComponent() {
   return (
