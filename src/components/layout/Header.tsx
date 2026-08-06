@@ -23,9 +23,13 @@ const NAV = [
 
 export function Header() {
   const { t, lang, setLang } = useI18n();
-  const { user, isCustomer, isAdmin, isStaff, signOut } = useAuth();
-  const staffLike = !!user && isStaff;
+  const { user, isCustomer, isAdmin, isStaff, rolesLoading, signOut } = useAuth();
+  const staffLike = !!user && !rolesLoading && isStaff;
+  // While roles are still loading we optimistically keep the customer icons
+  // visible for a signed-in user, so they don't flicker on every page load.
+  const customerLike = !!user && (rolesLoading || isCustomer);
   const workspaceTo = isAdmin ? "/admin" : "/staff";
+
   const { data: cart } = useCart();
   const { data: wishlist } = useWishlist();
   const navigate = useNavigate();
