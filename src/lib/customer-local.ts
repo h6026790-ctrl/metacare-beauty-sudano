@@ -97,3 +97,33 @@ export function useReadNotifications() {
 
   return { readIds: ids, markRead, markAllRead };
 }
+
+/**
+ * One-time purge of all client-side, user-specific state (recently viewed,
+ * recent searches, notification read flags, saved cart notes). Runs once per
+ * browser, keyed by the reset stamp below. Auth session and language
+ * preference are intentionally preserved.
+ */
+const RESET_STAMP_KEY = "mc.dataResetAt";
+const RESET_STAMP = "2026-08-06";
+
+export function purgeCustomerLocalData() {
+  if (typeof window === "undefined") return;
+  try {
+    if (window.localStorage.getItem(RESET_STAMP_KEY) === RESET_STAMP) return;
+    const drop: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i += 1) {
+      const k = window.localStorage.key(i);
+      // every app-owned user key is namespaced "mc." except the language pref
+      if (k && k.startsWith("mc.")) drop.push(k);
+    }
+    drop.forEach((k) => window.localStorage.removeItem(k));
+    for (let i = window.sessionStorage.length - 1; i >= 0; i -= 1) {
+      const k = window.sessionStorage.key(i);
+      if (k && k.startsWith("mc.")) window.sessionStorage.removeItem(k);
+    }
+    window.localStorage.setItem(RESET_STAMP_KEY, RESET_STAMP);
+  } catch {
+    /* private mode / quota — ignore */
+  }
+}
