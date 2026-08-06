@@ -287,6 +287,25 @@ export const adminSetUserRole = createServerFn({ method: "POST" })
     }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
+
+    // Does this request remove admin rights from the target user?
+    const removesAdmin = data.grant ? data.role !== "admin" : data.role === "admin";
+
+    if (removesAdmin) {
+      // 1) Never let an admin demote themselves.
+      if (context.userId === data.userId) {
+        throw new Error("لا يمكنك إزالة صلاحية المدير عن حسابك / You cannot remove your own admin role");
+      }
+      // 2) Never leave the system without an admin.
+      const { data: admins } = await context.supabase
+        .from("user_roles").select("user_id").eq("role", "admin");
+      const targetIsAdmin = (admins ?? []).some((r: any) => r.user_id === data.userId);
+      if (targetIsAdmin && (admins ?? []).length <= 1) {
+        throw new Error("يجب أن يبقى مدير واحد على الأقل في النظام / At least one admin must remain in the system");
+      }
+    }
+
+
     if (data.grant) {
       // One role per user: replace whatever role the user currently holds.
       await context.supabase
