@@ -84,6 +84,31 @@ function AdminCatalog() {
   const [product, setProduct] = useState<ProductForm | null>(null);
   const [brand, setBrand] = useState<BrandForm | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const uploadFn = useServerFn(adminUploadProductImage);
+
+  // Photos are uploaded to private storage and referenced by their served URL.
+  const uploadImage = async (file: File) => {
+    setUploading(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+        reader.onerror = () => reject(new Error("read_failed"));
+        reader.readAsDataURL(file);
+      });
+      const res: any = await uploadFn({
+        data: { fileName: file.name, contentType: file.type, base64 },
+      } as any);
+      setProduct((p) => (p ? { ...p, image_url: res.url } : p));
+      toast.success(ar ? "تم رفع الصورة" : "Image uploaded");
+    } catch (err: any) {
+      toast.error(err?.message ?? (ar ? "تعذر رفع الصورة" : "Upload failed"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
 
   const all = (productsQ.data ?? []) as any[];
   const products = showArchived ? all : all.filter((p) => p.is_active);
