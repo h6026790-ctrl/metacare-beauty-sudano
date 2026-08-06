@@ -9,6 +9,9 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  // Starts true so role-dependent UI never renders as "not a customer"
+  // before the user_roles query has answered.
+  const [rolesLoading, setRolesLoading] = useState(true);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
@@ -19,15 +22,21 @@ export function useAuth() {
       setSession(data.session);
       setUser(data.session?.user ?? null);
       setLoading(false);
+      if (!data.session?.user) setRolesLoading(false);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!user) { setRoles([]); return; }
+    if (!user) { setRoles([]); setRolesLoading(false); return; }
+    let cancelled = false;
+    setRolesLoading(true);
     supabase.from("user_roles").select("role").eq("user_id", user.id).then(({ data }) => {
+      if (cancelled) return;
       setRoles((data ?? []).map((r) => r.role as AppRole));
+      setRolesLoading(false);
     });
+    return () => { cancelled = true; };
   }, [user]);
 
   return {
@@ -35,6 +44,7 @@ export function useAuth() {
     user,
     roles,
     loading,
+    rolesLoading,
     hasRole: (r: AppRole) => roles.includes(r),
     isStaff: roles.includes("staff") || roles.includes("admin"),
     isAdmin: roles.includes("admin"),
@@ -43,3 +53,4 @@ export function useAuth() {
     signOut: () => supabase.auth.signOut(),
   };
 }
+
