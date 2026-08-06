@@ -256,22 +256,20 @@ function AccountPage() {
           </TabsContent>
 
           <TabsContent value="profile" className="space-y-5">
-            <form onSubmit={saveProfile} className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-glass">
+            <div className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-glass">
               <h3 className="font-display text-lg text-foreground">{t.account.profile}</h3>
               <div className="grid gap-3 md:grid-cols-2">
-                <Field label={t.checkout.fullName}><Input required value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></Field>
-                <Field label={t.checkout.phone}><Input required dir="ltr" inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field>
-                <Field label={t.checkout.whatsapp} className="md:col-span-2"><Input required dir="ltr" inputMode="tel" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} /></Field>
+                <Field label={t.checkout.fullName}><Input readOnly disabled value={profile?.full_name ?? ""} className="bg-muted/50" /></Field>
+                <Field label={t.checkout.phone}><Input readOnly disabled dir="ltr" value={profile?.phone ?? ""} className="bg-muted/50" /></Field>
+                <Field label={t.checkout.whatsapp} className="md:col-span-2"><Input readOnly disabled dir="ltr" value={profile?.whatsapp ?? ""} className="bg-muted/50" /></Field>
               </div>
               <p className="text-xs text-muted-foreground">
                 {lang === "ar"
-                  ? "تنبيه: رقم الجوال هو بيانات الدخول، وتغييره يعني تسجيل الدخول بالرقم الجديد لاحقاً."
-                  : "Note: your phone number is your login. Changing it means you sign in with the new number."}
+                  ? "الاسم ورقم الجوال/واتساب ثابتة بعد التسجيل ولا يمكن تعديلها. للتعديل يرجى التواصل مع خدمة العملاء."
+                  : "Your name and phone/WhatsApp number are locked after registration. Contact customer service to change them."}
               </p>
-              <button type="submit" disabled={updateProfile.isPending} className="min-h-[44px] rounded-full gradient-brand px-6 text-sm font-medium text-primary-foreground shadow-glow disabled:opacity-60">
-                {updateProfile.isPending ? (lang === "ar" ? "جارٍ الحفظ…" : "Saving…") : (lang === "ar" ? "حفظ" : "Save")}
-              </button>
-            </form>
+            </div>
+
 
             <form onSubmit={saveAddress} className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-glass">
               <h3 className="flex items-center gap-2 font-display text-lg text-foreground"><MapPin className="h-4 w-4 text-primary" />{t.customer.addresses}</h3>
