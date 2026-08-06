@@ -118,7 +118,10 @@ function CheckoutPage() {
         neighborhood_id: neighborhoodId || undefined,
       });
       const orderId = (res as { order: { id: string } }).order.id;
+      // The note now lives on the order; don't reuse it for the next cart.
+      try { window.localStorage.removeItem("mc.cartNotes"); } catch { /* noop */ }
       navigate({ to: "/orders/$id", params: { id: orderId }, search: { confirmed: true } });
+
     } catch (err: any) {
       toast.error(err.message || "Error");
     } finally {
