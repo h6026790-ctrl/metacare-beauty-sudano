@@ -148,7 +148,7 @@ export function Header() {
             <Globe className="h-4 w-4" />
             {lang === "ar" ? "EN" : "ع"}
           </button>
-          {isCustomer && (
+          {customerLike && (
             <>
               <Link to="/notifications" className="relative hidden h-10 w-10 place-items-center rounded-full hover:bg-muted md:grid" aria-label={t.customer.notifications}>
                 <Bell className="h-5 w-5" />
