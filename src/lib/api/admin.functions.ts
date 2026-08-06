@@ -319,3 +319,44 @@ export const adminDeleteNeighborhood = createServerFn({ method: "POST" })
     if (error) throw error;
     return { softDisabled: false };
   });
+
+// ---------- PRODUCT IMAGE UPLOAD ----------
+// Photos go to the private `product-images` bucket and are served back to the
+// storefront through /api/public/product-image/<path>. Uploads are admin-only,
+// size-capped, and restricted to image MIME types.
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"] as const;
+
+export const adminUploadProductImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    fileName: z.string().trim().min(1).max(120),
+    contentType: z.enum(ALLOWED_IMAGE_TYPES),
+    // data URL body, base64-encoded
+    base64: z.string().min(16).max(6_000_000),
+  }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+
+    const bytes = Buffer.from(data.base64, "base64");
+    if (bytes.byteLength === 0) throw new Error("ملف غير صالح / Invalid file");
+    if (bytes.byteLength > MAX_IMAGE_BYTES) {
+      throw new Error("حجم الصورة يتجاوز 3 ميجابايت / Image exceeds the 3 MB limit");
+    }
+
+    const ext = (data.fileName.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 5);
+    const path = `${new Date().getFullYear()}/${crypto.randomUUID()}.${ext || "jpg"}`;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.storage
+      .from("product-images")
+      .upload(path, bytes, { contentType: data.contentType, upsert: false });
+    if (error) throw new Error(error.message);
+
+    await context.supabase.from("audit_logs").insert({
+      actor_id: context.userId, action: "admin.product_image_uploaded",
+      entity_type: "storage", entity_id: path, metadata: { bytes: bytes.byteLength },
+    });
+
+    return { url: `/api/public/product-image/${path}` };
+  });
