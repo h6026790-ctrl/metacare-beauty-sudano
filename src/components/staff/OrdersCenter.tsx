@@ -69,13 +69,20 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
 
   const onStatus = async (status: string) => {
     if (!selected) return;
+    const ref = payRef.trim();
+    if (status === "paid" && ref.length < 3) {
+      toast.error(lang === "ar" ? "أدخلي مرجع الدفع أولاً" : "Enter the payment reference first");
+      return;
+    }
     try {
-      await setStatus({ data: { orderId: selected.id, status } } as any);
+      await setStatus({ data: { orderId: selected.id, status, paymentReference: status === "paid" ? ref : undefined } } as any);
       toast.success(lang === "ar" ? "تم التحديث" : "Updated");
+      if (status === "paid") setPayRef("");
       setSelected({ ...selected, status });
       refresh();
     } catch (e: any) { toast.error(e.message); }
   };
+
 
   const onClaim = async (orderId: string) => {
     try {
