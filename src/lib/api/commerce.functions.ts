@@ -83,7 +83,6 @@ export const toggleWishlist = createServerFn({ method: "POST" })
   });
 
 // ---------- CHECKOUT ----------
-const DEFAULT_DELIVERY_SDG = 3000;
 
 const checkoutSchema = z.object({
   contact_name: z.string().min(1).max(120),
