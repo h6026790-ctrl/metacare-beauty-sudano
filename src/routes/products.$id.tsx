@@ -69,9 +69,29 @@ function ProductDetail() {
     try { await navigator.clipboard.writeText(url); toast.success(t.visitor.linkCopied); } catch { /* noop */ }
   };
 
+  // Product structured data. Price is deliberately omitted: prices are only
+  // visible to signed-in customers, so they must not leak through JSON-LD.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name[lang],
+    description: product.description?.[lang] ?? undefined,
+    image: product.imageUrl ? [product.imageUrl] : undefined,
+    sku: product.slug,
+    brand: product.brand ? { "@type": "Brand", name: product.brand.name[lang] } : undefined,
+    offers: {
+      "@type": "Offer",
+      url: `https://metacare-beauty-sudano.lovable.app/products/${product.slug}`,
+      priceCurrency: "SDG",
+      availability: oos ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+    },
+  };
+
   return (
     <AppShell>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="mx-auto max-w-7xl px-4 py-6 pb-28 md:py-10 md:pb-10">
+
         <nav className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
           <Link to="/" className="hover:text-foreground">{t.nav.home}</Link>
           <span>/</span>
