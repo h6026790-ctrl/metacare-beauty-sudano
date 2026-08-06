@@ -366,3 +366,27 @@ export const adminUpsertCategory = createServerFn({ method: "POST" })
     const { data: ins } = await context.supabase.from("categories").insert(data).select("id").single();
     return { id: ins?.id };
   });
+
+// Manual pre-payment cancellation. Restores the reserved stock immediately
+// (via the order status trigger) and is independent of the 6-hour timer.
+export const cancelOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { orderId: string; reason?: string }) =>
+    z.object({ orderId: z.string().uuid(), reason: z.string().max(500).optional() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertStaff(context);
+    const { data: order, error: readErr } = await context.supabase
+      .from("orders").select("id, status").eq("id", data.orderId).maybeSingle();
+    if (readErr) throw readErr;
+    if (!order) throw new Error("order_not_found");
+    if (!["new", "review"].includes(order.status)) throw new Error("order_not_cancellable");
+    const { error } = await context.supabase
+      .from("orders").update({ status: "cancelled" }).eq("id", data.orderId);
+    if (error) throw error;
+    if (data.reason) {
+      await context.supabase.from("order_notes").insert({
+        order_id: data.orderId, author_id: context.userId, body: data.reason,
+      });
+    }
+    return { ok: true };
+  });

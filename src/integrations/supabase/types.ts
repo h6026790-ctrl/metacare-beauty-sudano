@@ -601,11 +601,13 @@ export type Database = {
           contact_whatsapp: string
           cutoff_bucket: string
           delivery_sdg: number
+          expires_at: string | null
           id: string
           number: string | null
           placed_at: string
           profile_id: string
           status: Database["public"]["Enums"]["order_status"]
+          stock_restored_at: string | null
           subtotal_sdg: number
           total_sdg: number
         }
@@ -622,11 +624,13 @@ export type Database = {
           contact_whatsapp: string
           cutoff_bucket?: string
           delivery_sdg?: number
+          expires_at?: string | null
           id?: string
           number?: string | null
           placed_at?: string
           profile_id: string
           status?: Database["public"]["Enums"]["order_status"]
+          stock_restored_at?: string | null
           subtotal_sdg?: number
           total_sdg?: number
         }
@@ -643,11 +647,13 @@ export type Database = {
           contact_whatsapp?: string
           cutoff_bucket?: string
           delivery_sdg?: number
+          expires_at?: string | null
           id?: string
           number?: string | null
           placed_at?: string
           profile_id?: string
           status?: Database["public"]["Enums"]["order_status"]
+          stock_restored_at?: string | null
           subtotal_sdg?: number
           total_sdg?: number
         }
@@ -1125,6 +1131,7 @@ export type Database = {
         Args: { _order_id: string; _token: string }
         Returns: Json
       }
+      expire_stale_orders: { Args: never; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1133,6 +1140,20 @@ export type Database = {
         Returns: boolean
       }
       is_staff_or_admin: { Args: { _user_id: string }; Returns: boolean }
+      place_order: {
+        Args: {
+          _address_city: string
+          _address_neighborhood: string
+          _address_notes: string
+          _address_state: string
+          _address_street: string
+          _contact_name: string
+          _contact_phone: string
+          _contact_whatsapp: string
+          _neighborhood_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "staff" | "customer"

@@ -294,8 +294,12 @@ export function useSiteSettings() {
         .maybeSingle();
       return (data as SiteSettings) ?? null;
     },
-    staleTime: 30_000,
+    staleTime: 15_000,
+    // Poll so an open storefront page reacts shortly after an admin closes the site.
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
   });
+
 }
 
 // Helpers
