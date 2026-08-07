@@ -51,10 +51,11 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
   const listNotes = useServerFn(listOrderNotes);
 
   const notesQ = useQuery({
-    queryKey: ["staff-notes", selected?.id],
-    queryFn: () => listNotes({ data: { orderId: selected.id } } as any),
-    enabled: enabled && !!selected?.id,
+    queryKey: ["staff-notes", selectedRaw?.id],
+    queryFn: () => listNotes({ data: { orderId: selectedRaw.id } } as any),
+    enabled: enabled && !!selectedRaw?.id,
   });
+
 
   const orders = (ordersQ.data ?? []) as any[];
   const unassigned = (unassQ.data ?? []) as any[];
