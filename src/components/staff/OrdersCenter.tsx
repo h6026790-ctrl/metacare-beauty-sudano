@@ -108,14 +108,24 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
 
   const onMarkOut = async () => {
     if (!selected) return;
+    if (!courierName.trim()) {
+      toast.error(lang === "ar" ? "أدخلي اسم المندوب" : "Enter the courier name");
+      return;
+    }
     try {
-      await markOut({ data: { orderId: selected.id, courierNote: courierNote.trim() || undefined } } as any);
+      await markOut({ data: {
+        orderId: selected.id,
+        courierName: courierName.trim(),
+        courierPhone: courierPhone.trim() || undefined,
+        courierNote: courierNote.trim() || undefined,
+      } } as any);
       toast.success(lang === "ar" ? "تم التسليم للمندوب" : "Marked out for delivery");
-      setCourierNote("");
+      setCourierName(""); setCourierPhone(""); setCourierNote("");
       setSelected({ ...selected, status: "shipping" });
       refresh();
     } catch (e: any) { toast.error(e.message); }
   };
+
 
   return (
     <div className="space-y-4">
