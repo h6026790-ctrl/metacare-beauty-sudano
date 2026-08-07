@@ -57,6 +57,11 @@ import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminCatalogRouteImport } from './routes/admin.catalog'
 import { Route as AdminActivityRouteImport } from './routes/admin.activity'
 import { Route as AccountWishlistRouteImport } from './routes/account.wishlist'
+import { Route as AdminInventoryIndexRouteImport } from './routes/admin.inventory.index'
+import { Route as AdminCatalogIndexRouteImport } from './routes/admin.catalog.index'
+import { Route as AdminInventoryPurchasesRouteImport } from './routes/admin.inventory.purchases'
+import { Route as AdminInventoryMovementsRouteImport } from './routes/admin.inventory.movements'
+import { Route as AdminCatalogCategoriesRouteImport } from './routes/admin.catalog.categories'
 import { Route as ApiPublicProductImageSplatRouteImport } from './routes/api.public.product-image.$'
 
 const SupportRoute = SupportRouteImport.update({
@@ -299,6 +304,31 @@ const AccountWishlistRoute = AccountWishlistRouteImport.update({
   path: '/wishlist',
   getParentRoute: () => AccountRoute,
 } as any)
+const AdminInventoryIndexRoute = AdminInventoryIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminInventoryRoute,
+} as any)
+const AdminCatalogIndexRoute = AdminCatalogIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminCatalogRoute,
+} as any)
+const AdminInventoryPurchasesRoute = AdminInventoryPurchasesRouteImport.update({
+  id: '/purchases',
+  path: '/purchases',
+  getParentRoute: () => AdminInventoryRoute,
+} as any)
+const AdminInventoryMovementsRoute = AdminInventoryMovementsRouteImport.update({
+  id: '/movements',
+  path: '/movements',
+  getParentRoute: () => AdminInventoryRoute,
+} as any)
+const AdminCatalogCategoriesRoute = AdminCatalogCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AdminCatalogRoute,
+} as any)
 const ApiPublicProductImageSplatRoute =
   ApiPublicProductImageSplatRouteImport.update({
     id: '/api/public/product-image/$',
@@ -327,10 +357,10 @@ export interface FileRoutesByFullPath {
   '/support': typeof SupportRoute
   '/account/wishlist': typeof AccountWishlistRoute
   '/admin/activity': typeof AdminActivityRoute
-  '/admin/catalog': typeof AdminCatalogRoute
+  '/admin/catalog': typeof AdminCatalogRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/delivery': typeof AdminDeliveryRoute
-  '/admin/inventory': typeof AdminInventoryRoute
+  '/admin/inventory': typeof AdminInventoryRouteWithChildren
   '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
@@ -355,6 +385,11 @@ export interface FileRoutesByFullPath {
   '/orders/': typeof OrdersIndexRoute
   '/products/': typeof ProductsIndexRoute
   '/staff/': typeof StaffIndexRoute
+  '/admin/catalog/categories': typeof AdminCatalogCategoriesRoute
+  '/admin/inventory/movements': typeof AdminInventoryMovementsRoute
+  '/admin/inventory/purchases': typeof AdminInventoryPurchasesRoute
+  '/admin/catalog/': typeof AdminCatalogIndexRoute
+  '/admin/inventory/': typeof AdminInventoryIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
 }
 export interface FileRoutesByTo {
@@ -375,10 +410,8 @@ export interface FileRoutesByTo {
   '/support': typeof SupportRoute
   '/account/wishlist': typeof AccountWishlistRoute
   '/admin/activity': typeof AdminActivityRoute
-  '/admin/catalog': typeof AdminCatalogRoute
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/delivery': typeof AdminDeliveryRoute
-  '/admin/inventory': typeof AdminInventoryRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
@@ -403,6 +436,11 @@ export interface FileRoutesByTo {
   '/orders': typeof OrdersIndexRoute
   '/products': typeof ProductsIndexRoute
   '/staff': typeof StaffIndexRoute
+  '/admin/catalog/categories': typeof AdminCatalogCategoriesRoute
+  '/admin/inventory/movements': typeof AdminInventoryMovementsRoute
+  '/admin/inventory/purchases': typeof AdminInventoryPurchasesRoute
+  '/admin/catalog': typeof AdminCatalogIndexRoute
+  '/admin/inventory': typeof AdminInventoryIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
 }
 export interface FileRoutesById {
@@ -427,10 +465,10 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/account/wishlist': typeof AccountWishlistRoute
   '/admin/activity': typeof AdminActivityRoute
-  '/admin/catalog': typeof AdminCatalogRoute
+  '/admin/catalog': typeof AdminCatalogRouteWithChildren
   '/admin/customers': typeof AdminCustomersRoute
   '/admin/delivery': typeof AdminDeliveryRoute
-  '/admin/inventory': typeof AdminInventoryRoute
+  '/admin/inventory': typeof AdminInventoryRouteWithChildren
   '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
@@ -455,6 +493,11 @@ export interface FileRoutesById {
   '/orders/': typeof OrdersIndexRoute
   '/products/': typeof ProductsIndexRoute
   '/staff/': typeof StaffIndexRoute
+  '/admin/catalog/categories': typeof AdminCatalogCategoriesRoute
+  '/admin/inventory/movements': typeof AdminInventoryMovementsRoute
+  '/admin/inventory/purchases': typeof AdminInventoryPurchasesRoute
+  '/admin/catalog/': typeof AdminCatalogIndexRoute
+  '/admin/inventory/': typeof AdminInventoryIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
 }
 export interface FileRouteTypes {
@@ -508,6 +551,11 @@ export interface FileRouteTypes {
     | '/orders/'
     | '/products/'
     | '/staff/'
+    | '/admin/catalog/categories'
+    | '/admin/inventory/movements'
+    | '/admin/inventory/purchases'
+    | '/admin/catalog/'
+    | '/admin/inventory/'
     | '/api/public/product-image/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -528,10 +576,8 @@ export interface FileRouteTypes {
     | '/support'
     | '/account/wishlist'
     | '/admin/activity'
-    | '/admin/catalog'
     | '/admin/customers'
     | '/admin/delivery'
-    | '/admin/inventory'
     | '/admin/offers'
     | '/admin/orders'
     | '/admin/registrations'
@@ -556,6 +602,11 @@ export interface FileRouteTypes {
     | '/orders'
     | '/products'
     | '/staff'
+    | '/admin/catalog/categories'
+    | '/admin/inventory/movements'
+    | '/admin/inventory/purchases'
+    | '/admin/catalog'
+    | '/admin/inventory'
     | '/api/public/product-image/$'
   id:
     | '__root__'
@@ -607,6 +658,11 @@ export interface FileRouteTypes {
     | '/orders/'
     | '/products/'
     | '/staff/'
+    | '/admin/catalog/categories'
+    | '/admin/inventory/movements'
+    | '/admin/inventory/purchases'
+    | '/admin/catalog/'
+    | '/admin/inventory/'
     | '/api/public/product-image/$'
   fileRoutesById: FileRoutesById
 }
@@ -977,6 +1033,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountWishlistRouteImport
       parentRoute: typeof AccountRoute
     }
+    '/admin/inventory/': {
+      id: '/admin/inventory/'
+      path: '/'
+      fullPath: '/admin/inventory/'
+      preLoaderRoute: typeof AdminInventoryIndexRouteImport
+      parentRoute: typeof AdminInventoryRoute
+    }
+    '/admin/catalog/': {
+      id: '/admin/catalog/'
+      path: '/'
+      fullPath: '/admin/catalog/'
+      preLoaderRoute: typeof AdminCatalogIndexRouteImport
+      parentRoute: typeof AdminCatalogRoute
+    }
+    '/admin/inventory/purchases': {
+      id: '/admin/inventory/purchases'
+      path: '/purchases'
+      fullPath: '/admin/inventory/purchases'
+      preLoaderRoute: typeof AdminInventoryPurchasesRouteImport
+      parentRoute: typeof AdminInventoryRoute
+    }
+    '/admin/inventory/movements': {
+      id: '/admin/inventory/movements'
+      path: '/movements'
+      fullPath: '/admin/inventory/movements'
+      preLoaderRoute: typeof AdminInventoryMovementsRouteImport
+      parentRoute: typeof AdminInventoryRoute
+    }
+    '/admin/catalog/categories': {
+      id: '/admin/catalog/categories'
+      path: '/categories'
+      fullPath: '/admin/catalog/categories'
+      preLoaderRoute: typeof AdminCatalogCategoriesRouteImport
+      parentRoute: typeof AdminCatalogRoute
+    }
     '/api/public/product-image/$': {
       id: '/api/public/product-image/$'
       path: '/api/public/product-image/$'
@@ -1000,12 +1091,42 @@ const AccountRouteChildren: AccountRouteChildren = {
 const AccountRouteWithChildren =
   AccountRoute._addFileChildren(AccountRouteChildren)
 
+interface AdminCatalogRouteChildren {
+  AdminCatalogCategoriesRoute: typeof AdminCatalogCategoriesRoute
+  AdminCatalogIndexRoute: typeof AdminCatalogIndexRoute
+}
+
+const AdminCatalogRouteChildren: AdminCatalogRouteChildren = {
+  AdminCatalogCategoriesRoute: AdminCatalogCategoriesRoute,
+  AdminCatalogIndexRoute: AdminCatalogIndexRoute,
+}
+
+const AdminCatalogRouteWithChildren = AdminCatalogRoute._addFileChildren(
+  AdminCatalogRouteChildren,
+)
+
+interface AdminInventoryRouteChildren {
+  AdminInventoryMovementsRoute: typeof AdminInventoryMovementsRoute
+  AdminInventoryPurchasesRoute: typeof AdminInventoryPurchasesRoute
+  AdminInventoryIndexRoute: typeof AdminInventoryIndexRoute
+}
+
+const AdminInventoryRouteChildren: AdminInventoryRouteChildren = {
+  AdminInventoryMovementsRoute: AdminInventoryMovementsRoute,
+  AdminInventoryPurchasesRoute: AdminInventoryPurchasesRoute,
+  AdminInventoryIndexRoute: AdminInventoryIndexRoute,
+}
+
+const AdminInventoryRouteWithChildren = AdminInventoryRoute._addFileChildren(
+  AdminInventoryRouteChildren,
+)
+
 interface AdminRouteChildren {
   AdminActivityRoute: typeof AdminActivityRoute
-  AdminCatalogRoute: typeof AdminCatalogRoute
+  AdminCatalogRoute: typeof AdminCatalogRouteWithChildren
   AdminCustomersRoute: typeof AdminCustomersRoute
   AdminDeliveryRoute: typeof AdminDeliveryRoute
-  AdminInventoryRoute: typeof AdminInventoryRoute
+  AdminInventoryRoute: typeof AdminInventoryRouteWithChildren
   AdminOffersRoute: typeof AdminOffersRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
   AdminRegistrationsRoute: typeof AdminRegistrationsRoute
@@ -1017,10 +1138,10 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminActivityRoute: AdminActivityRoute,
-  AdminCatalogRoute: AdminCatalogRoute,
+  AdminCatalogRoute: AdminCatalogRouteWithChildren,
   AdminCustomersRoute: AdminCustomersRoute,
   AdminDeliveryRoute: AdminDeliveryRoute,
-  AdminInventoryRoute: AdminInventoryRoute,
+  AdminInventoryRoute: AdminInventoryRouteWithChildren,
   AdminOffersRoute: AdminOffersRoute,
   AdminOrdersRoute: AdminOrdersRoute,
   AdminRegistrationsRoute: AdminRegistrationsRoute,

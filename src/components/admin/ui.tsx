@@ -1,4 +1,5 @@
 // Presentational building blocks shared across Administrator centers.
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 
 export function CenterHeader({ title, sub }: { title: string; sub?: string }) {
@@ -63,5 +64,28 @@ export function StockEditor({ stock, onSave }: { stock: number; onSave: (n: numb
         {stock === v ? "—" : "Save"}
       </button>
     </span>
+  );
+}
+
+/** In-workspace sub navigation for centers that own several screens. */
+export function SubNav({ items }: { items: { to: string; label: string; exact?: boolean }[] }) {
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  return (
+    <nav className="mb-5 flex flex-wrap gap-2 border-b border-border pb-3">
+      {items.map((it) => {
+        const active = it.exact ? pathname === it.to : pathname.startsWith(it.to);
+        return (
+          <Link
+            key={it.to}
+            to={it.to}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition ${
+              active ? "gradient-brand text-primary-foreground shadow-glow" : "border border-border text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            {it.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
