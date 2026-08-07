@@ -59,6 +59,7 @@ import { Route as AdminActivityRouteImport } from './routes/admin.activity'
 import { Route as AccountWishlistRouteImport } from './routes/account.wishlist'
 import { Route as AdminInventoryIndexRouteImport } from './routes/admin.inventory.index'
 import { Route as AdminCatalogIndexRouteImport } from './routes/admin.catalog.index'
+import { Route as AdminCatalogCategoriesRouteImport } from './routes/admin.catalog.categories'
 import { Route as ApiPublicProductImageSplatRouteImport } from './routes/api.public.product-image.$'
 
 const SupportRoute = SupportRouteImport.update({
@@ -311,6 +312,11 @@ const AdminCatalogIndexRoute = AdminCatalogIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminCatalogRoute,
 } as any)
+const AdminCatalogCategoriesRoute = AdminCatalogCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AdminCatalogRoute,
+} as any)
 const ApiPublicProductImageSplatRoute =
   ApiPublicProductImageSplatRouteImport.update({
     id: '/api/public/product-image/$',
@@ -367,6 +373,7 @@ export interface FileRoutesByFullPath {
   '/orders/': typeof OrdersIndexRoute
   '/products/': typeof ProductsIndexRoute
   '/staff/': typeof StaffIndexRoute
+  '/admin/catalog/categories': typeof AdminCatalogCategoriesRoute
   '/admin/catalog/': typeof AdminCatalogIndexRoute
   '/admin/inventory/': typeof AdminInventoryIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
@@ -415,6 +422,7 @@ export interface FileRoutesByTo {
   '/orders': typeof OrdersIndexRoute
   '/products': typeof ProductsIndexRoute
   '/staff': typeof StaffIndexRoute
+  '/admin/catalog/categories': typeof AdminCatalogCategoriesRoute
   '/admin/catalog': typeof AdminCatalogIndexRoute
   '/admin/inventory': typeof AdminInventoryIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
@@ -469,6 +477,7 @@ export interface FileRoutesById {
   '/orders/': typeof OrdersIndexRoute
   '/products/': typeof ProductsIndexRoute
   '/staff/': typeof StaffIndexRoute
+  '/admin/catalog/categories': typeof AdminCatalogCategoriesRoute
   '/admin/catalog/': typeof AdminCatalogIndexRoute
   '/admin/inventory/': typeof AdminInventoryIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
@@ -524,6 +533,7 @@ export interface FileRouteTypes {
     | '/orders/'
     | '/products/'
     | '/staff/'
+    | '/admin/catalog/categories'
     | '/admin/catalog/'
     | '/admin/inventory/'
     | '/api/public/product-image/$'
@@ -572,6 +582,7 @@ export interface FileRouteTypes {
     | '/orders'
     | '/products'
     | '/staff'
+    | '/admin/catalog/categories'
     | '/admin/catalog'
     | '/admin/inventory'
     | '/api/public/product-image/$'
@@ -625,6 +636,7 @@ export interface FileRouteTypes {
     | '/orders/'
     | '/products/'
     | '/staff/'
+    | '/admin/catalog/categories'
     | '/admin/catalog/'
     | '/admin/inventory/'
     | '/api/public/product-image/$'
@@ -1011,6 +1023,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCatalogIndexRouteImport
       parentRoute: typeof AdminCatalogRoute
     }
+    '/admin/catalog/categories': {
+      id: '/admin/catalog/categories'
+      path: '/categories'
+      fullPath: '/admin/catalog/categories'
+      preLoaderRoute: typeof AdminCatalogCategoriesRouteImport
+      parentRoute: typeof AdminCatalogRoute
+    }
     '/api/public/product-image/$': {
       id: '/api/public/product-image/$'
       path: '/api/public/product-image/$'
@@ -1035,10 +1054,12 @@ const AccountRouteWithChildren =
   AccountRoute._addFileChildren(AccountRouteChildren)
 
 interface AdminCatalogRouteChildren {
+  AdminCatalogCategoriesRoute: typeof AdminCatalogCategoriesRoute
   AdminCatalogIndexRoute: typeof AdminCatalogIndexRoute
 }
 
 const AdminCatalogRouteChildren: AdminCatalogRouteChildren = {
+  AdminCatalogCategoriesRoute: AdminCatalogCategoriesRoute,
   AdminCatalogIndexRoute: AdminCatalogIndexRoute,
 }
 
