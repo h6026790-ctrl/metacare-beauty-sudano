@@ -59,6 +59,14 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
   const orders = (ordersQ.data ?? []) as any[];
   const unassigned = (unassQ.data ?? []) as any[];
 
+  // Always render the freshest server copy of the selected order so the
+  // payment reference / delivery code appear right after each step.
+  const selected = selectedRaw ? (orders.find((o) => o.id === selectedRaw.id) ?? selectedRaw) : null;
+  const assignment = selected
+    ? (Array.isArray(selected.delivery_assignment) ? selected.delivery_assignment[0] : selected.delivery_assignment) ?? null
+    : null;
+
+
   const counts = useMemo(() => {
     const c: Record<string, number> = { unassigned: unassigned.length };
     for (const o of orders) c[o.status] = (c[o.status] ?? 0) + 1;
