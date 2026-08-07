@@ -247,8 +247,11 @@ export type Database = {
       }
       categories: {
         Row: {
+          description_ar: string | null
+          description_en: string | null
           icon: string | null
           id: string
+          image_url: string | null
           is_active: boolean
           name_ar: string
           name_en: string
@@ -256,8 +259,11 @@ export type Database = {
           sort_order: number
         }
         Insert: {
+          description_ar?: string | null
+          description_en?: string | null
           icon?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           name_ar: string
           name_en: string
@@ -265,8 +271,11 @@ export type Database = {
           sort_order?: number
         }
         Update: {
+          description_ar?: string | null
+          description_en?: string | null
           icon?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           name_ar?: string
           name_en?: string
@@ -395,6 +404,67 @@ export type Database = {
             foreignKeyName: "inventory_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_movements: {
+        Row: {
+          actor_id: string | null
+          balance_after: number
+          created_at: string
+          delta: number
+          id: string
+          note: string | null
+          product_id: string
+          reference_id: string | null
+          reference_type: string | null
+          source: string
+        }
+        Insert: {
+          actor_id?: string | null
+          balance_after: number
+          created_at?: string
+          delta: number
+          id?: string
+          note?: string | null
+          product_id: string
+          reference_id?: string | null
+          reference_type?: string | null
+          source?: string
+        }
+        Update: {
+          actor_id?: string | null
+          balance_after?: number
+          created_at?: string
+          delta?: number
+          id?: string
+          note?: string | null
+          product_id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_authenticated"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
@@ -860,6 +930,110 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_invoice_items: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string
+          product_id: string
+          purchase_price_sdg: number
+          qty: number
+          selling_price_sdg: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id: string
+          product_id: string
+          purchase_price_sdg?: number
+          qty: number
+          selling_price_sdg?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          product_id?: string
+          purchase_price_sdg?: number
+          qty?: number
+          selling_price_sdg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_invoice_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_authenticated"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_invoice_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_invoice_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_invoices: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string
+          notes: string | null
+          status: string
+          supplier_name: string
+          total_sdg: number
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number: string
+          notes?: string | null
+          status?: string
+          supplier_name: string
+          total_sdg?: number
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          notes?: string | null
+          status?: string
+          supplier_name?: string
+          total_sdg?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       registration_requests: {
         Row: {
           address_city_id: string | null
@@ -1166,6 +1340,7 @@ export type Database = {
       }
     }
     Functions: {
+      approve_purchase_invoice: { Args: { _invoice_id: string }; Returns: Json }
       claim_order: { Args: { _order_id: string }; Returns: Json }
       confirm_delivery_by_qr: {
         Args: { _order_id: string; _token: string }
