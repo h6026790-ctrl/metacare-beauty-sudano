@@ -57,6 +57,8 @@ function AdminOrders() {
             <Th>#</Th>
             <Th>{lang === "ar" ? "العميلة" : "Customer"}</Th>
             <Th>{lang === "ar" ? "الجوال" : "Phone"}</Th>
+            <Th>{lang === "ar" ? "مرجع الدفع" : "Payment ref"}</Th>
+            <Th>{lang === "ar" ? "التوصيل" : "Delivery"}</Th>
             <Th align="end">{lang === "ar" ? "الإجمالي" : "Total"}</Th>
             <Th align="end">{lang === "ar" ? "الحالة" : "Status"}</Th>
             <Th align="end">{lang === "ar" ? "التاريخ" : "Date"}</Th>
@@ -64,17 +66,40 @@ function AdminOrders() {
         </thead>
         <tbody className="divide-y divide-border">
           {rows.length === 0 ? (
-            <EmptyRow colSpan={6} label={lang === "ar" ? "لا توجد طلبات في هذه الحالة" : "No orders in this state"} />
-          ) : rows.map((o) => (
+            <EmptyRow colSpan={8} label={lang === "ar" ? "لا توجد طلبات في هذه الحالة" : "No orders in this state"} />
+          ) : rows.map((o) => {
+            const da = Array.isArray(o.delivery_assignment) ? o.delivery_assignment[0] : o.delivery_assignment;
+            return (
             <tr key={o.id} className="hover:bg-muted/30">
               <Td><span className="font-mono">{o.number}</span></Td>
               <Td>{o.contact_name}</Td>
               <Td><span dir="ltr" className="font-mono text-xs">{o.contact_phone}</span></Td>
+              <Td>
+                {o.payment_reference ? (
+                  <span className="font-mono text-xs" dir="ltr" title={o.payment_confirmed_at ? new Date(o.payment_confirmed_at).toLocaleString() : ""}>
+                    {o.payment_reference}
+                  </span>
+                ) : <span className="text-xs text-muted-foreground">—</span>}
+              </Td>
+              <Td>
+                {da ? (
+                  <span className="text-xs text-muted-foreground">
+                    {da.courier_name ?? "—"}
+                    {da.courier_phone ? <span dir="ltr"> • {da.courier_phone}</span> : null}
+                    {" • "}
+                    {da.completed_at
+                      ? (lang === "ar" ? "تم التأكيد" : "Confirmed")
+                      : (lang === "ar" ? "بالانتظار" : "Pending")}
+                  </span>
+                ) : <span className="text-xs text-muted-foreground">—</span>}
+              </Td>
               <Td align="end">{formatPrice(Number(o.total_sdg), lang)}</Td>
               <Td align="end"><OrderStatusBadge status={o.status} /></Td>
               <Td align="end">{formatDate(o.placed_at, lang)}</Td>
             </tr>
-          ))}
+            );
+          })}
+
         </tbody>
       </TableCard>
       <p className="mt-3 text-xs text-muted-foreground">

@@ -114,7 +114,7 @@ function OrderPage() {
                     <div className="flex-1 space-y-2">
                       <p className="text-sm font-medium text-foreground">{t.account.confirmDelivery}</p>
                       <p className="text-xs text-muted-foreground">{t.account.scanQr}</p>
-                      <input value={token} onChange={(e) => setToken(e.target.value)} placeholder="QR token" dir="ltr" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                      <input value={token} onChange={(e) => setToken(e.target.value.toUpperCase())} placeholder={lang === "ar" ? "رمز تأكيد الاستلام" : "Delivery confirmation code"} dir="ltr" className="w-full rounded-md border border-input bg-background px-3 py-2 text-center font-mono text-sm tracking-[0.2em]" />
                       <button onClick={confirmDelivery} className="inline-flex items-center gap-2 rounded-full gradient-brand px-4 py-2 text-xs font-medium text-primary-foreground shadow-glow">
                         <QrCode className="h-3.5 w-3.5" />{t.account.confirmDelivery}
                       </button>

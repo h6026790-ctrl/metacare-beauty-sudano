@@ -133,8 +133,15 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
 
     // The status write keeps going through the orders table so the existing
     // handle_order_status_change trigger runs (history, audit, stock restore).
+    // Payment reference is stored as a structured field on the order itself.
+    const patch: Record<string, unknown> = { status: data.status };
+    if (data.status === "paid") {
+      patch['payment_reference'] = paymentRef;
+      patch['payment_confirmed_at'] = new Date().toISOString();
+      patch['payment_confirmed_by'] = context.userId;
+    }
     const { error } = await context.supabase
-      .from("orders").update({ status: data.status })
+      .from("orders").update(patch as never)
       .eq("id", data.orderId).eq("status", from);
     if (error) throw error;
     if (data.status === "paid") {
@@ -142,6 +149,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
         order_id: data.orderId, author_id: context.userId,
         body: `Payment reference: ${paymentRef}${data.note ? ` — ${data.note}` : ""}`,
       });
+
       await context.supabase.from("audit_logs").insert({
         actor_id: context.userId, action: "order.payment_confirmed",
         entity_type: "order", entity_id: data.orderId,
@@ -187,39 +195,56 @@ export const listOrderNotes = createServerFn({ method: "GET" })
 // they scan when the courier hands over the package.
 export const markOutForDelivery = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { orderId: string; courierNote?: string }) =>
+  .inputValidator((d: { orderId: string; courierName?: string; courierPhone?: string; courierNote?: string }) =>
     z.object({
       orderId: z.string().uuid(),
+      courierName: z.string().trim().max(120).optional(),
+      courierPhone: z.string().trim().max(40).optional(),
       courierNote: z.string().max(500).optional(),
     }).parse(d))
   .handler(async ({ context, data }) => {
     await assertStaff(context);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    // Short, human-typeable confirmation code the customer enters on delivery.
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const bytes = crypto.getRandomValues(new Uint8Array(6));
+    const code = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+
+    const courier = {
+      courier_name: data.courierName || null,
+      courier_phone: data.courierPhone || null,
+      courier_note: data.courierNote || null,
+    };
     const { data: existing } = await context.supabase
       .from("delivery_assignments").select("id").eq("order_id", data.orderId).maybeSingle();
     if (existing) {
       await context.supabase.from("delivery_assignments").update({
         assigned_by: context.userId,
         assigned_at: new Date().toISOString(),
+        qr_token: code,
         qr_expires_at: expiresAt, completed_at: null,
-      }).eq("id", existing.id);
+        ...courier,
+      } as never).eq("id", existing.id);
     } else {
       await context.supabase.from("delivery_assignments").insert({
         order_id: data.orderId,
-        assigned_by: context.userId, qr_expires_at: expiresAt,
-      });
+        assigned_by: context.userId, qr_token: code, qr_expires_at: expiresAt,
+        ...courier,
+      } as never);
     }
-    if (data.courierNote) {
+    const summary = [data.courierName, data.courierPhone, data.courierNote].filter(Boolean).join(" — ");
+    if (summary) {
       await context.supabase.from("order_notes").insert({
         order_id: data.orderId, author_id: context.userId,
-        body: `Courier: ${data.courierNote}`,
+        body: `Courier: ${summary}`,
       });
     }
     // Move order into shipping if currently paid
     await context.supabase.from("orders").update({ status: "shipping" })
       .eq("id", data.orderId).eq("status", "paid");
-    return { ok: true };
+    return { ok: true, code };
   });
+
 
 // Staff/admin directory (delivery agents no longer exist)
 export const listTeam = createServerFn({ method: "GET" })
@@ -253,7 +278,7 @@ export const adminListAllOrders = createServerFn({ method: "GET" })
     await assertAdmin(context);
     let q = context.supabase
       .from("orders")
-      .select("*, order_items(*)")
+      .select("*, order_items(*), delivery_assignment:delivery_assignments(*)")
       .order("placed_at", { ascending: false }).limit(500);
     if (data.status) q = q.eq("status", data.status);
     const { data: rows, error } = await q;
