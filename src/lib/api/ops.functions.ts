@@ -133,8 +133,15 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
 
     // The status write keeps going through the orders table so the existing
     // handle_order_status_change trigger runs (history, audit, stock restore).
+    // Payment reference is stored as a structured field on the order itself.
+    const patch: Record<string, unknown> = { status: data.status };
+    if (data.status === "paid") {
+      patch['payment_reference'] = paymentRef;
+      patch['payment_confirmed_at'] = new Date().toISOString();
+      patch['payment_confirmed_by'] = context.userId;
+    }
     const { error } = await context.supabase
-      .from("orders").update({ status: data.status })
+      .from("orders").update(patch as never)
       .eq("id", data.orderId).eq("status", from);
     if (error) throw error;
     if (data.status === "paid") {
@@ -142,6 +149,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
         order_id: data.orderId, author_id: context.userId,
         body: `Payment reference: ${paymentRef}${data.note ? ` — ${data.note}` : ""}`,
       });
+
       await context.supabase.from("audit_logs").insert({
         actor_id: context.userId, action: "order.payment_confirmed",
         entity_type: "order", entity_id: data.orderId,
