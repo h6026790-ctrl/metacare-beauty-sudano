@@ -59,6 +59,7 @@ import { Route as AdminActivityRouteImport } from './routes/admin.activity'
 import { Route as AccountWishlistRouteImport } from './routes/account.wishlist'
 import { Route as AdminInventoryIndexRouteImport } from './routes/admin.inventory.index'
 import { Route as AdminCatalogIndexRouteImport } from './routes/admin.catalog.index'
+import { Route as AdminInventoryPurchasesRouteImport } from './routes/admin.inventory.purchases'
 import { Route as AdminCatalogCategoriesRouteImport } from './routes/admin.catalog.categories'
 import { Route as ApiPublicProductImageSplatRouteImport } from './routes/api.public.product-image.$'
 
@@ -312,6 +313,11 @@ const AdminCatalogIndexRoute = AdminCatalogIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminCatalogRoute,
 } as any)
+const AdminInventoryPurchasesRoute = AdminInventoryPurchasesRouteImport.update({
+  id: '/purchases',
+  path: '/purchases',
+  getParentRoute: () => AdminInventoryRoute,
+} as any)
 const AdminCatalogCategoriesRoute = AdminCatalogCategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
@@ -374,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/products/': typeof ProductsIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/admin/catalog/categories': typeof AdminCatalogCategoriesRoute
+  '/admin/inventory/purchases': typeof AdminInventoryPurchasesRoute
   '/admin/catalog/': typeof AdminCatalogIndexRoute
   '/admin/inventory/': typeof AdminInventoryIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
@@ -423,6 +430,7 @@ export interface FileRoutesByTo {
   '/products': typeof ProductsIndexRoute
   '/staff': typeof StaffIndexRoute
   '/admin/catalog/categories': typeof AdminCatalogCategoriesRoute
+  '/admin/inventory/purchases': typeof AdminInventoryPurchasesRoute
   '/admin/catalog': typeof AdminCatalogIndexRoute
   '/admin/inventory': typeof AdminInventoryIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
@@ -478,6 +486,7 @@ export interface FileRoutesById {
   '/products/': typeof ProductsIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/admin/catalog/categories': typeof AdminCatalogCategoriesRoute
+  '/admin/inventory/purchases': typeof AdminInventoryPurchasesRoute
   '/admin/catalog/': typeof AdminCatalogIndexRoute
   '/admin/inventory/': typeof AdminInventoryIndexRoute
   '/api/public/product-image/$': typeof ApiPublicProductImageSplatRoute
@@ -534,6 +543,7 @@ export interface FileRouteTypes {
     | '/products/'
     | '/staff/'
     | '/admin/catalog/categories'
+    | '/admin/inventory/purchases'
     | '/admin/catalog/'
     | '/admin/inventory/'
     | '/api/public/product-image/$'
@@ -583,6 +593,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/staff'
     | '/admin/catalog/categories'
+    | '/admin/inventory/purchases'
     | '/admin/catalog'
     | '/admin/inventory'
     | '/api/public/product-image/$'
@@ -637,6 +648,7 @@ export interface FileRouteTypes {
     | '/products/'
     | '/staff/'
     | '/admin/catalog/categories'
+    | '/admin/inventory/purchases'
     | '/admin/catalog/'
     | '/admin/inventory/'
     | '/api/public/product-image/$'
@@ -1023,6 +1035,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCatalogIndexRouteImport
       parentRoute: typeof AdminCatalogRoute
     }
+    '/admin/inventory/purchases': {
+      id: '/admin/inventory/purchases'
+      path: '/purchases'
+      fullPath: '/admin/inventory/purchases'
+      preLoaderRoute: typeof AdminInventoryPurchasesRouteImport
+      parentRoute: typeof AdminInventoryRoute
+    }
     '/admin/catalog/categories': {
       id: '/admin/catalog/categories'
       path: '/categories'
@@ -1068,10 +1087,12 @@ const AdminCatalogRouteWithChildren = AdminCatalogRoute._addFileChildren(
 )
 
 interface AdminInventoryRouteChildren {
+  AdminInventoryPurchasesRoute: typeof AdminInventoryPurchasesRoute
   AdminInventoryIndexRoute: typeof AdminInventoryIndexRoute
 }
 
 const AdminInventoryRouteChildren: AdminInventoryRouteChildren = {
+  AdminInventoryPurchasesRoute: AdminInventoryPurchasesRoute,
   AdminInventoryIndexRoute: AdminInventoryIndexRoute,
 }
 
