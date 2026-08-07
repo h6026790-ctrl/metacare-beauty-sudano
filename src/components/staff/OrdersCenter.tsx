@@ -269,52 +269,128 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
                 </p>
               </div>
 
-              <div className="mt-2 rounded-xl border border-border bg-muted/30 p-3">
-                <p className="mb-1.5 text-xs font-medium text-muted-foreground">
-                  {lang === "ar" ? "مرجع الدفع (إلزامي لتأكيد الدفع)" : "Payment reference (required to confirm payment)"}
-                </p>
-                <Input
-                  value={payRef}
-                  onChange={(e) => setPayRef(e.target.value)}
-                  placeholder={lang === "ar" ? "رقم العملية / الإيصال" : "Transaction / receipt number"}
-                  className="h-9 text-xs"
-                />
-              </div>
+              {/* ── Step 1: payment ─────────────────────────────── */}
+              {["new", "review"].includes(selected.status) ? (
+                <div className="mt-2 rounded-xl border border-border bg-muted/30 p-3">
+                  <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                    {lang === "ar" ? "مرجع الدفع / رقم الإيصال (إلزامي)" : "Payment reference / receipt no. (required)"}
+                  </p>
+                  <Input
+                    value={payRef}
+                    onChange={(e) => setPayRef(e.target.value)}
+                    placeholder={lang === "ar" ? "رقم العملية / الإيصال" : "Transaction / receipt number"}
+                    className="h-9 text-xs"
+                  />
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {selected.status === "new" && (
+                      <button onClick={() => onStatus("review")} className="rounded-full border border-border bg-card px-3 py-2 text-xs">
+                        {lang === "ar" ? "تحت المراجعة" : "Mark review"}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onStatus("paid")}
+                      disabled={payRef.trim().length < 3}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-full bg-success px-3 py-2 text-xs font-medium text-success-foreground disabled:opacity-50"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />{lang === "ar" ? "تأكيد الدفع" : "Confirm paid"}
+                    </button>
+                  </div>
+                </div>
+              ) : selected.payment_reference ? (
+                <div className="mt-2 rounded-xl border border-success/30 bg-success/5 p-3">
+                  <p className="inline-flex items-center gap-1.5 text-xs font-medium text-success">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {lang === "ar" ? "تم تأكيد الدفع" : "Payment confirmed"} —{" "}
+                    {lang === "ar" ? "المرجع" : "Reference"}:{" "}
+                    <span className="font-mono text-foreground" dir="ltr">{selected.payment_reference}</span>
+                  </p>
+                  {selected.payment_confirmed_at && (
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {new Date(selected.payment_confirmed_at).toLocaleString(lang === "ar" ? "ar-EG" : "en-GB")}
+                      {selected.payment_confirmed_by ? ` • ${lang === "ar" ? "بواسطة" : "by"} ${String(selected.payment_confirmed_by).slice(0, 8)}` : ""}
+                    </p>
+                  )}
+                </div>
+              ) : null}
 
-              <div className="mt-1 grid grid-cols-2 gap-2">
-                <button onClick={() => onStatus("review")} className="rounded-full border border-border bg-card px-3 py-2 text-xs">
-                  {lang === "ar" ? "تحت المراجعة" : "Mark review"}
-                </button>
-                <button
-                  onClick={() => onStatus("paid")}
-                  disabled={payRef.trim().length < 3}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-full bg-success px-3 py-2 text-xs font-medium text-success-foreground disabled:opacity-50"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />{lang === "ar" ? "تأكيد الدفع" : "Confirm paid"}
-                </button>
+              {/* ── Step 2: delivery handoff ────────────────────── */}
+              {selected.status === "paid" && (
+                <div className="mt-2 rounded-xl border border-border bg-muted/30 p-3">
+                  <p className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    <Truck className="h-3 w-3" /> {lang === "ar" ? "التسليم للمندوب (تنسيق يدوي)" : "Hand off to courier (manual)"}
+                  </p>
+                  <div className="space-y-2">
+                    <Input
+                      value={courierName}
+                      onChange={(e) => setCourierName(e.target.value)}
+                      placeholder={lang === "ar" ? "اسم المندوب" : "Courier name"}
+                      className="h-9 text-xs"
+                    />
+                    <Input
+                      value={courierPhone}
+                      onChange={(e) => setCourierPhone(e.target.value)}
+                      placeholder={lang === "ar" ? "رقم المندوب (اختياري)" : "Courier phone (optional)"}
+                      dir="ltr"
+                      className="h-9 text-xs"
+                    />
+                    <Input
+                      value={courierNote}
+                      onChange={(e) => setCourierNote(e.target.value)}
+                      placeholder={lang === "ar" ? "ملاحظة للمندوب (اختياري)" : "Courier note (optional)"}
+                      className="h-9 text-xs"
+                    />
+                  </div>
+                  <button onClick={onMarkOut} className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-full gradient-brand px-3 py-2 text-xs font-medium text-primary-foreground shadow-glow">
+                    <Truck className="h-3.5 w-3.5" />{lang === "ar" ? "تحديد كخارج للتوصيل" : "Mark out for delivery"}
+                  </button>
+                </div>
+              )}
 
-                <button onClick={() => onStatus("delivered")} className="rounded-full border border-border bg-card px-3 py-2 text-xs">
-                  {lang === "ar" ? "تم التسليم" : "Delivered"}
-                </button>
-                <button onClick={() => onStatus("cancelled")} className="rounded-full border border-border bg-card px-3 py-2 text-xs text-destructive">
-                  {lang === "ar" ? "إلغاء" : "Cancel"}
-                </button>
-              </div>
+              {/* ── Step 3: delivery code + courier record ──────── */}
+              {["shipping", "delivered"].includes(selected.status) && assignment && (
+                <div className="mt-2 space-y-2 rounded-xl border border-accent/30 bg-accent/5 p-3">
+                  <p className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    <Truck className="h-3 w-3" /> {lang === "ar" ? "بيانات التوصيل" : "Delivery details"}
+                  </p>
+                  {assignment.courier_name && (
+                    <p className="text-xs text-foreground">
+                      {lang === "ar" ? "المندوب" : "Courier"}: {assignment.courier_name}
+                      {assignment.courier_phone ? <span dir="ltr"> • {assignment.courier_phone}</span> : null}
+                    </p>
+                  )}
+                  {assignment.courier_note && (
+                    <p className="text-[11px] text-muted-foreground">{assignment.courier_note}</p>
+                  )}
+                  {!assignment.completed_at && (
+                    <div className="rounded-lg border border-border bg-card p-2.5">
+                      <p className="text-[11px] text-muted-foreground">
+                        {lang === "ar"
+                          ? "رمز تأكيد الاستلام — أرسليه للمندوب، وتُدخله العميلة عند الاستلام"
+                          : "Delivery confirmation code — send it to the courier; the customer enters it on receipt"}
+                      </p>
+                      <p className="mt-1 font-mono text-lg font-semibold tracking-[0.2em] text-foreground" dir="ltr">
+                        {assignment.qr_token}
+                      </p>
+                    </div>
+                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    {lang === "ar" ? "حالة التأكيد" : "Confirmation"}:{" "}
+                    <span className="font-medium text-foreground">
+                      {assignment.completed_at
+                        ? `${lang === "ar" ? "تم التأكيد" : "Confirmed"} • ${new Date(assignment.completed_at).toLocaleString(lang === "ar" ? "ar-EG" : "en-GB")}`
+                        : (lang === "ar" ? "بانتظار تأكيد العميلة" : "Awaiting customer confirmation")}
+                    </span>
+                  </p>
+                </div>
+              )}
 
-              <div className="mt-2 rounded-xl border border-border bg-muted/30 p-3">
-                <p className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                  <Truck className="h-3 w-3" /> {lang === "ar" ? "التسليم للمندوب (يدوي عبر واتساب)" : "Hand off to courier (manual via WhatsApp)"}
-                </p>
-                <Input
-                  value={courierNote}
-                  onChange={(e) => setCourierNote(e.target.value)}
-                  placeholder={lang === "ar" ? "اسم المندوب / رقمه (اختياري)" : "Courier name / phone (optional)"}
-                  className="h-9 text-xs"
-                />
-                <button onClick={onMarkOut} className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-full gradient-brand px-3 py-2 text-xs font-medium text-primary-foreground shadow-glow">
-                  <Truck className="h-3.5 w-3.5" />{lang === "ar" ? "تحديد كخارج للتوصيل" : "Mark out for delivery"}
+              {/* ── Exceptions ──────────────────────────────────── */}
+              {!["delivered", "cancelled", "returned"].includes(selected.status) && (
+                <button onClick={() => onStatus("cancelled")} className="mt-2 w-full rounded-full border border-border bg-card px-3 py-2 text-xs text-destructive">
+                  {lang === "ar" ? "إلغاء الطلب" : "Cancel order"}
                 </button>
-              </div>
+              )}
+
 
               <NoteBox
                 orderId={selected.id}
