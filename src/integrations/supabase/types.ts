@@ -316,6 +316,9 @@ export type Database = {
           assigned_at: string
           assigned_by: string | null
           completed_at: string | null
+          courier_name: string | null
+          courier_note: string | null
+          courier_phone: string | null
           id: string
           order_id: string
           qr_expires_at: string
@@ -326,6 +329,9 @@ export type Database = {
           assigned_at?: string
           assigned_by?: string | null
           completed_at?: string | null
+          courier_name?: string | null
+          courier_note?: string | null
+          courier_phone?: string | null
           id?: string
           order_id: string
           qr_expires_at?: string
@@ -336,6 +342,9 @@ export type Database = {
           assigned_at?: string
           assigned_by?: string | null
           completed_at?: string | null
+          courier_name?: string | null
+          courier_note?: string | null
+          courier_phone?: string | null
           id?: string
           order_id?: string
           qr_expires_at?: string
@@ -625,6 +634,9 @@ export type Database = {
           expires_at: string | null
           id: string
           number: string | null
+          payment_confirmed_at: string | null
+          payment_confirmed_by: string | null
+          payment_reference: string | null
           placed_at: string
           profile_id: string
           status: Database["public"]["Enums"]["order_status"]
@@ -648,6 +660,9 @@ export type Database = {
           expires_at?: string | null
           id?: string
           number?: string | null
+          payment_confirmed_at?: string | null
+          payment_confirmed_by?: string | null
+          payment_reference?: string | null
           placed_at?: string
           profile_id: string
           status?: Database["public"]["Enums"]["order_status"]
@@ -671,6 +686,9 @@ export type Database = {
           expires_at?: string | null
           id?: string
           number?: string | null
+          payment_confirmed_at?: string | null
+          payment_confirmed_by?: string | null
+          payment_reference?: string | null
           placed_at?: string
           profile_id?: string
           status?: Database["public"]["Enums"]["order_status"]
