@@ -278,7 +278,7 @@ export const adminListAllOrders = createServerFn({ method: "GET" })
     await assertAdmin(context);
     let q = context.supabase
       .from("orders")
-      .select("*, order_items(*)")
+      .select("*, order_items(*), delivery_assignment:delivery_assignments(*)")
       .order("placed_at", { ascending: false }).limit(500);
     if (data.status) q = q.eq("status", data.status);
     const { data: rows, error } = await q;
