@@ -33,9 +33,12 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [tab, setTab] = useState(initialTab);
-  const [selected, setSelected] = useState<any | null>(null);
+  const [selectedRaw, setSelected] = useState<any | null>(null);
+  const [courierName, setCourierName] = useState("");
+  const [courierPhone, setCourierPhone] = useState("");
   const [courierNote, setCourierNote] = useState("");
   const [payRef, setPayRef] = useState("");
+
 
 
   const ordersQ = useStaffOrders(enabled, q);
