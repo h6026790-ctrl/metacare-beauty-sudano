@@ -49,8 +49,14 @@ function AdminInventory() {
     <>
       <CenterHeader
         title={lang === "ar" ? "المخزون" : "Inventory"}
-        sub={lang === "ar" ? "الكميات المتاحة مرتبة من الأقل إلى الأعلى." : "Available quantities, lowest first."}
+        sub={lang === "ar" ? "الكميات المتاحة مرتبة من الأقل إلى الأعلى. الإدخال المعتاد للمخزون يتم عبر فواتير الشراء." : "Available quantities, lowest first. Routine stock intake happens through purchase invoices."}
       />
+
+      <p className="mb-4 rounded-xl border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+        {lang === "ar"
+          ? "التعديل اليدوي للكميات مخصص للحالات الاستثنائية فقط (جرد، تلف، فقد، تصحيح بيانات)، ويُسجَّل في حركة المخزون كتعديل يدوي. لإضافة مخزون جديد استخدم فواتير الشراء."
+          : "Manual editing is for exceptional cases only (stock count, damage, loss, data correction) and is logged as a manual adjustment. Use purchase invoices to add new stock."}
+      </p>
 
       <label className="mb-4 inline-flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
         <input type="checkbox" checked={lowOnly} onChange={(e) => setLowOnly(e.target.checked)} className="h-3.5 w-3.5 rounded border-input" />
