@@ -254,11 +254,12 @@ export const adminUpdateSiteSettings = createServerFn({ method: "POST" })
   }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const patch = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
+    const patch = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined)) as Record<string, never>;
     if (Object.keys(patch).length === 0) return { ok: true };
     const { error } = await context.supabase
       .from("site_settings").update(patch).eq("id", true);
     if (error) throw error;
+
     await context.supabase.from("audit_logs").insert({
       actor_id: context.userId, action: "admin.site_settings_updated",
       entity_type: "site_settings", entity_id: "singleton",
