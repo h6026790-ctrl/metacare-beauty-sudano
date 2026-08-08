@@ -244,22 +244,29 @@ export const adminSetProductFlags = createServerFn({ method: "POST" })
 export const adminUpdateSiteSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({
-    maintenance_mode: z.boolean(),
-    maintenance_message_ar: z.string().trim().min(1).max(300),
-    maintenance_message_en: z.string().trim().min(1).max(300),
+    maintenance_mode: z.boolean().optional(),
+    maintenance_message_ar: z.string().trim().min(1).max(300).optional(),
+    maintenance_message_en: z.string().trim().min(1).max(300).optional(),
+    contact_whatsapp: z.string().trim().max(30).optional(),
+    facebook_url: z.string().trim().max(300).optional(),
+    instagram_url: z.string().trim().max(300).optional(),
+    tiktok_url: z.string().trim().max(300).optional(),
   }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
+    const patch = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
+    if (Object.keys(patch).length === 0) return { ok: true };
     const { error } = await context.supabase
-      .from("site_settings").update(data).eq("id", true);
+      .from("site_settings").update(patch).eq("id", true);
     if (error) throw error;
     await context.supabase.from("audit_logs").insert({
       actor_id: context.userId, action: "admin.site_settings_updated",
       entity_type: "site_settings", entity_id: "singleton",
-      metadata: { maintenance_mode: data.maintenance_mode },
+      metadata: { fields: Object.keys(patch) },
     });
     return { ok: true };
   });
+
 
 // ---------- DELIVERY GEOGRAPHY (neighborhoods & fees) ----------
 export const adminListNeighborhoods = createServerFn({ method: "GET" })
