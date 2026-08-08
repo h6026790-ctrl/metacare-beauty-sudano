@@ -60,12 +60,6 @@ function WishlistPage() {
     toast.success(t.product.added);
   };
 
-  const moveAll = async () => {
-    for (const p of items.filter((p) => stockOf(p) > 0)) {
-      try { await addToCart.mutateAsync(p.id); await toggleWish.mutateAsync(p.id); } catch { /* skip */ }
-    }
-    toast.success(t.product.added);
-  };
 
   const share = async () => {
     const url = `${window.location.origin}/products`;
