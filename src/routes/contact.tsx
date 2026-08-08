@@ -37,6 +37,10 @@ function ContactPage() {
           <p className="mt-4 text-muted-foreground">{t.contact.lead}</p>
         </div>
 
+        <SocialLinks />
+
+
+
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           <a href={`https://wa.me/${WA}`} target="_blank" rel="noreferrer" className="group rounded-2xl border border-border bg-card p-5 shadow-glass transition hover:-translate-y-0.5 hover:shadow-elevated">
             <div className="grid h-11 w-11 place-items-center rounded-xl bg-success text-success-foreground"><MessageCircle className="h-5 w-5" /></div>
