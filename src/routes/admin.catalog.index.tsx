@@ -72,6 +72,8 @@ function AdminCatalog() {
   const enabled = !!user && isAdmin;
   const qc = useQueryClient();
   const [showArchived, setShowArchived] = useState(true);
+  const [q, setQ] = useState("");
+
 
   const productsQ = useAdminProducts(enabled);
   const brandsQ = useAdminBrands(enabled);
