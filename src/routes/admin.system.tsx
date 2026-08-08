@@ -131,6 +131,9 @@ function AdminSystem() {
         </div>
       </section>
 
+      <ContactSettings />
+
+
       <dl className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
         {rows.map((r) => (
           <div key={r.label} className="grid grid-cols-[140px_1fr] gap-3 p-3 text-sm">
