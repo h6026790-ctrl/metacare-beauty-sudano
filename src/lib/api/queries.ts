@@ -282,6 +282,10 @@ export type SiteSettings = {
   maintenance_mode: boolean;
   maintenance_message_ar: string;
   maintenance_message_en: string;
+  contact_whatsapp: string;
+  facebook_url: string;
+  instagram_url: string;
+  tiktok_url: string;
 };
 
 export function useSiteSettings() {
@@ -290,10 +294,11 @@ export function useSiteSettings() {
     queryFn: async (): Promise<SiteSettings | null> => {
       const { data } = await supabase
         .from("site_settings")
-        .select("maintenance_mode, maintenance_message_ar, maintenance_message_en")
+        .select("maintenance_mode, maintenance_message_ar, maintenance_message_en, contact_whatsapp, facebook_url, instagram_url, tiktok_url")
         .maybeSingle();
       return (data as SiteSettings) ?? null;
     },
+
     staleTime: 15_000,
     // Poll so an open storefront page reacts shortly after an admin closes the site.
     refetchInterval: 15_000,
