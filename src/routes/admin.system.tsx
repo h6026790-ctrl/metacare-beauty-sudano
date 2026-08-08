@@ -153,3 +153,84 @@ function AdminSystem() {
     </>
   );
 }
+
+// Public contact channels shown on the storefront "Contact us" page.
+function ContactSettings() {
+  const { lang } = useI18n();
+  const ar = lang === "ar";
+  const qc = useQueryClient();
+  const settingsQ = useSiteSettings();
+  const updateFn = useServerFn(adminUpdateSiteSettings);
+
+  const [wa, setWa] = useState("");
+  const [fb, setFb] = useState("");
+  const [ig, setIg] = useState("");
+  const [tt, setTt] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const s = settingsQ.data;
+    if (!s) return;
+    setWa(s.contact_whatsapp ?? "");
+    setFb(s.facebook_url ?? "");
+    setIg(s.instagram_url ?? "");
+    setTt(s.tiktok_url ?? "");
+  }, [settingsQ.data]);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await updateFn({
+        data: {
+          contact_whatsapp: wa.trim(),
+          facebook_url: fb.trim(),
+          instagram_url: ig.trim(),
+          tiktok_url: tt.trim(),
+        },
+      } as any);
+      qc.invalidateQueries({ queryKey: ["site-settings"] });
+      toast.success(ar ? "تم حفظ بيانات التواصل" : "Contact settings saved");
+    } catch (err: any) {
+      toast.error(err?.message ?? (ar ? "تعذر الحفظ" : "Could not save"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fields: { label: string; value: string; set: (v: string) => void; ph: string }[] = [
+    { label: ar ? "رقم واتساب" : "WhatsApp number", value: wa, set: setWa, ph: "+249..." },
+    { label: "Facebook", value: fb, set: setFb, ph: "https://facebook.com/…" },
+    { label: "Instagram", value: ig, set: setIg, ph: "https://instagram.com/…" },
+    { label: "TikTok", value: tt, set: setTt, ph: "https://tiktok.com/@…" },
+  ];
+
+  return (
+    <section className="mb-8 rounded-2xl border border-border bg-card p-5 shadow-glass">
+      <h2 className="flex items-center gap-2 font-display text-lg text-foreground">
+        <Share2 className="h-4 w-4 text-primary" />{ar ? "قنوات التواصل" : "Contact channels"}
+      </h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {ar ? "تظهر هذه الروابط كأزرار في صفحة تواصل معنا. اترك الحقل فارغاً لإخفاء الزر." : "These appear as buttons on the Contact us page. Leave a field empty to hide its button."}
+      </p>
+      <form onSubmit={save} className="mt-4 grid gap-3 md:grid-cols-2">
+        {fields.map((f) => (
+          <div key={f.label}>
+            <Label className="mb-1.5 block text-xs text-muted-foreground">{f.label}</Label>
+            <Input dir="ltr" value={f.value} placeholder={f.ph} onChange={(e) => f.set(e.target.value)} maxLength={300} />
+          </div>
+        ))}
+        <div className="md:col-span-2 flex justify-end">
+          <button
+            type="submit"
+            disabled={saving || settingsQ.isLoading}
+            className="min-h-[40px] rounded-full gradient-brand px-6 text-sm font-medium text-primary-foreground shadow-glow disabled:opacity-50"
+          >
+            {saving ? (ar ? "جارٍ الحفظ…" : "Saving…") : (ar ? "حفظ قنوات التواصل" : "Save contact channels")}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
