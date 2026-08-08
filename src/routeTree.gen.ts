@@ -49,6 +49,7 @@ import { Route as AdminTeamRouteImport } from './routes/admin.team'
 import { Route as AdminSystemRouteImport } from './routes/admin.system'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminRegistrationsRouteImport } from './routes/admin.registrations'
+import { Route as AdminProfileRouteImport } from './routes/admin.profile'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminOffersRouteImport } from './routes/admin.offers'
 import { Route as AdminInventoryRouteImport } from './routes/admin.inventory'
@@ -264,6 +265,11 @@ const AdminRegistrationsRoute = AdminRegistrationsRouteImport.update({
   path: '/registrations',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminProfileRoute = AdminProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminOrdersRoute = AdminOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -363,6 +369,7 @@ export interface FileRoutesByFullPath {
   '/admin/inventory': typeof AdminInventoryRouteWithChildren
   '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/system': typeof AdminSystemRoute
@@ -414,6 +421,7 @@ export interface FileRoutesByTo {
   '/admin/delivery': typeof AdminDeliveryRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/system': typeof AdminSystemRoute
@@ -471,6 +479,7 @@ export interface FileRoutesById {
   '/admin/inventory': typeof AdminInventoryRouteWithChildren
   '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/registrations': typeof AdminRegistrationsRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/system': typeof AdminSystemRoute
@@ -529,6 +538,7 @@ export interface FileRouteTypes {
     | '/admin/inventory'
     | '/admin/offers'
     | '/admin/orders'
+    | '/admin/profile'
     | '/admin/registrations'
     | '/admin/reports'
     | '/admin/system'
@@ -580,6 +590,7 @@ export interface FileRouteTypes {
     | '/admin/delivery'
     | '/admin/offers'
     | '/admin/orders'
+    | '/admin/profile'
     | '/admin/registrations'
     | '/admin/reports'
     | '/admin/system'
@@ -636,6 +647,7 @@ export interface FileRouteTypes {
     | '/admin/inventory'
     | '/admin/offers'
     | '/admin/orders'
+    | '/admin/profile'
     | '/admin/registrations'
     | '/admin/reports'
     | '/admin/system'
@@ -977,6 +989,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRegistrationsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/profile': {
+      id: '/admin/profile'
+      path: '/profile'
+      fullPath: '/admin/profile'
+      preLoaderRoute: typeof AdminProfileRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/orders': {
       id: '/admin/orders'
       path: '/orders'
@@ -1129,6 +1148,7 @@ interface AdminRouteChildren {
   AdminInventoryRoute: typeof AdminInventoryRouteWithChildren
   AdminOffersRoute: typeof AdminOffersRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
+  AdminProfileRoute: typeof AdminProfileRoute
   AdminRegistrationsRoute: typeof AdminRegistrationsRoute
   AdminReportsRoute: typeof AdminReportsRoute
   AdminSystemRoute: typeof AdminSystemRoute
@@ -1144,6 +1164,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminInventoryRoute: AdminInventoryRouteWithChildren,
   AdminOffersRoute: AdminOffersRoute,
   AdminOrdersRoute: AdminOrdersRoute,
+  AdminProfileRoute: AdminProfileRoute,
   AdminRegistrationsRoute: AdminRegistrationsRoute,
   AdminReportsRoute: AdminReportsRoute,
   AdminSystemRoute: AdminSystemRoute,

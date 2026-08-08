@@ -2,8 +2,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, ShoppingBag, Tags, Boxes, Users, UserCog,
-  UserPlus, BarChart3, Activity, Settings, Sparkles, Truck,
+  UserPlus, BarChart3, Activity, Settings, Sparkles, Truck, UserRound,
 } from "lucide-react";
+
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,
