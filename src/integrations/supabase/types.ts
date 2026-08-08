@@ -1136,24 +1136,36 @@ export type Database = {
       }
       site_settings: {
         Row: {
+          contact_whatsapp: string
+          facebook_url: string
           id: boolean
+          instagram_url: string
           maintenance_message_ar: string
           maintenance_message_en: string
           maintenance_mode: boolean
+          tiktok_url: string
           updated_at: string
         }
         Insert: {
+          contact_whatsapp?: string
+          facebook_url?: string
           id?: boolean
+          instagram_url?: string
           maintenance_message_ar?: string
           maintenance_message_en?: string
           maintenance_mode?: boolean
+          tiktok_url?: string
           updated_at?: string
         }
         Update: {
+          contact_whatsapp?: string
+          facebook_url?: string
           id?: boolean
+          instagram_url?: string
           maintenance_message_ar?: string
           maintenance_message_en?: string
           maintenance_mode?: boolean
+          tiktok_url?: string
           updated_at?: string
         }
         Relationships: []

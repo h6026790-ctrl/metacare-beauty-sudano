@@ -80,9 +80,6 @@ function AccountPage() {
 
   const activeOrders = (orders as any[]).filter((o) => !["cancelled", "delivered", "returned"].includes(o.status));
   const pastOrders = (orders as any[]).filter((o) => ["delivered", "returned"].includes(o.status));
-  const totalSpend = (orders as any[])
-    .filter((o) => ["paid", "shipping", "delivered"].includes(o.status))
-    .reduce((s, o) => s + Number(o.total_sdg ?? 0), 0);
   const cartCount = (cart?.items ?? []).reduce((s: number, i: any) => s + (i.qty ?? 0), 0);
 
   const viewedProducts = viewed
@@ -165,11 +162,11 @@ function AccountPage() {
             </div>
           </div>
 
-          <dl className="mt-6 grid grid-cols-3 gap-2">
+          <dl className="mt-6 grid grid-cols-2 gap-2">
             <Stat label={t.customer.ordersTotal} value={String((orders as any[]).length)} />
             <Stat label={t.customer.savedItems} value={String(wishlist.length)} />
-            <Stat label={t.customer.spend} value={formatPrice(totalSpend, lang)} />
           </dl>
+
 
           {!profileComplete && (
             <p className="mt-4 rounded-2xl bg-primary-foreground/10 p-3 text-xs">

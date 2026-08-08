@@ -2,8 +2,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, ShoppingBag, Tags, Boxes, Users, UserCog,
-  UserPlus, BarChart3, Activity, Settings, Sparkles, Truck,
+  UserPlus, BarChart3, Activity, Settings, Sparkles, Truck, UserRound,
 } from "lucide-react";
+
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,
@@ -25,6 +26,8 @@ const items: { key: string; url: string; exact?: boolean; icon: typeof LayoutDas
   { key: "reports", url: "/admin/reports", icon: BarChart3, ar: "التقارير", en: "Reports" },
   { key: "activity", url: "/admin/activity", icon: Activity, ar: "سجل النشاط", en: "Activity" },
   { key: "system", url: "/admin/system", icon: Settings, ar: "النظام", en: "System" },
+  { key: "profile", url: "/admin/profile", icon: UserRound, ar: "حسابي", en: "My account" },
+
 ];
 
 

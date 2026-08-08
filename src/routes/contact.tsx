@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useI18n } from "@/i18n/I18nProvider";
-import { MessageCircle, Phone, Mail, Clock, MapPin } from "lucide-react";
+import { MessageCircle, Phone, Mail, Clock, MapPin, Facebook, Instagram, Music2 } from "lucide-react";
 import { COMPANY, waDigits } from "@/lib/company";
+import { useSiteSettings } from "@/lib/api/queries";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -36,6 +37,10 @@ function ContactPage() {
           <h1 className="font-display text-3xl text-foreground md:text-5xl">{t.contact.title}</h1>
           <p className="mt-4 text-muted-foreground">{t.contact.lead}</p>
         </div>
+
+        <SocialLinks />
+
+
 
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           <a href={`https://wa.me/${WA}`} target="_blank" rel="noreferrer" className="group rounded-2xl border border-border bg-card p-5 shadow-glass transition hover:-translate-y-0.5 hover:shadow-elevated">
@@ -83,5 +88,40 @@ function ContactPage() {
         </form>
       </section>
     </AppShell>
+  );
+}
+
+// Admin-configured contact channels; each button hides when its value is empty.
+function SocialLinks() {
+  const { lang } = useI18n();
+  const ar = lang === "ar";
+  const { data: settings } = useSiteSettings();
+
+  const waNumber = (settings?.contact_whatsapp ?? "").replace(/[^0-9]/g, "");
+  const links = [
+    waNumber ? { key: "wa", label: ar ? "واتساب" : "WhatsApp", href: `https://wa.me/${waNumber}`, Icon: MessageCircle, cls: "bg-success text-success-foreground" } : null,
+    settings?.facebook_url ? { key: "fb", label: "Facebook", href: settings.facebook_url, Icon: Facebook, cls: "bg-muted text-foreground" } : null,
+    settings?.instagram_url ? { key: "ig", label: "Instagram", href: settings.instagram_url, Icon: Instagram, cls: "bg-muted text-foreground" } : null,
+    settings?.tiktok_url ? { key: "tt", label: "TikTok", href: settings.tiktok_url, Icon: Music2, cls: "bg-muted text-foreground" } : null,
+  ].filter(Boolean) as { key: string; label: string; href: string; Icon: typeof MessageCircle; cls: string }[];
+
+  if (links.length === 0) return null;
+
+  return (
+    <div className="mt-8 flex flex-wrap justify-center gap-3">
+      {links.map(({ key, label, href, Icon, cls }) => (
+        <a
+          key={key}
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={label}
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-medium text-foreground shadow-glass transition hover:-translate-y-0.5 hover:shadow-elevated"
+        >
+          <span className={`grid h-8 w-8 place-items-center rounded-full ${cls}`}><Icon className="h-4 w-4" /></span>
+          {label}
+        </a>
+      ))}
+    </div>
   );
 }

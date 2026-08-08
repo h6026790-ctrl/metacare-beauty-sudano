@@ -72,6 +72,8 @@ function AdminCatalog() {
   const enabled = !!user && isAdmin;
   const qc = useQueryClient();
   const [showArchived, setShowArchived] = useState(true);
+  const [q, setQ] = useState("");
+
 
   const productsQ = useAdminProducts(enabled);
   const brandsQ = useAdminBrands(enabled);
@@ -111,7 +113,10 @@ function AdminCatalog() {
 
 
   const all = (productsQ.data ?? []) as any[];
-  const products = showArchived ? all : all.filter((p) => p.is_active);
+  const term = q.trim().toLowerCase();
+  const products = (showArchived ? all : all.filter((p) => p.is_active))
+    .filter((p) => !term || `${p.name_ar ?? ""} ${p.name_en ?? ""}`.toLowerCase().includes(term));
+
   const brands = (brandsQ.data ?? []) as any[];
   const categories = (categoriesQ.data ?? []) as any[];
 
@@ -216,12 +221,22 @@ function AdminCatalog() {
       />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
-          <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="h-3.5 w-3.5 rounded border-input" />
-          {ar ? "إظهار المنتجات المؤرشفة" : "Show archived products"}
-        </label>
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={ar ? "ابحث باسم المنتج…" : "Search by product name…"}
+            className="h-10 w-full max-w-xs rounded-full border border-input bg-card px-4 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+          />
+          <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+            <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="h-3.5 w-3.5 rounded border-input" />
+            {ar ? "إظهار المنتجات المؤرشفة" : "Show archived products"}
+          </label>
+        </div>
         <button onClick={() => openProduct()} className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full gradient-brand px-4 text-xs font-medium text-primary-foreground shadow-glow">
           <Plus className="h-3.5 w-3.5" />{ar ? "منتج جديد" : "New product"}
+
         </button>
       </div>
 
