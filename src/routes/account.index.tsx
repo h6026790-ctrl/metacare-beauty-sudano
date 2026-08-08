@@ -162,11 +162,11 @@ function AccountPage() {
             </div>
           </div>
 
-          <dl className="mt-6 grid grid-cols-3 gap-2">
+          <dl className="mt-6 grid grid-cols-2 gap-2">
             <Stat label={t.customer.ordersTotal} value={String((orders as any[]).length)} />
             <Stat label={t.customer.savedItems} value={String(wishlist.length)} />
-            <Stat label={t.customer.spend} value={formatPrice(totalSpend, lang)} />
           </dl>
+
 
           {!profileComplete && (
             <p className="mt-4 rounded-2xl bg-primary-foreground/10 p-3 text-xs">
