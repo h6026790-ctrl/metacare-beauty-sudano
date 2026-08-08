@@ -4,15 +4,17 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Power } from "lucide-react";
+import { Power, Share2 } from "lucide-react";
 import { useI18n } from "@/i18n/I18nProvider";
 import { COMPANY } from "@/lib/company";
 import { CenterHeader } from "@/components/admin/ui";
 import { useSiteSettings } from "@/lib/api/queries";
 import { adminUpdateSiteSettings } from "@/lib/api/admin.functions";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+
 
 export const Route = createFileRoute("/admin/system")({
   head: () => ({
