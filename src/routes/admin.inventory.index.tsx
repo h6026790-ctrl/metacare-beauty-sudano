@@ -27,13 +27,18 @@ function AdminInventory() {
   const enabled = !!user && isAdmin;
   const qc = useQueryClient();
   const [lowOnly, setLowOnly] = useState(false);
+  const [q, setQ] = useState("");
 
   const productsQ = useAdminProducts(enabled);
   const stockFn = useServerFn(adminAdjustStock);
 
-  const all = ((productsQ.data ?? []) as any[]).filter((p) => p.is_active);
+  const term = q.trim().toLowerCase();
+  const all = ((productsQ.data ?? []) as any[])
+    .filter((p) => p.is_active)
+    .filter((p) => !term || `${p.name_ar ?? ""} ${p.name_en ?? ""}`.toLowerCase().includes(term));
   const sorted = [...all].sort((a, b) => stockOf(a) - stockOf(b));
   const rows = lowOnly ? sorted.filter((p) => stockOf(p) <= LOW_STOCK_THRESHOLD) : sorted;
+
 
   const save = async (p: any, n: number) => {
     try {
