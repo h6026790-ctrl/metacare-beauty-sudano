@@ -80,9 +80,6 @@ function AccountPage() {
 
   const activeOrders = (orders as any[]).filter((o) => !["cancelled", "delivered", "returned"].includes(o.status));
   const pastOrders = (orders as any[]).filter((o) => ["delivered", "returned"].includes(o.status));
-  const totalSpend = (orders as any[])
-    .filter((o) => ["paid", "shipping", "delivered"].includes(o.status))
-    .reduce((s, o) => s + Number(o.total_sdg ?? 0), 0);
   const cartCount = (cart?.items ?? []).reduce((s: number, i: any) => s + (i.qty ?? 0), 0);
 
   const viewedProducts = viewed
