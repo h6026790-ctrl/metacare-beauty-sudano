@@ -113,7 +113,10 @@ function AdminCatalog() {
 
 
   const all = (productsQ.data ?? []) as any[];
-  const products = showArchived ? all : all.filter((p) => p.is_active);
+  const term = q.trim().toLowerCase();
+  const products = (showArchived ? all : all.filter((p) => p.is_active))
+    .filter((p) => !term || `${p.name_ar ?? ""} ${p.name_en ?? ""}`.toLowerCase().includes(term));
+
   const brands = (brandsQ.data ?? []) as any[];
   const categories = (categoriesQ.data ?? []) as any[];
 
