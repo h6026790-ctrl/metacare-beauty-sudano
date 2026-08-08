@@ -94,15 +94,13 @@ function WishlistPage() {
           </div>
         ) : (
           <>
-            <div className="mb-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="mb-4">
               <div className="relative">
                 <Search className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" style={{ insetInlineStart: "1rem" }} />
                 <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.search.placeholder} className="h-12 rounded-full bg-card ps-11 pe-4 text-sm shadow-glass" />
               </div>
-              <button onClick={moveAll} className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full gradient-brand px-5 text-sm font-medium text-primary-foreground shadow-glow">
-                <ShoppingBag className="h-4 w-4" />{t.customer.moveAllToCart}
-              </button>
             </div>
+
 
             <ul className="space-y-3">
               {items.map((p: any) => {
