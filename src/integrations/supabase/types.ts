@@ -1136,8 +1136,14 @@ export type Database = {
       }
       site_settings: {
         Row: {
+          address_ar: string
+          address_en: string
+          contact_email: string
+          contact_phone: string
           contact_whatsapp: string
           facebook_url: string
+          hours_ar: string
+          hours_en: string
           id: boolean
           instagram_url: string
           maintenance_message_ar: string
@@ -1147,8 +1153,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address_ar?: string
+          address_en?: string
+          contact_email?: string
+          contact_phone?: string
           contact_whatsapp?: string
           facebook_url?: string
+          hours_ar?: string
+          hours_en?: string
           id?: boolean
           instagram_url?: string
           maintenance_message_ar?: string
@@ -1158,8 +1170,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address_ar?: string
+          address_en?: string
+          contact_email?: string
+          contact_phone?: string
           contact_whatsapp?: string
           facebook_url?: string
+          hours_ar?: string
+          hours_en?: string
           id?: boolean
           instagram_url?: string
           maintenance_message_ar?: string
