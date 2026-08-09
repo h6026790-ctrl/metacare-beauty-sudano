@@ -77,7 +77,7 @@ function AboutPage() {
             </div>
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/auth" className="rounded-full gradient-brand px-6 py-3 text-sm font-medium text-primary-foreground shadow-glow">{t.visitor.registerCta}</Link>
+            
             <Link to="/contact" className="rounded-full border border-border bg-card px-6 py-3 text-sm font-medium text-foreground hover:bg-muted">{t.contact.title}</Link>
           </div>
         </div>

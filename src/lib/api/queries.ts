@@ -300,7 +300,7 @@ export function useSiteSettings() {
     queryFn: async (): Promise<SiteSettings | null> => {
       const { data } = await supabase
         .from("site_settings")
-        .select("maintenance_mode, maintenance_message_ar, maintenance_message_en, contact_whatsapp, facebook_url, instagram_url, tiktok_url")
+        .select("maintenance_mode, maintenance_message_ar, maintenance_message_en, contact_whatsapp, facebook_url, instagram_url, tiktok_url, contact_phone, contact_email, address_ar, address_en, hours_ar, hours_en")
         .maybeSingle();
       return (data as SiteSettings) ?? null;
     },
