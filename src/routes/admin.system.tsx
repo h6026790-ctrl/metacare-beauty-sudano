@@ -166,6 +166,12 @@ function ContactSettings() {
   const [fb, setFb] = useState("");
   const [ig, setIg] = useState("");
   const [tt, setTt] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [addrAr, setAddrAr] = useState("");
+  const [addrEn, setAddrEn] = useState("");
+  const [hoursAr, setHoursAr] = useState("");
+  const [hoursEn, setHoursEn] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -175,6 +181,12 @@ function ContactSettings() {
     setFb(s.facebook_url ?? "");
     setIg(s.instagram_url ?? "");
     setTt(s.tiktok_url ?? "");
+    setPhone(s.contact_phone ?? "");
+    setEmail(s.contact_email ?? "");
+    setAddrAr(s.address_ar ?? "");
+    setAddrEn(s.address_en ?? "");
+    setHoursAr(s.hours_ar ?? "");
+    setHoursEn(s.hours_en ?? "");
   }, [settingsQ.data]);
 
   const save = async (e: React.FormEvent) => {
@@ -187,6 +199,12 @@ function ContactSettings() {
           facebook_url: fb.trim(),
           instagram_url: ig.trim(),
           tiktok_url: tt.trim(),
+          contact_phone: phone.trim(),
+          contact_email: email.trim(),
+          address_ar: addrAr.trim(),
+          address_en: addrEn.trim(),
+          hours_ar: hoursAr.trim(),
+          hours_en: hoursEn.trim(),
         },
       } as any);
       qc.invalidateQueries({ queryKey: ["site-settings"] });
@@ -198,11 +216,17 @@ function ContactSettings() {
     }
   };
 
-  const fields: { label: string; value: string; set: (v: string) => void; ph: string }[] = [
+  const fields: { label: string; value: string; set: (v: string) => void; ph: string; rtl?: boolean }[] = [
     { label: ar ? "رقم واتساب" : "WhatsApp number", value: wa, set: setWa, ph: "+249..." },
     { label: "Facebook", value: fb, set: setFb, ph: "https://facebook.com/…" },
     { label: "Instagram", value: ig, set: setIg, ph: "https://instagram.com/…" },
     { label: "TikTok", value: tt, set: setTt, ph: "https://tiktok.com/@…" },
+    { label: ar ? "رقم الهاتف" : "Phone number", value: phone, set: setPhone, ph: "+249..." },
+    { label: ar ? "البريد الإلكتروني" : "Email address", value: email, set: setEmail, ph: "care@example.sd" },
+    { label: ar ? "العنوان (عربي)" : "Address (Arabic)", value: addrAr, set: setAddrAr, ph: "ود مدني، الجزيرة", rtl: true },
+    { label: ar ? "العنوان (إنجليزي)" : "Address (English)", value: addrEn, set: setAddrEn, ph: "Wad Madani, Gezira" },
+    { label: ar ? "ساعات العمل (عربي)" : "Working hours (Arabic)", value: hoursAr, set: setHoursAr, ph: "السبت – الخميس، ٩ ص – ٩ م", rtl: true },
+    { label: ar ? "ساعات العمل (إنجليزي)" : "Working hours (English)", value: hoursEn, set: setHoursEn, ph: "Sat – Thu, 9 AM – 9 PM" },
   ];
 
   return (
@@ -211,13 +235,13 @@ function ContactSettings() {
         <Share2 className="h-4 w-4 text-primary" />{ar ? "قنوات التواصل" : "Contact channels"}
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        {ar ? "تظهر هذه الروابط كأزرار في صفحة تواصل معنا. اترك الحقل فارغاً لإخفاء الزر." : "These appear as buttons on the Contact us page. Leave a field empty to hide its button."}
+        {ar ? "تظهر هذه البيانات في صفحة تواصل معنا. اترك الحقل فارغاً لإخفاء العنصر." : "These appear on the Contact us page. Leave a field empty to hide that item."}
       </p>
       <form onSubmit={save} className="mt-4 grid gap-3 md:grid-cols-2">
         {fields.map((f) => (
           <div key={f.label}>
             <Label className="mb-1.5 block text-xs text-muted-foreground">{f.label}</Label>
-            <Input dir="ltr" value={f.value} placeholder={f.ph} onChange={(e) => f.set(e.target.value)} maxLength={300} />
+            <Input dir={f.rtl ? "rtl" : "ltr"} value={f.value} placeholder={f.ph} onChange={(e) => f.set(e.target.value)} maxLength={300} />
           </div>
         ))}
         <div className="md:col-span-2 flex justify-end">
