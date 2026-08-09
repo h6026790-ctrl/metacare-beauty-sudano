@@ -286,6 +286,12 @@ export type SiteSettings = {
   facebook_url: string;
   instagram_url: string;
   tiktok_url: string;
+  contact_phone: string;
+  contact_email: string;
+  address_ar: string;
+  address_en: string;
+  hours_ar: string;
+  hours_en: string;
 };
 
 export function useSiteSettings() {
@@ -294,7 +300,7 @@ export function useSiteSettings() {
     queryFn: async (): Promise<SiteSettings | null> => {
       const { data } = await supabase
         .from("site_settings")
-        .select("maintenance_mode, maintenance_message_ar, maintenance_message_en, contact_whatsapp, facebook_url, instagram_url, tiktok_url")
+        .select("maintenance_mode, maintenance_message_ar, maintenance_message_en, contact_whatsapp, facebook_url, instagram_url, tiktok_url, contact_phone, contact_email, address_ar, address_en, hours_ar, hours_en")
         .maybeSingle();
       return (data as SiteSettings) ?? null;
     },

@@ -251,6 +251,12 @@ export const adminUpdateSiteSettings = createServerFn({ method: "POST" })
     facebook_url: z.string().trim().max(300).optional(),
     instagram_url: z.string().trim().max(300).optional(),
     tiktok_url: z.string().trim().max(300).optional(),
+    contact_phone: z.string().trim().max(40).optional(),
+    contact_email: z.string().trim().max(160).optional(),
+    address_ar: z.string().trim().max(300).optional(),
+    address_en: z.string().trim().max(300).optional(),
+    hours_ar: z.string().trim().max(200).optional(),
+    hours_en: z.string().trim().max(200).optional(),
   }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);

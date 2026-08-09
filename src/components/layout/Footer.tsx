@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Logo } from "@/components/brand/Logo";
 import { Instagram, Facebook, MessageCircle } from "lucide-react";
+import { useSiteSettings } from "@/lib/api/queries";
 
 export function Footer() {
   const { t, lang } = useI18n();
@@ -15,11 +16,7 @@ export function Footer() {
               ? "ميتاكير بيوتي — وجهتكِ الفاخرة للعناية بالبشرة، المكياج والعطور في ود مدني."
               : "Metacare Beauty — your luxury destination for skincare, makeup and fragrance in Wad Madani."}
           </p>
-          <div className="flex gap-2 pt-1">
-            <a className="grid h-10 w-10 place-items-center rounded-full bg-muted text-foreground hover:bg-muted/70" href="#" aria-label="Instagram"><Instagram className="h-4 w-4" /></a>
-            <a className="grid h-10 w-10 place-items-center rounded-full bg-muted text-foreground hover:bg-muted/70" href="#" aria-label="Facebook"><Facebook className="h-4 w-4" /></a>
-            <a className="grid h-10 w-10 place-items-center rounded-full bg-success text-success-foreground hover:opacity-90" href="https://wa.me/249900000000" target="_blank" rel="noreferrer" aria-label="WhatsApp"><MessageCircle className="h-4 w-4" /></a>
-          </div>
+          <FooterSocials />
         </div>
         <FooterCol title={t.footer.shop} links={[
           { label: t.nav.categories, to: "/categories" },
@@ -46,6 +43,43 @@ export function Footer() {
         </div>
       </div>
     </footer>
+  );
+}
+
+// Admin-managed channels (site_settings); each icon hides when its value is empty.
+function FooterSocials() {
+  const { data: settings } = useSiteSettings();
+  const waNumber = (settings?.contact_whatsapp ?? "").replace(/[^0-9]/g, "");
+
+  const links = [
+    settings?.instagram_url
+      ? { key: "ig", href: settings.instagram_url, label: "Instagram", Icon: Instagram, cls: "bg-muted text-foreground hover:bg-muted/70" }
+      : null,
+    settings?.facebook_url
+      ? { key: "fb", href: settings.facebook_url, label: "Facebook", Icon: Facebook, cls: "bg-muted text-foreground hover:bg-muted/70" }
+      : null,
+    waNumber
+      ? { key: "wa", href: `https://wa.me/${waNumber}`, label: "WhatsApp", Icon: MessageCircle, cls: "bg-success text-success-foreground hover:opacity-90" }
+      : null,
+  ].filter(Boolean) as { key: string; href: string; label: string; Icon: typeof Instagram; cls: string }[];
+
+  if (links.length === 0) return null;
+
+  return (
+    <div className="flex gap-2 pt-1">
+      {links.map(({ key, href, label, Icon, cls }) => (
+        <a
+          key={key}
+          className={`grid h-10 w-10 place-items-center rounded-full ${cls}`}
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={label}
+        >
+          <Icon className="h-4 w-4" />
+        </a>
+      ))}
+    </div>
   );
 }
 
