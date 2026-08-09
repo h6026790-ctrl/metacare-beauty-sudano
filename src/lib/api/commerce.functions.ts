@@ -18,7 +18,9 @@ export const getMyCart = createServerFn({ method: "GET" })
     const cartId = await ensureCart(supabase, userId);
     const { data: items } = await supabase
       .from("cart_items")
-      .select("qty, product:products(id, slug, name_ar, name_en, price_sdg, image_url, is_active, inventory(stock))")
+      // Customers cannot read `inventory` (quantities are staff/admin only);
+      // `products.is_available` is the customer-safe availability flag.
+      .select("qty, product:products(id, slug, name_ar, name_en, price_sdg, image_url, is_active, is_available)")
       .eq("cart_id", cartId);
     return { cartId, items: items ?? [] };
   });
@@ -66,7 +68,7 @@ export const getMyWishlist = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data } = await context.supabase
       .from("wishlists")
-      .select("product:products(id, slug, name_ar, name_en, price_sdg, image_url, inventory(stock))")
+      .select("product:products(id, slug, name_ar, name_en, price_sdg, image_url, is_active, is_available)")
       .eq("profile_id", context.userId);
     return data ?? [];
   });
