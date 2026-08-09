@@ -58,14 +58,14 @@ function MaintenanceScreen({
           {ar ? settings.maintenance_message_ar : settings.maintenance_message_en}
         </p>
         <a
-          href={`https://wa.me/${waDigits()}`}
+          href={`https://wa.me/${(settings.contact_whatsapp ?? "").replace(/[^0-9]/g, "") || waDigits()}`}
           target="_blank" rel="noopener noreferrer"
           className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-full gradient-brand px-6 text-sm font-medium text-primary-foreground shadow-glow"
         >
           <MessageCircle className="h-4 w-4" />
           {ar ? "تواصلي معنا عبر واتساب" : "Contact us on WhatsApp"}
         </a>
-        <p className="mt-4 text-xs text-muted-foreground" dir="ltr">{COMPANY.whatsappDisplay}</p>
+        <p className="mt-4 text-xs text-muted-foreground" dir="ltr">{settings.contact_whatsapp || COMPANY.whatsappDisplay}</p>
         <Link to="/auth" className="mt-5 block text-xs text-primary hover:underline">
           {ar ? "تسجيل الدخول" : "Sign in"}
         </Link>
