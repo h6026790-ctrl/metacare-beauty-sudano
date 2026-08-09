@@ -152,7 +152,7 @@ function ContactChannels() {
                 title={label}
                 className="grid h-11 w-11 place-items-center rounded-full border border-border bg-background text-foreground transition hover:-translate-y-0.5 hover:bg-muted"
               >
-                <Icon className="h-4.5 w-4.5" />
+                <Icon className="h-4 w-4" />
               </a>
             ))}
           </div>
