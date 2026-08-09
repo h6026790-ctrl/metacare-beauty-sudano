@@ -112,7 +112,7 @@ function WishlistPage() {
 
             <ul className="space-y-3">
               {items.map((p: any) => {
-                const oos = stockOf(p) <= 0;
+                const oos = isUnavailable(p);
                 return (
                   <li key={p.id} className="grid grid-cols-[auto_minmax(0,1fr)] gap-4 rounded-2xl border border-border bg-card p-3 shadow-glass">
                     <Link to="/products/$id" params={{ id: p.slug }} className="shrink-0">
