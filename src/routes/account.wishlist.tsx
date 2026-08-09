@@ -52,7 +52,15 @@ function WishlistPage() {
     .filter(Boolean)
     .filter((p) => !term || `${p.name_ar} ${p.name_en}`.toLowerCase().includes(term));
 
-  const stockOf = (p: any) => (Array.isArray(p.inventory) ? p.inventory[0]?.stock ?? 0 : p.inventory?.stock ?? 0);
+  // Customers never receive exact quantities; availability is a boolean flag
+  // on the product, kept in sync with stock by the database.
+  const isUnavailable = (p: any) => {
+    if (p.is_active === false) return true;
+    if (typeof p.is_available === "boolean") return !p.is_available;
+    // Tolerate the legacy joined shape while caches drain.
+    const stock = Array.isArray(p.inventory) ? p.inventory[0]?.stock : p.inventory?.stock;
+    return typeof stock === "number" ? stock <= 0 : false;
+  };
 
   const moveToCart = async (p: any) => {
     await addToCart.mutateAsync(p.id);
@@ -104,7 +112,7 @@ function WishlistPage() {
 
             <ul className="space-y-3">
               {items.map((p: any) => {
-                const oos = stockOf(p) <= 0;
+                const oos = isUnavailable(p);
                 return (
                   <li key={p.id} className="grid grid-cols-[auto_minmax(0,1fr)] gap-4 rounded-2xl border border-border bg-card p-3 shadow-glass">
                     <Link to="/products/$id" params={{ id: p.slug }} className="shrink-0">
