@@ -64,9 +64,10 @@ function CartPage() {
   const subtotal = items.reduce((s, l) => s + Number(l.product?.price_sdg ?? 0) * l.qty, 0);
   const total = subtotal + (items.length ? DELIVERY_FEE_SDG : 0);
 
+  // The cart is independent from the wishlist: saving to the wishlist
+  // leaves the cart line untouched.
   const saveForLater = async (productId: string) => {
     await toggleWish.mutateAsync(productId);
-    await setQty.mutateAsync({ productId, qty: 0 });
     toast.success(t.customer.moveToWishlist);
   };
 

@@ -286,6 +286,12 @@ export type SiteSettings = {
   facebook_url: string;
   instagram_url: string;
   tiktok_url: string;
+  contact_phone: string;
+  contact_email: string;
+  address_ar: string;
+  address_en: string;
+  hours_ar: string;
+  hours_en: string;
 };
 
 export function useSiteSettings() {

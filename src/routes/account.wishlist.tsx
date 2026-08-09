@@ -62,9 +62,10 @@ function WishlistPage() {
     return typeof stock === "number" ? stock <= 0 : false;
   };
 
+  // The wishlist is independent from the cart: adding to the cart never
+  // removes the item from the wishlist. Only the heart icon does that.
   const moveToCart = async (p: any) => {
     await addToCart.mutateAsync(p.id);
-    await toggleWish.mutateAsync(p.id);
     toast.success(t.product.added);
   };
 
