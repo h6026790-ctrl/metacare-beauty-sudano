@@ -700,6 +700,7 @@ export type Database = {
           contact_phone: string
           contact_whatsapp: string
           cutoff_bucket: string
+          delivery_agent_name: string | null
           delivery_sdg: number
           expires_at: string | null
           id: string
@@ -726,6 +727,7 @@ export type Database = {
           contact_phone: string
           contact_whatsapp: string
           cutoff_bucket?: string
+          delivery_agent_name?: string | null
           delivery_sdg?: number
           expires_at?: string | null
           id?: string
@@ -752,6 +754,7 @@ export type Database = {
           contact_phone?: string
           contact_whatsapp?: string
           cutoff_bucket?: string
+          delivery_agent_name?: string | null
           delivery_sdg?: number
           expires_at?: string | null
           id?: string
