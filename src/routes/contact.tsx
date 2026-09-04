@@ -127,10 +127,10 @@ function ContactChannels() {
             href={`https://wa.me/${waNumber}`}
             target="_blank"
             rel="noreferrer"
-            className="group flex flex-1 items-center gap-4 rounded-2xl border border-border bg-background p-4 transition hover:-translate-y-0.5 hover:shadow-elevated"
+            className="group flex flex-1 items-center gap-4 rounded-2xl border border-border bg-background p-4 transition-all duration-200 hover:-translate-y-1 hover:border-success/40 hover:shadow-elevated active:scale-[0.99]"
           >
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-success text-success-foreground">
-              <MessageCircle className="h-6 w-6" />
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-success text-success-foreground transition-transform duration-200 group-hover:scale-110">
+              <MessageCircle className="h-5 w-5" />
             </span>
             <span className="min-w-0">
               <span className="block font-display text-lg text-foreground">{t.contact.whatsapp}</span>
@@ -150,9 +150,9 @@ function ContactChannels() {
                 rel="noreferrer"
                 aria-label={label}
                 title={label}
-                className="grid h-11 w-11 place-items-center rounded-full border border-border bg-background text-foreground transition hover:-translate-y-0.5 hover:bg-muted"
+                className="grid h-12 w-12 place-items-center rounded-full border border-border bg-background text-foreground transition-all duration-200 hover:-translate-y-1 hover:scale-105 hover:border-primary/40 hover:bg-muted hover:shadow-elevated active:scale-95"
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-5 w-5" />
               </a>
             ))}
           </div>
