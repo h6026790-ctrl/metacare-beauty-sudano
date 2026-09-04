@@ -165,6 +165,34 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
 
 
 
+// Staff can record/edit the delivery agent (courier) name on an order at any
+// point before it reaches a terminal state. Couriers are external — this is
+// just a label for coordination and display.
+export const setDeliveryAgentName = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { orderId: string; agentName: string }) =>
+    z.object({ orderId: z.string().uuid(), agentName: z.string().trim().max(120) }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertStaff(context);
+    const { data: current, error: readErr } = await context.supabase
+      .from("orders").select("status").eq("id", data.orderId).maybeSingle();
+    if (readErr) throw readErr;
+    if (!current) throw new Error("الطلب غير موجود / Order not found");
+    if (["delivered", "cancelled", "returned"].includes(current.status)) {
+      throw new Error("لا يمكن تعديل اسم المندوب بعد اكتمال الطلب / Cannot edit the delivery agent after completion");
+    }
+    const name = data.agentName.trim() || null;
+    const { error } = await context.supabase
+      .from("orders").update({ delivery_agent_name: name } as never).eq("id", data.orderId);
+    if (error) throw error;
+    await context.supabase.from("audit_logs").insert({
+      actor_id: context.userId, action: "order.delivery_agent_set",
+      entity_type: "order", entity_id: data.orderId,
+      metadata: { delivery_agent_name: name },
+    });
+    return { ok: true };
+  });
+
 export const addOrderNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { orderId: string; body: string }) =>
