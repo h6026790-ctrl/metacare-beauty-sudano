@@ -120,9 +120,11 @@ function CartPage() {
                             <button aria-label="+" onClick={() => setQty.mutate({ productId: p.id, qty: l.qty + 1 })} className="grid h-10 w-10 place-items-center rounded-full hover:bg-muted"><Plus className="h-3.5 w-3.5" /></button>
                           </div>
                           <div className="flex items-center gap-3">
-                            <button onClick={() => saveForLater(p.id)} className="inline-flex min-h-[36px] items-center gap-1 text-xs text-muted-foreground hover:text-violet">
-                              <Heart className="h-3.5 w-3.5" />{t.customer.moveToWishlist}
-                            </button>
+                            {!wishedIds.has(p.id) && (
+                              <button onClick={() => saveForLater(p.id)} className="inline-flex min-h-[36px] items-center gap-1 text-xs text-muted-foreground hover:text-violet">
+                                <Heart className="h-3.5 w-3.5" />{t.customer.moveToWishlist}
+                              </button>
+                            )}
                             <button onClick={() => setQty.mutate({ productId: p.id, qty: 0 })} className="inline-flex min-h-[36px] items-center gap-1 text-xs text-muted-foreground hover:text-destructive">
                               <Trash2 className="h-3.5 w-3.5" />{t.cart.remove}
                             </button>
