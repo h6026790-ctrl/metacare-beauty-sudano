@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  claimOrder, updateOrderStatus, markOutForDelivery, addOrderNote, listOrderNotes,
+  claimOrder, updateOrderStatus, markOutForDelivery, addOrderNote, listOrderNotes, setDeliveryAgentName,
 } from "@/lib/api/ops.functions";
 import { useStaffOrders, useUnassignedOrders } from "./useStaffWorkspace";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -232,6 +232,25 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
                 {selected.address_neighborhood ? `${selected.address_neighborhood}, ` : ""}
                 {selected.address_street}, {selected.address_city}
               </p>
+              {selected.address_notes ? (
+                <p className="inline-flex items-start gap-1.5 rounded-lg bg-muted/40 px-2 py-1.5 text-xs text-foreground">
+                  <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
+                  <span>
+                    <span className="font-medium text-muted-foreground">{lang === "ar" ? "ملاحظات التوصيل: " : "Delivery notes: "}</span>
+                    {selected.address_notes}
+                  </span>
+                </p>
+              ) : null}
+              {(selected.delivery_agent_name || !["delivered", "cancelled", "returned"].includes(selected.status)) && (
+                <DeliveryAgentBox
+                  key={selected.id}
+                  orderId={selected.id}
+                  value={selected.delivery_agent_name ?? ""}
+                  terminal={["delivered", "cancelled", "returned"].includes(selected.status)}
+                  save={setAgent}
+                  onSaved={refresh}
+                />
+              )}
 
               <div className="my-2 h-px bg-border" />
               <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
