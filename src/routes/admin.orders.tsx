@@ -94,11 +94,15 @@ function AdminOrders() {
                     {o.delivery_agent_name
                       ? <span className="font-medium text-foreground">{o.delivery_agent_name}</span>
                       : (da?.courier_name ?? "—")}
-                    {da.courier_phone ? <span dir="ltr"> • {da.courier_phone}</span> : null}
-                    {" • "}
-                    {da.completed_at
-                      ? (lang === "ar" ? "تم التأكيد" : "Confirmed")
-                      : (lang === "ar" ? "بالانتظار" : "Pending")}
+                    {da?.courier_phone ? <span dir="ltr"> • {da.courier_phone}</span> : null}
+                    {da ? (
+                      <>
+                        {" • "}
+                        {da.completed_at
+                          ? (lang === "ar" ? "تم التأكيد" : "Confirmed")
+                          : (lang === "ar" ? "بالانتظار" : "Pending")}
+                      </>
+                    ) : null}
                   </span>
                 ) : <span className="text-xs text-muted-foreground">—</span>}
               </Td>
