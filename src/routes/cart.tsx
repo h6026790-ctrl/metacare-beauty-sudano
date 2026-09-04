@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { useCart, useSetCartQty, useToggleWishlist } from "@/lib/api/queries";
+import { useCart, useSetCartQty, useToggleWishlist, useWishlist } from "@/lib/api/queries";
 import { Minus, Plus, Trash2, ShoppingBag, Heart, MessageCircle } from "lucide-react";
 import { formatPrice } from "@/lib/format";
 import { PricePill } from "@/components/PricePill";
@@ -35,6 +35,9 @@ function CartPage() {
   const { data, isLoading } = useCart();
   const setQty = useSetCartQty();
   const toggleWish = useToggleWishlist();
+  const wishlistQ = useWishlist();
+  // One-directional: products already in the wishlist don't show the button.
+  const wishedIds = new Set((wishlistQ.data ?? []).map((w: any) => w.product_id ?? w.product?.id));
   const items = (data?.items ?? []) as any[];
   const [notes, setNotes] = useState("");
 
@@ -117,9 +120,11 @@ function CartPage() {
                             <button aria-label="+" onClick={() => setQty.mutate({ productId: p.id, qty: l.qty + 1 })} className="grid h-10 w-10 place-items-center rounded-full hover:bg-muted"><Plus className="h-3.5 w-3.5" /></button>
                           </div>
                           <div className="flex items-center gap-3">
-                            <button onClick={() => saveForLater(p.id)} className="inline-flex min-h-[36px] items-center gap-1 text-xs text-muted-foreground hover:text-violet">
-                              <Heart className="h-3.5 w-3.5" />{t.customer.moveToWishlist}
-                            </button>
+                            {!wishedIds.has(p.id) && (
+                              <button onClick={() => saveForLater(p.id)} className="inline-flex min-h-[36px] items-center gap-1 text-xs text-muted-foreground hover:text-violet">
+                                <Heart className="h-3.5 w-3.5" />{t.customer.moveToWishlist}
+                              </button>
+                            )}
                             <button onClick={() => setQty.mutate({ productId: p.id, qty: 0 })} className="inline-flex min-h-[36px] items-center gap-1 text-xs text-muted-foreground hover:text-destructive">
                               <Trash2 className="h-3.5 w-3.5" />{t.cart.remove}
                             </button>

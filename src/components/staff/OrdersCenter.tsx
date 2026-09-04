@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  claimOrder, updateOrderStatus, markOutForDelivery, addOrderNote, listOrderNotes,
+  claimOrder, updateOrderStatus, markOutForDelivery, addOrderNote, listOrderNotes, setDeliveryAgentName,
 } from "@/lib/api/ops.functions";
 import { useStaffOrders, useUnassignedOrders } from "./useStaffWorkspace";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -49,6 +49,7 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
   const markOut = useServerFn(markOutForDelivery);
   const addNote = useServerFn(addOrderNote);
   const listNotes = useServerFn(listOrderNotes);
+  const setAgent = useServerFn(setDeliveryAgentName);
 
   const notesQ = useQuery({
     queryKey: ["staff-notes", selectedRaw?.id],
@@ -232,6 +233,25 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
                 {selected.address_neighborhood ? `${selected.address_neighborhood}, ` : ""}
                 {selected.address_street}, {selected.address_city}
               </p>
+              {selected.address_notes ? (
+                <p className="inline-flex items-start gap-1.5 rounded-lg bg-muted/40 px-2 py-1.5 text-xs text-foreground">
+                  <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
+                  <span>
+                    <span className="font-medium text-muted-foreground">{lang === "ar" ? "ملاحظات التوصيل: " : "Delivery notes: "}</span>
+                    {selected.address_notes}
+                  </span>
+                </p>
+              ) : null}
+              {(selected.delivery_agent_name || !["delivered", "cancelled", "returned"].includes(selected.status)) && (
+                <DeliveryAgentBox
+                  key={selected.id}
+                  orderId={selected.id}
+                  value={selected.delivery_agent_name ?? ""}
+                  terminal={["delivered", "cancelled", "returned"].includes(selected.status)}
+                  save={setAgent}
+                  onSaved={refresh}
+                />
+              )}
 
               <div className="my-2 h-px bg-border" />
               <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -413,6 +433,56 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
             </>
           )}
         </aside>
+      </div>
+    </div>
+  );
+}
+
+// Editable delivery agent (courier) name — available any time before the
+// order reaches a terminal state; read-only afterwards.
+function DeliveryAgentBox({ orderId, value, terminal, save, onSaved }: {
+  orderId: string; value: string; terminal: boolean; save: any; onSaved: () => void;
+}) {
+  const { lang } = useI18n();
+  const [name, setName] = useState(value);
+  const [busy, setBusy] = useState(false);
+  const dirty = name.trim() !== value.trim();
+
+  if (terminal) {
+    return (
+      <p className="inline-flex items-center gap-1.5 text-xs text-foreground">
+        <Truck className="h-3 w-3 text-primary" />
+        {lang === "ar" ? "مندوب التوصيل" : "Delivery agent"}: <span className="font-medium">{value || "—"}</span>
+      </p>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-muted/30 p-2.5">
+      <p className="mb-1.5 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <Truck className="h-3 w-3" /> {lang === "ar" ? "اسم مندوب التوصيل" : "Delivery agent name"}
+      </p>
+      <div className="flex items-center gap-2">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={lang === "ar" ? "اسم المندوب" : "Agent name"}
+          className="h-8 text-xs"
+        />
+        <button
+          disabled={!dirty || busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await save({ data: { orderId, agentName: name } } as any);
+              toast.success(lang === "ar" ? "تم الحفظ" : "Saved");
+              onSaved();
+            } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+          }}
+          className="shrink-0 rounded-full gradient-brand px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-glow disabled:opacity-50"
+        >
+          {lang === "ar" ? "حفظ" : "Save"}
+        </button>
       </div>
     </div>
   );

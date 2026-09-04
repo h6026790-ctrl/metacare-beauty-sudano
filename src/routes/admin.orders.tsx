@@ -72,7 +72,14 @@ function AdminOrders() {
             return (
             <tr key={o.id} className="hover:bg-muted/30">
               <Td><span className="font-mono">{o.number}</span></Td>
-              <Td>{o.contact_name}</Td>
+              <Td>
+                {o.contact_name}
+                {o.address_notes ? (
+                  <span className="mt-0.5 block max-w-[220px] truncate text-[11px] text-muted-foreground" title={o.address_notes}>
+                    {lang === "ar" ? "ملاحظات التوصيل: " : "Delivery notes: "}{o.address_notes}
+                  </span>
+                ) : null}
+              </Td>
               <Td><span dir="ltr" className="font-mono text-xs">{o.contact_phone}</span></Td>
               <Td>
                 {o.payment_reference ? (
@@ -82,14 +89,20 @@ function AdminOrders() {
                 ) : <span className="text-xs text-muted-foreground">—</span>}
               </Td>
               <Td>
-                {da ? (
+                {(da || o.delivery_agent_name) ? (
                   <span className="text-xs text-muted-foreground">
-                    {da.courier_name ?? "—"}
-                    {da.courier_phone ? <span dir="ltr"> • {da.courier_phone}</span> : null}
-                    {" • "}
-                    {da.completed_at
-                      ? (lang === "ar" ? "تم التأكيد" : "Confirmed")
-                      : (lang === "ar" ? "بالانتظار" : "Pending")}
+                    {o.delivery_agent_name
+                      ? <span className="font-medium text-foreground">{o.delivery_agent_name}</span>
+                      : (da?.courier_name ?? "—")}
+                    {da?.courier_phone ? <span dir="ltr"> • {da.courier_phone}</span> : null}
+                    {da ? (
+                      <>
+                        {" • "}
+                        {da.completed_at
+                          ? (lang === "ar" ? "تم التأكيد" : "Confirmed")
+                          : (lang === "ar" ? "بالانتظار" : "Pending")}
+                      </>
+                    ) : null}
                   </span>
                 ) : <span className="text-xs text-muted-foreground">—</span>}
               </Td>
