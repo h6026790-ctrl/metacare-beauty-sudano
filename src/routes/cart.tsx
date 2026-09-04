@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { useCart, useSetCartQty, useToggleWishlist } from "@/lib/api/queries";
+import { useCart, useSetCartQty, useToggleWishlist, useWishlist } from "@/lib/api/queries";
 import { Minus, Plus, Trash2, ShoppingBag, Heart, MessageCircle } from "lucide-react";
 import { formatPrice } from "@/lib/format";
 import { PricePill } from "@/components/PricePill";
@@ -35,6 +35,9 @@ function CartPage() {
   const { data, isLoading } = useCart();
   const setQty = useSetCartQty();
   const toggleWish = useToggleWishlist();
+  const wishlistQ = useWishlist();
+  // One-directional: products already in the wishlist don't show the button.
+  const wishedIds = new Set((wishlistQ.data ?? []).map((w: any) => w.product_id ?? w.product?.id));
   const items = (data?.items ?? []) as any[];
   const [notes, setNotes] = useState("");
 
