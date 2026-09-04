@@ -130,7 +130,7 @@ function ContactChannels() {
             className="group flex flex-1 items-center gap-4 rounded-2xl border border-border bg-background p-4 transition-all duration-200 hover:-translate-y-1 hover:border-success/40 hover:shadow-elevated active:scale-[0.99]"
           >
             <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-success text-success-foreground transition-transform duration-200 group-hover:scale-110">
-              <MessageCircle className="h-5 w-5" />
+              <MessageCircle className="h-5.5 w-5.5" />
             </span>
             <span className="min-w-0">
               <span className="block font-display text-lg text-foreground">{t.contact.whatsapp}</span>
