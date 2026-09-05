@@ -906,6 +906,68 @@ export type Database = {
           },
         ]
       }
+      profile_change_requests: {
+        Row: {
+          code_hash: string | null
+          created_at: string
+          current_name: string | null
+          current_phone: string | null
+          expires_at: string | null
+          failed_attempts: number
+          id: string
+          profile_id: string
+          reject_reason: string | null
+          requested_name: string | null
+          requested_phone: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          code_hash?: string | null
+          created_at?: string
+          current_name?: string | null
+          current_phone?: string | null
+          expires_at?: string | null
+          failed_attempts?: number
+          id?: string
+          profile_id: string
+          reject_reason?: string | null
+          requested_name?: string | null
+          requested_phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          code_hash?: string | null
+          created_at?: string
+          current_name?: string | null
+          current_phone?: string | null
+          expires_at?: string | null
+          failed_attempts?: number
+          id?: string
+          profile_id?: string
+          reject_reason?: string | null
+          requested_name?: string | null
+          requested_phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_change_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
