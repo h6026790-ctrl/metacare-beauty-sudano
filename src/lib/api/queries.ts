@@ -13,6 +13,10 @@ import {
   placeOrder, listMyOrders, getMyOrder,
 } from "./commerce.functions";
 import { getMyProfile, updateMyProfile, upsertDefaultAddress, changeMyPassword } from "./account.functions";
+import {
+  getMyProfileChangeRequest, submitProfileChangeRequest,
+  applyProfileChangeRequest, cancelMyProfileChangeRequest,
+} from "./profile-change.functions";
 import type { Lang } from "@/i18n/dict";
 import { useAuth } from "@/hooks/useAuth";
 
