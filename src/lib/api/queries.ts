@@ -268,6 +268,45 @@ export function useChangePassword() {
     mutationFn: (vars: { current_password: string; new_password: string }) => fn({ data: vars }),
   });
 }
+// ---------- PROFILE CHANGE REQUESTS (customer side) ----------
+export function useMyProfileChangeRequest() {
+  const { user } = useAuth();
+  const fn = useServerFn(getMyProfileChangeRequest);
+  return useQuery({
+    queryKey: ["my-profile-change-request"],
+    queryFn: () => fn(),
+    enabled: !!user,
+    refetchInterval: 20_000,
+  });
+}
+export function useSubmitProfileChange() {
+  const fn = useServerFn(submitProfileChangeRequest);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { full_name?: string | null; phone?: string | null }) => (fn as any)({ data: vars }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["my-profile-change-request"] }),
+  });
+}
+export function useApplyProfileChange() {
+  const fn = useServerFn(applyProfileChangeRequest);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { code: string }) => fn({ data: vars }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["my-profile-change-request"] });
+      qc.invalidateQueries({ queryKey: ["my-profile"] });
+    },
+  });
+}
+export function useCancelProfileChange() {
+  const fn = useServerFn(cancelMyProfileChangeRequest);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { requestId: string }) => fn({ data: vars }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["my-profile-change-request"] }),
+  });
+}
+
 export function useUpsertAddress() {
   const fn = useServerFn(upsertDefaultAddress);
   const qc = useQueryClient();
