@@ -74,12 +74,15 @@ export const submitProfileChangeRequest = createServerFn({ method: "POST" })
       throw new Error("لم يتم إدخال أي تغيير / No change was requested");
     }
 
-    // Only one live request per customer.
-    await supabase
+    // Only one live request per customer. Status changes are system-owned,
+    // so this runs with elevated privileges scoped to the caller's own rows.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
       .from("profile_change_requests")
       .update({ status: "expired" })
       .eq("profile_id", userId)
       .in("status", ["pending", "approved"]);
+
 
     const { data: row, error } = await supabase
       .from("profile_change_requests")
@@ -116,15 +119,29 @@ export const cancelMyProfileChangeRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ requestId: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase
+    // A pending request can be cancelled by the customer directly (RLS allows
+    // exactly this transition). An already-approved request is cancelled with
+    // elevated privileges, still scoped to the caller's own row.
+    const { error, count } = await context.supabase
       .from("profile_change_requests")
-      .update({ status: "expired" })
+      .update({ status: "cancelled" }, { count: "exact" })
       .eq("id", data.requestId)
       .eq("profile_id", context.userId)
-      .in("status", ["pending", "approved"]);
+      .eq("status", "pending");
     if (error) throw error;
+    if (!count) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { error: adminErr } = await supabaseAdmin
+        .from("profile_change_requests")
+        .update({ status: "cancelled" })
+        .eq("id", data.requestId)
+        .eq("profile_id", context.userId)
+        .in("status", ["pending", "approved"]);
+      if (adminErr) throw adminErr;
+    }
     return { ok: true };
   });
+
 
 // ---------- 3) CUSTOMER: confirm with the code → apply the change ----------
 export const applyProfileChangeRequest = createServerFn({ method: "POST" })
