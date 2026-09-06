@@ -74,12 +74,15 @@ export const submitProfileChangeRequest = createServerFn({ method: "POST" })
       throw new Error("لم يتم إدخال أي تغيير / No change was requested");
     }
 
-    // Only one live request per customer.
-    await supabase
+    // Only one live request per customer. Status changes are system-owned,
+    // so this runs with elevated privileges scoped to the caller's own rows.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
       .from("profile_change_requests")
       .update({ status: "expired" })
       .eq("profile_id", userId)
       .in("status", ["pending", "approved"]);
+
 
     const { data: row, error } = await supabase
       .from("profile_change_requests")
