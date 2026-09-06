@@ -34,6 +34,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AccountIndexRouteImport } from './routes/account.index'
 import { Route as StaffResetsRouteImport } from './routes/staff.resets'
 import { Route as StaffRegistrationsRouteImport } from './routes/staff.registrations'
+import { Route as StaffProfileChangesRouteImport } from './routes/staff.profile-changes'
 import { Route as StaffProfileRouteImport } from './routes/staff.profile'
 import { Route as StaffOrdersRouteImport } from './routes/staff.orders'
 import { Route as StaffNotificationsRouteImport } from './routes/staff.notifications'
@@ -188,6 +189,11 @@ const StaffResetsRoute = StaffResetsRouteImport.update({
 const StaffRegistrationsRoute = StaffRegistrationsRouteImport.update({
   id: '/registrations',
   path: '/registrations',
+  getParentRoute: () => StaffRoute,
+} as any)
+const StaffProfileChangesRoute = StaffProfileChangesRouteImport.update({
+  id: '/profile-changes',
+  path: '/profile-changes',
   getParentRoute: () => StaffRoute,
 } as any)
 const StaffProfileRoute = StaffProfileRouteImport.update({
@@ -385,6 +391,7 @@ export interface FileRoutesByFullPath {
   '/staff/notifications': typeof StaffNotificationsRoute
   '/staff/orders': typeof StaffOrdersRoute
   '/staff/profile': typeof StaffProfileRoute
+  '/staff/profile-changes': typeof StaffProfileChangesRoute
   '/staff/registrations': typeof StaffRegistrationsRoute
   '/staff/resets': typeof StaffResetsRoute
   '/account/': typeof AccountIndexRoute
@@ -437,6 +444,7 @@ export interface FileRoutesByTo {
   '/staff/notifications': typeof StaffNotificationsRoute
   '/staff/orders': typeof StaffOrdersRoute
   '/staff/profile': typeof StaffProfileRoute
+  '/staff/profile-changes': typeof StaffProfileChangesRoute
   '/staff/registrations': typeof StaffRegistrationsRoute
   '/staff/resets': typeof StaffResetsRoute
   '/account': typeof AccountIndexRoute
@@ -495,6 +503,7 @@ export interface FileRoutesById {
   '/staff/notifications': typeof StaffNotificationsRoute
   '/staff/orders': typeof StaffOrdersRoute
   '/staff/profile': typeof StaffProfileRoute
+  '/staff/profile-changes': typeof StaffProfileChangesRoute
   '/staff/registrations': typeof StaffRegistrationsRoute
   '/staff/resets': typeof StaffResetsRoute
   '/account/': typeof AccountIndexRoute
@@ -554,6 +563,7 @@ export interface FileRouteTypes {
     | '/staff/notifications'
     | '/staff/orders'
     | '/staff/profile'
+    | '/staff/profile-changes'
     | '/staff/registrations'
     | '/staff/resets'
     | '/account/'
@@ -606,6 +616,7 @@ export interface FileRouteTypes {
     | '/staff/notifications'
     | '/staff/orders'
     | '/staff/profile'
+    | '/staff/profile-changes'
     | '/staff/registrations'
     | '/staff/resets'
     | '/account'
@@ -663,6 +674,7 @@ export interface FileRouteTypes {
     | '/staff/notifications'
     | '/staff/orders'
     | '/staff/profile'
+    | '/staff/profile-changes'
     | '/staff/registrations'
     | '/staff/resets'
     | '/account/'
@@ -882,6 +894,13 @@ declare module '@tanstack/react-router' {
       path: '/registrations'
       fullPath: '/staff/registrations'
       preLoaderRoute: typeof StaffRegistrationsRouteImport
+      parentRoute: typeof StaffRoute
+    }
+    '/staff/profile-changes': {
+      id: '/staff/profile-changes'
+      path: '/profile-changes'
+      fullPath: '/staff/profile-changes'
+      preLoaderRoute: typeof StaffProfileChangesRouteImport
       parentRoute: typeof StaffRoute
     }
     '/staff/profile': {
@@ -1191,6 +1210,7 @@ interface StaffRouteChildren {
   StaffNotificationsRoute: typeof StaffNotificationsRoute
   StaffOrdersRoute: typeof StaffOrdersRoute
   StaffProfileRoute: typeof StaffProfileRoute
+  StaffProfileChangesRoute: typeof StaffProfileChangesRoute
   StaffRegistrationsRoute: typeof StaffRegistrationsRoute
   StaffResetsRoute: typeof StaffResetsRoute
   StaffIndexRoute: typeof StaffIndexRoute
@@ -1202,6 +1222,7 @@ const StaffRouteChildren: StaffRouteChildren = {
   StaffNotificationsRoute: StaffNotificationsRoute,
   StaffOrdersRoute: StaffOrdersRoute,
   StaffProfileRoute: StaffProfileRoute,
+  StaffProfileChangesRoute: StaffProfileChangesRoute,
   StaffRegistrationsRoute: StaffRegistrationsRoute,
   StaffResetsRoute: StaffResetsRoute,
   StaffIndexRoute: StaffIndexRoute,
