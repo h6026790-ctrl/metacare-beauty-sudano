@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   useMyOrders, useMyProfile, useUpsertAddress, useStatesTree,
   useWishlist, useProducts, useCart, useChangePassword,
+  useMyProfileChangeRequest, useSubmitProfileChange, useApplyProfileChange, useCancelProfileChange,
 } from "@/lib/api/queries";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductCard } from "@/components/ProductCard";
@@ -391,4 +392,133 @@ function Empty({ text }: { text: string }) {
 }
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return <div className={className}><Label className="mb-1.5 block text-xs text-muted-foreground">{label}</Label>{children}</div>;
+}
+
+// Requests a name / phone change. Nothing is applied until customer service
+// approves and the customer confirms the WhatsApp code (30-minute validity).
+function ProfileChangeCard({
+  profile, lang, errMsg,
+}: { profile: any; lang: "ar" | "en"; errMsg: (e: any) => string }) {
+  const { data: request } = useMyProfileChangeRequest();
+  const submit = useSubmitProfileChange();
+  const apply = useApplyProfileChange();
+  const cancel = useCancelProfileChange();
+  const [form, setForm] = useState({ full_name: "", phone: "" });
+  const [code, setCode] = useState("");
+
+  const req = request as any;
+
+  const send = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.full_name.trim() && !form.phone.trim()) {
+      toast.error(lang === "ar" ? "أدخلي الاسم الجديد أو الرقم الجديد" : "Enter a new name or a new phone number");
+      return;
+    }
+    try {
+      await submit.mutateAsync({
+        full_name: form.full_name.trim() || null,
+        phone: form.phone.trim() || null,
+      });
+      setForm({ full_name: "", phone: "" });
+      toast.success(lang === "ar" ? "تم إرسال الطلب إلى خدمة العملاء" : "Request sent to customer service");
+    } catch (err) { toast.error(errMsg(err)); }
+  };
+
+  const confirm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res: any = await apply.mutateAsync({ code: code.trim() });
+      setCode("");
+      toast.success(
+        res?.phoneChanged
+          ? (lang === "ar" ? "تم تحديث بياناتكِ. استخدمي الرقم الجديد عند تسجيل الدخول." : "Your details are updated. Use the new number to sign in.")
+          : (lang === "ar" ? "تم تحديث بياناتكِ" : "Your details are updated"),
+      );
+    } catch (err) { toast.error(errMsg(err)); }
+  };
+
+  return (
+    <div className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-glass">
+      <h3 className="font-display text-lg text-foreground">
+        {lang === "ar" ? "تعديل البيانات الأساسية" : "Update basic info"}
+      </h3>
+
+      {req ? (
+        <div className="space-y-4">
+          <div className="rounded-xl bg-muted/50 p-4 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">
+              {req.status === "approved"
+                ? (lang === "ar" ? "تمت الموافقة — أدخلي رمز التأكيد" : "Approved — enter the confirmation code")
+                : (lang === "ar" ? "طلبكِ قيد المراجعة لدى خدمة العملاء" : "Your request is under review by customer service")}
+            </p>
+            {req.requested_name && (
+              <p className="mt-1">
+                {lang === "ar" ? "الاسم" : "Name"}: {req.current_name || "—"} → {req.requested_name}
+              </p>
+            )}
+            {req.requested_phone && (
+              <p className="mt-1" dir="ltr">
+                {req.current_phone || "—"} → {req.requested_phone}
+              </p>
+            )}
+          </div>
+
+          <form onSubmit={confirm} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+            <Field label={lang === "ar" ? "رمز التأكيد" : "Confirmation code"}>
+              <Input
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                inputMode="numeric"
+                dir="ltr"
+                placeholder="000000"
+                className="font-mono tracking-[0.3em]"
+              />
+            </Field>
+            <button
+              type="submit"
+              disabled={apply.isPending || code.length !== 6}
+              className="inline-flex min-h-[44px] items-center justify-center rounded-full gradient-brand px-6 text-sm font-medium text-primary-foreground shadow-glow disabled:opacity-60"
+            >
+              {lang === "ar" ? "تأكيد" : "Confirm"}
+            </button>
+          </form>
+
+          <button
+            type="button"
+            onClick={() => cancel.mutate({ requestId: req.id })}
+            className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            {lang === "ar" ? "إلغاء الطلب" : "Cancel request"}
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={send} className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-2">
+            <Field label={lang === "ar" ? "الاسم الجديد" : "New full name"}>
+              <Input
+                value={form.full_name}
+                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                placeholder={profile?.full_name ?? ""}
+              />
+            </Field>
+            <Field label={lang === "ar" ? "الرقم الجديد (جوال / واتساب)" : "New phone / WhatsApp"}>
+              <Input
+                dir="ltr"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder={profile?.phone ?? ""}
+              />
+            </Field>
+          </div>
+          <button
+            type="submit"
+            disabled={submit.isPending}
+            className="inline-flex min-h-[44px] items-center rounded-full gradient-brand px-6 text-sm font-medium text-primary-foreground shadow-glow disabled:opacity-60"
+          >
+            {lang === "ar" ? "إرسال طلب التعديل" : "Submit change request"}
+          </button>
+        </form>
+      )}
+    </div>
+  );
 }
