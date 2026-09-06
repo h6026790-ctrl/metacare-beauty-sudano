@@ -1,6 +1,6 @@
 // Customer Service workspace navigation — operational centers only.
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, ClipboardList, UserPlus, KeyRound, Users, Bell, Activity, UserRound } from "lucide-react";
+import { LayoutDashboard, ClipboardList, UserPlus, KeyRound, Users, Bell, Activity, UserRound, UserCog } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,
@@ -14,6 +14,7 @@ const items: { key: string; url: string; exact?: boolean; icon: typeof LayoutDas
   { key: "orders", url: "/staff/orders", icon: ClipboardList, ar: "الطلبات", en: "Orders" },
   { key: "registrations", url: "/staff/registrations", icon: UserPlus, ar: "طلبات التسجيل", en: "Registrations" },
   { key: "resets", url: "/staff/resets", icon: KeyRound, ar: "استعادة كلمة المرور", en: "Password resets" },
+  { key: "profile-changes", url: "/staff/profile-changes", icon: UserCog, ar: "طلبات تعديل البيانات", en: "Profile changes" },
   { key: "customers", url: "/staff/customers", icon: Users, ar: "العملاء", en: "Customers" },
   { key: "notifications", url: "/staff/notifications", icon: Bell, ar: "التنبيهات", en: "Notifications" },
   { key: "activity", url: "/staff/activity", icon: Activity, ar: "نشاطي", en: "My activity" },
