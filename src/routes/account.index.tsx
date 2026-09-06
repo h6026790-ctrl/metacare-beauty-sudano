@@ -246,10 +246,13 @@ function AccountPage() {
               </div>
               <p className="text-xs text-muted-foreground">
                 {lang === "ar"
-                  ? "الاسم ورقم الجوال/واتساب ثابتة بعد التسجيل ولا يمكن تعديلها. للتعديل يرجى التواصل مع خدمة العملاء."
-                  : "Your name and phone/WhatsApp number are locked after registration. Contact customer service to change them."}
+                  ? "لتعديل الاسم أو رقم الجوال، أرسلي طلب تعديل أدناه — تراجعه خدمة العملاء وترسل لكِ رمز تأكيد عبر واتساب."
+                  : "To change your name or phone number, submit a change request below — customer service will review it and send you a confirmation code on WhatsApp."}
               </p>
             </div>
+
+            <ProfileChangeCard profile={profile} lang={lang} errMsg={errMsg} />
+
 
 
             <form onSubmit={saveAddress} className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-glass">
