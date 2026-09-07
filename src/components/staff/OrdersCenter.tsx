@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   claimOrder, updateOrderStatus, markOutForDelivery, addOrderNote, listOrderNotes, setDeliveryAgentName,
+  staffMarkDelivered,
 } from "@/lib/api/ops.functions";
 import { useStaffOrders, useUnassignedOrders } from "./useStaffWorkspace";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -26,6 +27,7 @@ const TABS = [
   { key: "delivered", ar: "تم التسليم", en: "Delivered" },
   { key: "cancelled", ar: "ملغاة", en: "Cancelled" },
   { key: "returned", ar: "مرتجعة", en: "Returned" },
+  { key: "archived", ar: "المؤرشفة", en: "Archived" },
 ];
 
 export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean; initialTab?: string }) {
@@ -57,6 +59,10 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
     enabled: enabled && !!selectedRaw?.id,
   });
 
+  const forceDeliver = useServerFn(staffMarkDelivered);
+
+
+
 
   const orders = (ordersQ.data ?? []) as any[];
   const unassigned = (unassQ.data ?? []) as any[];
@@ -69,13 +75,22 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
     : null;
 
 
-  const counts = useMemo(() => {
-    const c: Record<string, number> = { unassigned: unassigned.length };
-    for (const o of orders) c[o.status] = (c[o.status] ?? 0) + 1;
-    return c;
-  }, [orders, unassigned]);
+  // Archived orders (auto-archived 3 days after a finished status) live in
+  // their own tab and never clutter the live status queues.
+  const live = orders.filter((o) => !o.archived_at);
+  const archived = orders.filter((o) => !!o.archived_at);
 
-  const rows = tab === "unassigned" ? unassigned : orders.filter((o) => o.status === tab);
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { unassigned: unassigned.length, archived: archived.length };
+    for (const o of live) c[o.status] = (c[o.status] ?? 0) + 1;
+    return c;
+  }, [live, archived, unassigned]);
+
+  const rows = tab === "unassigned"
+    ? unassigned
+    : tab === "archived"
+      ? archived
+      : live.filter((o) => o.status === tab);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["staff-orders"] });
