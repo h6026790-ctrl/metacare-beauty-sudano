@@ -8,7 +8,16 @@ import { OrderStatusBadge } from "@/components/OrderTimeline";
 import { CenterHeader, TableCard, Th, Td, EmptyRow } from "@/components/admin/ui";
 import { useAdminOrders } from "@/components/admin/useAdminWorkspace";
 
-const STATUSES = ["all", "new", "review", "paid", "shipping", "delivered", "cancelled", "returned"] as const;
+const STATUSES = ["all", "new", "review", "paid", "shipping", "delivered", "cancelled", "returned", "archived"] as const;
+
+const STATUS_LABEL_AR: Record<string, string> = {
+  all: "الكل", new: "جديدة", review: "قيد المراجعة", paid: "مدفوعة", shipping: "خارج للتوصيل",
+  delivered: "تم التسليم", cancelled: "ملغاة", returned: "مرتجعة", archived: "المؤرشفة",
+};
+const STATUS_LABEL_EN: Record<string, string> = {
+  all: "All", new: "New", review: "Under review", paid: "Paid", shipping: "Out for delivery",
+  delivered: "Delivered", cancelled: "Cancelled", returned: "Returned", archived: "Archived",
+};
 
 export const Route = createFileRoute("/admin/orders")({
   head: () => ({

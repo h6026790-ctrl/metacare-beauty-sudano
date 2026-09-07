@@ -908,6 +908,7 @@ export type Database = {
       }
       profile_change_requests: {
         Row: {
+          archived_at: string | null
           code_hash: string | null
           created_at: string
           current_name: string | null
@@ -925,6 +926,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
           code_hash?: string | null
           created_at?: string
           current_name?: string | null
@@ -942,6 +944,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
           code_hash?: string | null
           created_at?: string
           current_name?: string | null
@@ -1106,6 +1109,7 @@ export type Database = {
           address_state_id: string | null
           approved_at: string | null
           approved_by: string | null
+          archived_at: string | null
           created_at: string
           expires_at: string
           failed_attempts: number
@@ -1131,6 +1135,7 @@ export type Database = {
           address_state_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          archived_at?: string | null
           created_at?: string
           expires_at?: string
           failed_attempts?: number
@@ -1156,6 +1161,7 @@ export type Database = {
           address_state_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          archived_at?: string | null
           created_at?: string
           expires_at?: string
           failed_attempts?: number
@@ -1436,6 +1442,7 @@ export type Database = {
     }
     Functions: {
       approve_purchase_invoice: { Args: { _invoice_id: string }; Returns: Json }
+      archive_finished_records: { Args: never; Returns: number }
       claim_order: { Args: { _order_id: string }; Returns: Json }
       confirm_delivery_by_qr: {
         Args: { _order_id: string; _token: string }
