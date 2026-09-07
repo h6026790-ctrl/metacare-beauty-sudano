@@ -468,6 +468,59 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
 
 // Editable delivery agent (courier) name — available any time before the
 // order reaches a terminal state; read-only afterwards.
+// Fallback closure: used only when the customer never enters the delivery
+// code. Recorded in the activity log as a staff override.
+function ManualDeliveryBox({ orderId, shippedAt, run, onDone }: {
+  orderId: string; shippedAt: string | null; run: any; onDone: () => void;
+}) {
+  const { lang } = useI18n();
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const hours = shippedAt ? (Date.now() - new Date(shippedAt).getTime()) / 3_600_000 : null;
+
+  return (
+    <div className="mt-2 rounded-xl border border-warning/40 bg-warning/10 p-3">
+      <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
+        <CheckCircle2 className="h-3.5 w-3.5" />
+        {lang === "ar" ? "تأكيد التسليم يدوياً (استثناء)" : "Confirm delivery manually (fallback)"}
+      </p>
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        {lang === "ar"
+          ? "استخدميه فقط إذا لم تُدخل العميلة رمز الاستلام. سيُسجَّل كتأكيد من خدمة العملاء وليس من العميلة."
+          : "Use only if the customer never entered the delivery code. It is logged as a staff override, not a customer confirmation."}
+        {hours !== null && (
+          <> {" "}• {lang === "ar" ? "منذ الخروج للتوصيل" : "Out for delivery for"}:{" "}
+            <span className="font-medium text-foreground">
+              {Math.floor(hours)} {lang === "ar" ? "ساعة" : "h"}
+            </span>
+          </>
+        )}
+      </p>
+      <Input
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder={lang === "ar" ? "سبب التأكيد اليدوي (اختياري)" : "Reason for the manual confirmation (optional)"}
+        className="mt-2 h-9 text-xs"
+      />
+      <button
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          try {
+            await run({ data: { orderId, reason: reason.trim() || undefined } } as any);
+            toast.success(lang === "ar" ? "تم تسجيل التسليم" : "Marked as delivered");
+            onDone();
+          } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+        }}
+        className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-success px-3 py-2 text-xs font-medium text-success-foreground disabled:opacity-50"
+      >
+        <CheckCircle2 className="h-3.5 w-3.5" />
+        {lang === "ar" ? "تحديد كتم التسليم" : "Mark as delivered"}
+      </button>
+    </div>
+  );
+}
+
 function DeliveryAgentBox({ orderId, value, terminal, save, onSaved }: {
   orderId: string; value: string; terminal: boolean; save: any; onSaved: () => void;
 }) {
