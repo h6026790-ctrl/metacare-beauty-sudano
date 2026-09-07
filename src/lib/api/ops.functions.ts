@@ -163,6 +163,60 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Fallback only. The primary delivery confirmation stays customer-driven:
+// the customer enters the delivery code and `confirm_delivery_by_qr` closes
+// the order. When the customer never completes that step, staff may close it
+// manually — logged distinctly so both paths stay distinguishable later.
+export const staffMarkDelivered = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { orderId: string; reason?: string }) =>
+    z.object({
+      orderId: z.string().uuid(),
+      reason: z.string().trim().max(500).optional(),
+    }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertStaff(context);
+
+    const { data: order, error: readErr } = await context.supabase
+      .from("orders").select("id, status").eq("id", data.orderId).maybeSingle();
+    if (readErr) throw readErr;
+    if (!order) throw new Error("الطلب غير موجود / Order not found");
+    if (order.status !== "shipping") {
+      throw new Error(
+        "التأكيد اليدوي متاح فقط للطلبات الخارجة للتوصيل / Manual confirmation is only available for orders out for delivery",
+      );
+    }
+
+    const { error } = await context.supabase
+      .from("orders").update({ status: "delivered" })
+      .eq("id", data.orderId).eq("status", "shipping");
+    if (error) throw error;
+
+    await context.supabase
+      .from("delivery_assignments")
+      .update({ completed_at: new Date().toISOString() } as never)
+      .eq("order_id", data.orderId).is("completed_at", null);
+
+    await context.supabase.from("audit_logs").insert({
+      actor_id: context.userId,
+      action: "order.delivered_staff_override",
+      entity_type: "order",
+      entity_id: data.orderId,
+      metadata: {
+        confirmation: "staff_override",
+        note: "Customer did not enter the delivery code; closed manually by staff.",
+        reason: data.reason ?? null,
+      },
+    });
+
+    await context.supabase.from("order_notes").insert({
+      order_id: data.orderId,
+      author_id: context.userId,
+      body: `تم تأكيد التسليم يدوياً بواسطة خدمة العملاء${data.reason ? ` — ${data.reason}` : ""} / Delivery confirmed manually by staff`,
+    });
+
+    return { ok: true };
+  });
 
 
 // Staff can record/edit the delivery agent (courier) name on an order at any
