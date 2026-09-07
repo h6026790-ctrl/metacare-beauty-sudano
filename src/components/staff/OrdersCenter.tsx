@@ -419,6 +419,19 @@ export function OrdersCenter({ enabled, initialTab = "new" }: { enabled: boolean
                 </div>
               )}
 
+              {/* ── Fallback: staff closes the order manually ───── */}
+              {selected.status === "shipping" && (
+                <ManualDeliveryBox
+                  key={selected.id}
+                  orderId={selected.id}
+                  shippedAt={assignment?.assigned_at ?? null}
+                  run={forceDeliver}
+                  onDone={() => { setSelected({ ...selected, status: "delivered" }); refresh(); }}
+                />
+              )}
+
+
+
               {/* ── Exceptions ──────────────────────────────────── */}
               {!["delivered", "cancelled", "returned"].includes(selected.status) && (
                 <button onClick={() => onStatus("cancelled")} className="mt-2 w-full rounded-full border border-border bg-card px-3 py-2 text-xs text-destructive">
