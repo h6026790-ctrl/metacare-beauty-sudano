@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { MessageCircle, Copy, RefreshCw, Check, X, ArrowRight } from "lucide-react";
 import { whatsappLink } from "@/lib/format";
 
-const STATUSES = ["pending", "approved", "rejected", "expired", "cancelled", "archived", "all"] as const;
+const STATUSES = ["pending", "approved", "applied", "rejected", "expired", "cancelled", "archived", "all"] as const;
 type Status = typeof STATUSES[number];
 
 export function ProfileChangeRequestsPanel({ enabled = true }: { enabled?: boolean }) {
@@ -233,12 +233,13 @@ function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     pending: "bg-warning text-warning-foreground",
     approved: "bg-primary text-primary-foreground",
+    applied: "bg-success text-success-foreground",
     rejected: "bg-destructive text-destructive-foreground",
     expired: "bg-muted text-muted-foreground",
     cancelled: "bg-muted text-muted-foreground",
   };
-  const ar: Record<string, string> = { pending: "بانتظار الموافقة", approved: "تمت الموافقة", rejected: "مرفوض", expired: "منتهي", cancelled: "ملغى" };
-  const en: Record<string, string> = { pending: "Pending", approved: "Approved", rejected: "Rejected", expired: "Expired", cancelled: "Cancelled" };
+  const ar: Record<string, string> = { pending: "بانتظار الموافقة", approved: "بانتظار إدخال العميلة", applied: "تم التنفيذ", rejected: "مرفوض", expired: "منتهي", cancelled: "ملغى" };
+  const en: Record<string, string> = { pending: "Pending", approved: "Awaiting customer", applied: "Applied", rejected: "Rejected", expired: "Expired", cancelled: "Cancelled" };
   const label = (lang === "ar" ? ar[status] : en[status]) ?? status;
   return (
     <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wider ${map[status] ?? "bg-muted text-muted-foreground"}`}>
@@ -248,7 +249,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function labelFor(s: Status, lang: "ar" | "en") {
-  const ar: Record<Status, string> = { pending: "بانتظار الموافقة", approved: "تمت الموافقة", rejected: "مرفوض", expired: "منتهي", cancelled: "ملغى", archived: "المؤرشفة", all: "الكل" };
-  const en: Record<Status, string> = { pending: "Pending", approved: "Approved", rejected: "Rejected", expired: "Expired", cancelled: "Cancelled", archived: "Archived", all: "All" };
+  const ar: Record<Status, string> = { pending: "بانتظار الموافقة", approved: "بانتظار إدخال العميلة", applied: "تم التنفيذ", rejected: "مرفوض", expired: "منتهي", cancelled: "ملغى", archived: "المؤرشفة", all: "الكل" };
+  const en: Record<Status, string> = { pending: "Pending", approved: "Awaiting customer", applied: "Applied", rejected: "Rejected", expired: "Expired", cancelled: "Cancelled", archived: "Archived", all: "All" };
   return (lang === "ar" ? ar : en)[s];
 }
