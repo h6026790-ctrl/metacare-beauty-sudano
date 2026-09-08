@@ -215,9 +215,12 @@ export const applyProfileChangeRequest = createServerFn({ method: "POST" })
     const { error: profErr } = await supabaseAdmin.from("profiles").update(updates).eq("id", userId);
     if (profErr) throw profErr;
 
+    // "applied" is the consumed state: the customer entered the code and the
+    // change landed. It stays distinct from "approved" (code issued, still
+    // waiting on the customer).
     await supabaseAdmin
       .from("profile_change_requests")
-      .update({ status: "approved", code_hash: null, expires_at: null })
+      .update({ status: "applied", code_hash: null, expires_at: null })
       .eq("id", req.id);
 
     await supabaseAdmin.from("audit_logs").insert({
@@ -236,7 +239,7 @@ export const applyProfileChangeRequest = createServerFn({ method: "POST" })
   });
 
 // ---------- 4) STAFF/ADMIN: list requests ----------
-const STATUS = z.enum(["pending", "approved", "rejected", "expired", "cancelled", "archived", "all"]);
+const STATUS = z.enum(["pending", "approved", "applied", "rejected", "expired", "cancelled", "archived", "all"]);
 
 export const listProfileChangeRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
