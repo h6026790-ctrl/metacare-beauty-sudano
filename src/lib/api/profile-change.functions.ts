@@ -236,7 +236,7 @@ export const applyProfileChangeRequest = createServerFn({ method: "POST" })
   });
 
 // ---------- 4) STAFF/ADMIN: list requests ----------
-const STATUS = z.enum(["pending", "approved", "rejected", "expired", "all"]);
+const STATUS = z.enum(["pending", "approved", "rejected", "expired", "cancelled", "archived", "all"]);
 
 export const listProfileChangeRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -246,10 +246,16 @@ export const listProfileChangeRequests = createServerFn({ method: "GET" })
     let q = context.supabase
       .from("profile_change_requests")
       // code_hash is never exposed; the plaintext is returned once by approve.
-      .select("id, profile_id, current_name, requested_name, current_phone, requested_phone, status, failed_attempts, expires_at, reviewed_at, reject_reason, created_at")
+      .select("id, profile_id, current_name, requested_name, current_phone, requested_phone, status, failed_attempts, expires_at, reviewed_at, reject_reason, created_at, archived_at")
       .order("created_at", { ascending: false })
       .limit(200);
-    if (data.status !== "all") q = q.eq("status", data.status);
+    // Finished requests auto-archive after 3 days into their own view.
+    if (data.status === "archived") {
+      q = q.not("archived_at", "is", null);
+    } else {
+      q = q.is("archived_at", null);
+      if (data.status !== "all") q = q.eq("status", data.status);
+    }
     const { data: rows, error } = await q;
     if (error) throw error;
     return rows ?? [];

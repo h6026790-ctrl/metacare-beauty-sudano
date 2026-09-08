@@ -37,7 +37,14 @@ function AdminOrders() {
   const ordersQ = useAdminOrders(!!user && isAdmin);
 
   const all = (ordersQ.data ?? []) as any[];
-  const rows = status === "all" ? all : all.filter((o) => o.status === status);
+  // Orders auto-archive 3 days after a finished status; they only show up
+  // in the dedicated Archived tab.
+  const live = all.filter((o) => !o.archived_at);
+  const rows = status === "archived"
+    ? all.filter((o) => !!o.archived_at)
+    : status === "all"
+      ? live
+      : live.filter((o) => o.status === status);
 
   return (
     <>
@@ -55,7 +62,7 @@ function AdminOrders() {
               status === s ? "border-transparent gradient-brand text-primary-foreground" : "border-border text-muted-foreground hover:bg-muted"
             }`}
           >
-            {s === "all" ? (lang === "ar" ? "الكل" : "All") : s}
+            {lang === "ar" ? STATUS_LABEL_AR[s] : STATUS_LABEL_EN[s]}
           </button>
         ))}
       </div>

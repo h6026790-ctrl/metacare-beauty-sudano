@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { MessageCircle, Copy, RefreshCw, Check, X } from "lucide-react";
 import { whatsappLink } from "@/lib/format";
 
-const STATUSES = ["pending", "approved", "verified", "rejected", "expired", "all"] as const;
+const STATUSES = ["pending", "approved", "verified", "rejected", "expired", "archived", "all"] as const;
 type Status = typeof STATUSES[number];
 
 export function RegistrationRequestsPanel({ enabled = true, kind }: { enabled?: boolean; kind?: "registration" | "reset" }) {
@@ -220,21 +220,21 @@ export function RegistrationRequestsPanel({ enabled = true, kind }: { enabled?: 
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    pending: "bg-warning/15 text-warning",
-    approved: "bg-primary/15 text-primary",
-    verified: "bg-success/15 text-success",
-    rejected: "bg-destructive/15 text-destructive",
+    pending: "bg-warning text-warning-foreground",
+    approved: "bg-primary text-primary-foreground",
+    verified: "bg-success text-success-foreground",
+    rejected: "bg-destructive text-destructive-foreground",
     expired: "bg-muted text-muted-foreground",
   };
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${map[status] ?? "bg-muted"}`}>
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${map[status] ?? "bg-muted text-muted-foreground"}`}>
       {status}
     </span>
   );
 }
 
 function labelFor(s: Status, lang: "ar" | "en") {
-  const ar: Record<Status, string> = { pending: "بانتظار الموافقة", approved: "تمت الموافقة", verified: "مفعّل", rejected: "مرفوض", expired: "منتهي", all: "الكل" };
-  const en: Record<Status, string> = { pending: "Pending", approved: "Approved", verified: "Verified", rejected: "Rejected", expired: "Expired", all: "All" };
+  const ar: Record<Status, string> = { pending: "بانتظار الموافقة", approved: "تمت الموافقة", verified: "مفعّل", rejected: "مرفوض", expired: "منتهي", archived: "المؤرشفة", all: "الكل" };
+  const en: Record<Status, string> = { pending: "Pending", approved: "Approved", verified: "Verified", rejected: "Rejected", expired: "Expired", archived: "Archived", all: "All" };
   return (lang === "ar" ? ar : en)[s];
 }
