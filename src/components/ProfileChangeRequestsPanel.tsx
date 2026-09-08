@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { MessageCircle, Copy, RefreshCw, Check, X, ArrowRight } from "lucide-react";
 import { whatsappLink } from "@/lib/format";
 
-const STATUSES = ["pending", "approved", "rejected", "expired", "all"] as const;
+const STATUSES = ["pending", "approved", "rejected", "expired", "cancelled", "archived", "all"] as const;
 type Status = typeof STATUSES[number];
 
 export function ProfileChangeRequestsPanel({ enabled = true }: { enabled?: boolean }) {
@@ -144,9 +144,13 @@ export function ProfileChangeRequestsPanel({ enabled = true }: { enabled?: boole
                     </>
                   ) : (
                     <span className="max-w-[14rem] text-[11px] leading-snug text-muted-foreground">
-                      {lang === "ar"
-                        ? "الرمز محفوظ مشفّراً — اضغطي موافقة أو رمز جديد لعرضه مرة واحدة"
-                        : "Code is stored hashed — approve or regenerate to reveal it once"}
+                      {r.status === "pending"
+                        ? (lang === "ar"
+                            ? "لم يُنشأ رمز بعد — يُنشأ عند الموافقة ويُعرض مرة واحدة"
+                            : "No code yet — one is created on approval and shown once")
+                        : (lang === "ar"
+                            ? "الرمز محفوظ مشفّراً — اضغطي رمز جديد لعرضه مرة واحدة"
+                            : "Code is stored hashed — regenerate to reveal a new one once")}
                     </span>
                   )}
                 </div>
@@ -180,10 +184,10 @@ export function ProfileChangeRequestsPanel({ enabled = true }: { enabled?: boole
                     <button
                       onClick={() => reject.mutate(r.id)}
                       disabled={reject.isPending}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:opacity-90 disabled:opacity-60"
                     >
                       <X className="h-3.5 w-3.5" />
-                      {lang === "ar" ? "رفض" : "Reject"}
+                      <span>{lang === "ar" ? "رفض" : "Reject"}</span>
                     </button>
                     <button
                       onClick={() => regen.mutate(r.id)}
@@ -213,33 +217,38 @@ function DiffRow({ label, from, to, ltr }: { label: string; from?: string | null
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs">
       <span className="text-muted-foreground">{label}:</span>
-      <span className="rounded-md bg-muted px-2 py-0.5 text-muted-foreground line-through" dir={ltr ? "ltr" : undefined}>
+      <span className="rounded-md bg-muted px-2 py-0.5 text-foreground/70 line-through" dir={ltr ? "ltr" : undefined}>
         {from || "—"}
       </span>
       <ArrowRight className="h-3 w-3 text-muted-foreground rtl:rotate-180" />
-      <span className="rounded-md bg-primary/10 px-2 py-0.5 font-medium text-primary" dir={ltr ? "ltr" : undefined}>
-        {to}
+      <span className="rounded-md bg-primary px-2 py-0.5 font-medium text-primary-foreground" dir={ltr ? "ltr" : undefined}>
+        {to || "—"}
       </span>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const { lang } = useI18n();
   const map: Record<string, string> = {
-    pending: "bg-warning/15 text-warning",
-    approved: "bg-primary/15 text-primary",
-    rejected: "bg-destructive/15 text-destructive",
+    pending: "bg-warning text-warning-foreground",
+    approved: "bg-primary text-primary-foreground",
+    rejected: "bg-destructive text-destructive-foreground",
     expired: "bg-muted text-muted-foreground",
+    cancelled: "bg-muted text-muted-foreground",
   };
+  const ar: Record<string, string> = { pending: "بانتظار الموافقة", approved: "تمت الموافقة", rejected: "مرفوض", expired: "منتهي", cancelled: "ملغى" };
+  const en: Record<string, string> = { pending: "Pending", approved: "Approved", rejected: "Rejected", expired: "Expired", cancelled: "Cancelled" };
+  const label = (lang === "ar" ? ar[status] : en[status]) ?? status;
   return (
-    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${map[status] ?? "bg-muted"}`}>
-      {status}
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wider ${map[status] ?? "bg-muted text-muted-foreground"}`}>
+      {label}
     </span>
   );
 }
 
 function labelFor(s: Status, lang: "ar" | "en") {
-  const ar: Record<Status, string> = { pending: "بانتظار الموافقة", approved: "تمت الموافقة", rejected: "مرفوض", expired: "منتهي", all: "الكل" };
-  const en: Record<Status, string> = { pending: "Pending", approved: "Approved", rejected: "Rejected", expired: "Expired", all: "All" };
+  const ar: Record<Status, string> = { pending: "بانتظار الموافقة", approved: "تمت الموافقة", rejected: "مرفوض", expired: "منتهي", cancelled: "ملغى", archived: "المؤرشفة", all: "الكل" };
+  const en: Record<Status, string> = { pending: "Pending", approved: "Approved", rejected: "Rejected", expired: "Expired", cancelled: "Cancelled", archived: "Archived", all: "All" };
   return (lang === "ar" ? ar : en)[s];
 }
