@@ -319,7 +319,7 @@ async function assertStaff(ctx: any) {
 export const listRegistrationRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ status: z.enum(["pending", "approved", "rejected", "verified", "expired", "all"]).default("pending") })
+    z.object({ status: z.enum(["pending", "approved", "rejected", "verified", "expired", "archived", "all"]).default("pending") })
       .parse(d ?? {}),
   )
   .handler(async ({ context, data }) => {
@@ -329,11 +329,18 @@ export const listRegistrationRequests = createServerFn({ method: "GET" })
       .select(
         // otp_code is stored hashed and never exposed; the plaintext code is
         // returned once by approve/regenerate.
-        "id, full_name, phone, whatsapp, street, notes, status, request_type, failed_attempts, created_at, expires_at, approved_at, verified_at, rejected_at, reject_reason, address_state:states(name_ar,name_en), address_city:cities(name_ar,name_en), address_neighborhood:neighborhoods(name_ar,name_en)",
+        "id, full_name, phone, whatsapp, street, notes, status, request_type, failed_attempts, created_at, expires_at, approved_at, verified_at, rejected_at, reject_reason, archived_at, address_state:states(name_ar,name_en), address_city:cities(name_ar,name_en), address_neighborhood:neighborhoods(name_ar,name_en)",
       )
       .order("created_at", { ascending: false })
       .limit(200);
-    if (data.status !== "all") q = q.eq("status", data.status);
+    // Finished requests auto-archive after 3 days and then only appear in
+    // the dedicated Archived view.
+    if (data.status === "archived") {
+      q = q.not("archived_at", "is", null);
+    } else {
+      q = q.is("archived_at", null);
+      if (data.status !== "all") q = q.eq("status", data.status);
+    }
     const { data: rows, error } = await q;
     if (error) throw error;
     return rows ?? [];
