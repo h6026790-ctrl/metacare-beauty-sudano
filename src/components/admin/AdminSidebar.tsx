@@ -38,7 +38,7 @@ export function AdminSidebar({ badges = {} }: { badges?: AdminBadges }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
 
   return (
-    <Sidebar collapsible="icon" side={lang === "ar" ? "right" : "left"}>
+    <Sidebar collapsible="icon" side={lang === "ar" ? "right" : "left"} className="pt-16">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>{lang === "ar" ? "إدارة الشركة" : "Company administration"}</SidebarGroupLabel>
