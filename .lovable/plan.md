@@ -1,71 +1,52 @@
-# Security audit — UI-only protection vs. real server enforcement
+# Pre-launch data reset — counts first, no deletion yet
 
-Diagnostic only. No code, policies, or data were changed. Findings are ordered by severity.
+Nothing has been deleted. Below are the exact current row counts. Confirm them and I will run the reset.
 
-## Overall result
+## Rows that would be deleted
 
-The great majority of restricted actions are genuinely enforced. Every admin/staff table (products, product images, brands, categories, inventory, purchase invoices, neighborhoods/cities/states, site settings, user roles, order notes, delivery assignments, registration requests, profile change requests) has a database rule requiring the admin or staff role, and every server function that writes re-checks the caller's role on the server. No page in the app writes to the database directly from the browser — all writes go through server functions. So "the button is hidden" is not the only line of defence in those areas.
+| Area | Rows now |
+|---|---|
+| cart_items | 0 |
+| wishlists | 2 |
+| order_notes | 15 |
+| order_status_history | 29 |
+| delivery_assignments | 6 |
+| order_items | 12 |
+| orders | 7 |
+| registration_requests | 1 |
+| profile_change_requests | 2 |
+| order_number_counters | 4 (reset to empty) |
+| auth_rate_limits | 2 (reset to empty) |
+| audit_logs (last) | 197 |
 
-Three real gaps were found, plus two lower-risk notes.
+## Customer accounts that would be removed (4)
 
-## 1. Product images storage — asked about specifically
+| Name | Phone | Orders |
+|---|---|---|
+| منولر محمدعلي | +249111804001 | 0 |
+| ملاذ منور | +249910737439 | 0 |
+| مهند عميل | +249916217777 | 7 |
+| محمد مصطفى | +249909072506 | 0 |
 
-Current policies on the images bucket (exact text):
+Each removal also clears that customer's linked rows: 4 carts, 1 address, their `user_roles` rows, their `profiles` row, and their sign-in account.
 
-```text
-"Admins manage product images"  ALL  {authenticated}
-  USING  (bucket_id = 'product-images' AND has_role(auth.uid(), 'admin'))
-  CHECK  (bucket_id = 'product-images' AND has_role(auth.uid(), 'admin'))
+## Accounts kept (untouched)
 
-"Signed-in users can read product images"  SELECT  {authenticated}
-  USING  (bucket_id = 'product-images')
-```
+- System Administrator (+249912345678) — admin
+- موظف خدمة عملاء (+249123456789) — staff
 
-- Upload, replace and delete are correctly restricted to admins at the policy level, not just in the UI. A signed-in customer using the SDK directly cannot write to this bucket.
-- The bucket itself is private. Reading is allowed for any signed-in user; visitors see images through a read-only public image endpoint that streams a single file by path and cannot list or write. Worth noting: that endpoint will serve **any** file placed in this bucket to anyone who knows the path, so the bucket should only ever hold public product photos.
-- This is the only storage bucket in the project.
+The admin's own cart row is left alone.
 
-## 2. A customer can create an order with any totals and any status (highest severity)
+## Kept and not touched
 
-The order-creation rule only checks that the order belongs to the person creating it — nothing about amounts or state:
+products, inventory, inventory movement records, purchase invoices, product-images files, states/cities/neighborhoods and delivery fees, brands, categories, site_settings.
 
-```text
-orders / p_orders_owner_insert  INSERT {authenticated}  CHECK (profile_id = auth.uid())
-order_items / p_order_items_insert  INSERT {authenticated}  CHECK (order belongs to auth.uid())
-```
+## How the reset will run
 
-Concretely, a customer with a normal session could create an order for themselves with a total of 0, a delivery fee of 0, and even set it straight to the "paid" state, with line items at prices they invented — completely bypassing the proper checkout routine that prices the basket, applies the correct delivery fee, and reserves stock. The order would then appear in the staff queue as a legitimate paid order.
+1. Temporarily disable the three audit triggers (`audit_product_change`, `audit_inventory_change`, `audit_delivery_assignment`) plus the order-status history trigger, so nothing new is written while deleting.
+2. In one single transaction, delete in the order you listed: cart_items and wishlists → order notes/history/delivery assignments/order items/orders → registration_requests → profile_change_requests → customer addresses, carts, user_roles, profiles → empty order_number_counters and auth_rate_limits → finally audit_logs.
+3. Re-enable the triggers inside the same transaction. If any step fails, the whole thing rolls back and nothing changes.
+4. Delete the four customer sign-in accounts through the secure admin API (auth accounts live outside the transaction, so they are removed as the final step after the transaction commits).
+5. Verify afterwards: admin and staff can still sign in, all kept reference data is unchanged, audit_logs is empty with zero new rows.
 
-Note that after creation they cannot edit it (updates are admin/assigned-staff only), and no delete is possible.
-
-## 3. A customer can change their own locked name and phone directly
-
-```text
-profiles / p_profiles_self_update  UPDATE {authenticated}  USING (id = auth.uid())  CHECK (id = auth.uid())
-```
-
-The application deliberately locks name and phone after registration (the profile save function rejects any change, and there is a staff-approved change-request flow with a confirmation code). That lock exists only in the server function; the database still lets the person write to their own row. A customer could rename themselves and change the stored phone/WhatsApp at will, skipping staff approval entirely. Their sign-in number would not change, so the stored phone and the login identity would fall out of sync — which also affects order contact details and the staff-facing customer list.
-
-## 4. A customer can pre-seed their own change request with fields staff should own
-
-```text
-profile_change_requests / "Customers create own change requests"  INSERT {authenticated}
-  CHECK (profile_id = auth.uid() AND status = 'pending')
-```
-
-Only the owner and the "pending" state are checked; every other column is free. A customer could insert a request with an expiry date and other internal fields of their choosing. They cannot approve it (status changes are staff-only) and the confirmation code is written by staff on approval, so this is not directly exploitable today — but it leaves the request record partly under the customer's control.
-
-Related non-security bug found while reading this area: the "cancel my request" path writes to this table as the customer, who has no update permission, so cancelling silently does nothing.
-
-## 5. Lower-risk notes
-
-- Any staff member can create or update a delivery assignment for **any** order, not only orders assigned to them (`p_da_staff_write` / `p_da_update` check the staff role only). Order edits themselves are correctly limited to the assigned staff member or an admin, so this is an inconsistency rather than an escalation.
-- One internal trigger helper (`log_inventory_movement`) is still executable by signed-out and signed-in callers. Called outside its trigger it fails immediately, so the practical risk is negligible, but it should not be reachable.
-- Two internal tables (`auth_rate_limits`, `order_number_counters`) have protection on with no rules at all, i.e. fully closed to customers and staff. Correct as-is.
-
-## Suggested priority if you decide to act later
-
-1. Order creation (item 2) — the only finding with direct financial impact.
-2. Direct profile self-edit (item 3) — defeats the approval workflow you just built.
-3. Change-request field control and the silent cancel bug (item 4).
-4. Delivery-assignment scoping and the trigger helper permission (item 5).
+Reply to confirm and I will execute it.
